@@ -5,10 +5,13 @@ import { supabase } from "../lib/supabase";
 const LOGO_FULL =
   "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
 
-const ADDRESS = "Av. Maria José de Paula, Setor Amélio Alves - Inhumas - GO";
+const ADDRESS_LINE_1 = "Av. Maria José de Paula";
+const ADDRESS_LINE_2 = "Setor Amélio Alves - Inhumas - GO";
 
 const GALLERY_BUCKET = "galeria";
 const GALLERY_PATH = "ultimo-culto";
+
+const PASTOR_WHATSAPP_NUMBER = "5562984468270"; // +55 62 98446-8270
 
 type Notice = {
   id: string;
@@ -86,6 +89,14 @@ export default function Home() {
     loadGalleryPreview();
   }, []);
 
+  const pastorWhatsUrl = `https://wa.me/${PASTOR_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    "Olá, pastor! Gostaria de falar com o senhor."
+  )}`;
+
+  const generalWhatsUrl = `https://wa.me/?text=${encodeURIComponent(
+    `Olá! Quero informações sobre os cultos.\nEndereço:\n${ADDRESS_LINE_1}\n${ADDRESS_LINE_2}`
+  )}`;
+
   return (
     <div className="relative">
       {/* HERO */}
@@ -93,7 +104,6 @@ export default function Home() {
         className="hero-animated-gradient relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden rounded-b-[2.5rem] text-white"
         style={
           {
-            // valores iniciais para não ficar "0,0"
             ["--mouse-x" as any]: "50%",
             ["--mouse-y" as any]: "35%",
           } as React.CSSProperties
@@ -107,7 +117,7 @@ export default function Home() {
           section.style.setProperty("--mouse-y", `${y}%`);
         }}
       >
-        {/* Luz dinâmica (premium) */}
+        {/* Luz dinâmica */}
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute w-[640px] h-[640px] bg-sky-400/20 blur-3xl rounded-full transition-all duration-200"
@@ -263,22 +273,40 @@ export default function Home() {
           )}
         </div>
 
-        {/* Endereço */}
+        {/* Endereço + Botões */}
         <div className="mt-16 rounded-[2rem] bg-gradient-to-br from-blue-700 to-blue-900 text-white p-8 shadow-lg">
           <h3 className="text-2xl font-black">Venha nos visitar</h3>
 
-          <p className="mt-4">📍 {ADDRESS}</p>
+          {/* Endereço em um campo separado */}
+          <div className="mt-4 rounded-2xl bg-white/10 border border-white/15 p-4">
+            <div className="text-xs uppercase tracking-widest text-white/70">
+              Endereço
+            </div>
+            <div className="mt-2 font-semibold">
+              📍 {ADDRESS_LINE_1}
+              <br />
+              {ADDRESS_LINE_2}
+            </div>
+          </div>
 
-          <div className="mt-6">
+          {/* Botões */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(
-                `Olá! Quero informações sobre os cultos. Endereço: ${ADDRESS}`
-              )}`}
+              href={generalWhatsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center rounded-full bg-white text-blue-900 px-6 py-3 font-bold hover:opacity-90 transition"
+              className="inline-flex items-center justify-center rounded-full bg-white text-blue-900 px-6 py-3 font-bold hover:opacity-90 transition w-full sm:w-auto"
             >
-              Falar no WhatsApp
+              Mandar localização no WhatsApp
+            </a>
+
+            <a
+              href={pastorWhatsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 hover:bg-white/10 text-white px-6 py-3 font-bold transition w-full sm:w-auto"
+            >
+              Falar com o Pastor
             </a>
           </div>
         </div>
