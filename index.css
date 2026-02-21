@@ -1,0 +1,18 @@
+@keyframes heroGradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-animated-gradient {
+  background: linear-gradient(
+    -45deg,
+    #020617,
+    #0f172a,
+    #1e3a8a,
+    #1e40af,
+    #0ea5e9
+  );
+  background-size: 400% 400%;
+  animation: heroGradientMove 15s ease infinite;
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
@@ -8,7 +8,7 @@ const LOGO_FULL =
 const ADDRESS = "Av. Maria José de Paula, Setor Amélio Alves - Inhumas - GO";
 
 const GALLERY_BUCKET = "galeria";
-const GALLERY_PATH = "ultimo-culto"; // pasta no Storage
+const GALLERY_PATH = "ultimo-culto";
 
 type Notice = {
   id: string;
@@ -33,6 +33,7 @@ export default function Home() {
   const [galleryPreview, setGalleryPreview] = useState<string[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
 
+  // Avisos
   useEffect(() => {
     async function loadNotices() {
       setLoadingNotices(true);
@@ -50,6 +51,7 @@ export default function Home() {
     loadNotices();
   }, []);
 
+  // Prévia da galeria (Storage)
   useEffect(() => {
     async function loadGalleryPreview() {
       setLoadingGallery(true);
@@ -57,7 +59,7 @@ export default function Home() {
       const { data, error } = await supabase.storage
         .from(GALLERY_BUCKET)
         .list(GALLERY_PATH, {
-          limit: 12,
+          limit: 30,
           sortBy: { column: "created_at", order: "desc" },
         });
 
@@ -66,10 +68,11 @@ export default function Home() {
           .filter((f) => !!f.name && !f.name.startsWith("."))
           .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
           .slice(0, 6)
-          .map((f) =>
-            supabase.storage
-              .from(GALLERY_BUCKET)
-              .getPublicUrl(`${GALLERY_PATH}/${f.name}`).data.publicUrl
+          .map(
+            (f) =>
+              supabase.storage
+                .from(GALLERY_BUCKET)
+                .getPublicUrl(`${GALLERY_PATH}/${f.name}`).data.publicUrl
           );
 
         setGalleryPreview(urls);
@@ -86,32 +89,55 @@ export default function Home() {
   return (
     <div className="relative">
       {/* HERO */}
-      <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 text-white">
-        {/* Background Glow */}
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute -top-40 -left-40 w-[520px] h-[520px] bg-blue-600 blur-3xl rounded-full animate-pulse" />
-          <div className="absolute top-10 right-[-120px] w-[420px] h-[420px] bg-indigo-500 blur-3xl rounded-full animate-pulse" />
-          <div className="absolute bottom-[-180px] left-1/3 w-[560px] h-[560px] bg-cyan-500 blur-3xl rounded-full animate-pulse" />
+      <section
+        className="hero-animated-gradient relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden rounded-b-[2.5rem] text-white"
+        style={
+          {
+            // valores iniciais para não ficar "0,0"
+            ["--mouse-x" as any]: "50%",
+            ["--mouse-y" as any]: "35%",
+          } as React.CSSProperties
+        }
+        onMouseMove={(e) => {
+          const section = e.currentTarget;
+          const rect = section.getBoundingClientRect();
+          const x = ((e.clientX - rect.left) / rect.width) * 100;
+          const y = ((e.clientY - rect.top) / rect.height) * 100;
+          section.style.setProperty("--mouse-x", `${x}%`);
+          section.style.setProperty("--mouse-y", `${y}%`);
+        }}
+      >
+        {/* Luz dinâmica (premium) */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute w-[640px] h-[640px] bg-sky-400/20 blur-3xl rounded-full transition-all duration-200"
+            style={{
+              left: "var(--mouse-x)",
+              top: "var(--mouse-y)",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
+          <div className="absolute inset-0 bg-black/25" />
         </div>
 
+        {/* Conteúdo do HERO */}
         <div className="relative z-10 w-full max-w-5xl px-6 text-center">
-          {/* LOGO CENTRAL */}
           <div className="flex justify-center">
             <img
               src={LOGO_FULL}
               alt="AD Ministério Irlanda"
               className="
-                w-[180px]
-                sm:w-[240px]
-                md:w-[320px]
-                lg:w-[380px]
+                w-[170px]
+                sm:w-[220px]
+                md:w-[300px]
+                lg:w-[360px]
                 h-auto object-contain
-                drop-shadow-[0_20px_60px_rgba(0,0,0,0.35)]
+                drop-shadow-[0_20px_60px_rgba(0,0,0,0.40)]
               "
             />
           </div>
 
-          <p className="mt-8 text-base md:text-xl text-white/75 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-8 text-base md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
             Conecte-se aos avisos, devocionais e registros do último culto — com
             uma experiência moderna, leve e feita para o seu dia a dia.
           </p>
@@ -143,11 +169,15 @@ export default function Home() {
 
       {/* CONTEÚDO */}
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 pt-12 pb-24">
+        {/* Avisos */}
         <div className="flex items-end justify-between gap-4">
           <h2 className="text-2xl md:text-3xl font-black text-slate-900">
             Próximos Avisos
           </h2>
-          <Link to="/avisos" className="text-sm font-semibold text-blue-700 hover:text-blue-800">
+          <Link
+            to="/avisos"
+            className="text-sm font-semibold text-blue-700 hover:text-blue-800"
+          >
             Ver todos →
           </Link>
         </div>
@@ -184,7 +214,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* ✅ PRÉVIA DA GALERIA (ANTES DO ENDEREÇO) */}
+        {/* Prévia da Galeria */}
         <div className="mt-14">
           <div className="flex items-end justify-between gap-4">
             <div>
@@ -208,8 +238,8 @@ export default function Home() {
             <p className="mt-6 text-slate-500">Carregando fotos...</p>
           ) : galleryPreview.length === 0 ? (
             <div className="mt-6 rounded-3xl bg-white border p-6 text-slate-500">
-              Nenhuma foto disponível ainda. Assim que você enviar no painel admin,
-              elas aparecem aqui automaticamente.
+              Nenhuma foto disponível ainda. Assim que você enviar no painel
+              admin, elas aparecem aqui automaticamente.
             </div>
           ) : (
             <div className="mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -218,6 +248,7 @@ export default function Home() {
                   key={url}
                   to="/galeria"
                   className="group relative overflow-hidden rounded-2xl bg-slate-100 border"
+                  aria-label="Abrir galeria"
                 >
                   <img
                     src={url}
@@ -232,7 +263,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* ENDEREÇO / VISITA */}
+        {/* Endereço */}
         <div className="mt-16 rounded-[2rem] bg-gradient-to-br from-blue-700 to-blue-900 text-white p-8 shadow-lg">
           <h3 className="text-2xl font-black">Venha nos visitar</h3>
 
