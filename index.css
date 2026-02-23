@@ -16,3 +16,14 @@
   background-size: 400% 400%;
   animation: heroGradientMove 15s ease infinite;
 }
+.animated-bg {
+  background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0ea5e9, #0f172a);
+  background-size: 400% 400%;
+  animation: gradientMove 18s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
