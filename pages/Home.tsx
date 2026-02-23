@@ -8,6 +8,14 @@ const LOGO_FULL =
 const ADDRESS_LINE_1 = "Av. Maria José de Paula";
 const ADDRESS_LINE_2 = "Setor Amélio Alves - Inhumas - GO";
 
+// Link direto (compartilhável) do Google Maps para a igreja
+const CHURCH_MAPS_LINK =
+  "https://www.google.com/maps/search/?api=1&query=AOGIM%20-%20Assembleia%20de%20Deus%20Min.%20Irlanda%20Inhumas";
+
+// Link para abrir rota (navegação)
+const CHURCH_DIRECTIONS_LINK =
+  "https://www.google.com/maps/dir/?api=1&destination=AOGIM%20-%20Assembleia%20de%20Deus%20Min.%20Irlanda%20Inhumas";
+
 const GALLERY_BUCKET = "galeria";
 const GALLERY_PATH = "ultimo-culto";
 
@@ -93,9 +101,22 @@ export default function Home() {
     "Olá, pastor! Gostaria de falar com o senhor."
   )}`;
 
-  const generalWhatsUrl = `https://wa.me/?text=${encodeURIComponent(
-    `Olá! Quero informações sobre os cultos.\nEndereço:\n${ADDRESS_LINE_1}\n${ADDRESS_LINE_2}`
+  // WhatsApp para compartilhar localização (link + endereço)
+  const shareLocationWhatsUrl = `https://wa.me/?text=${encodeURIComponent(
+    `📍 Localização da igreja (clique para abrir no Maps):\n${CHURCH_MAPS_LINK}\n\nEndereço:\n${ADDRESS_LINE_1}\n${ADDRESS_LINE_2}`
   )}`;
+
+  // Copiar endereço
+  async function handleCopyAddress() {
+    const text = `${ADDRESS_LINE_1}\n${ADDRESS_LINE_2}\n${CHURCH_MAPS_LINK}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Endereço copiado! Agora é só colar onde quiser.");
+    } catch {
+      // fallback simples
+      prompt("Copie o endereço:", text);
+    }
+  }
 
   return (
     <div className="relative">
@@ -273,12 +294,17 @@ export default function Home() {
           )}
         </div>
 
-        {/* Endereço + Botões */}
+        {/* Localização (card clicável + compartilhamento fácil) */}
         <div className="mt-16 rounded-[2rem] bg-gradient-to-br from-blue-700 to-blue-900 text-white p-8 shadow-lg">
           <h3 className="text-2xl font-black">Venha nos visitar</h3>
 
-          {/* Endereço em um campo separado */}
-          <div className="mt-4 rounded-2xl bg-white/10 border border-white/15 p-4">
+          {/* CARD CLICÁVEL: abre o Google Maps */}
+          <a
+            href={CHURCH_DIRECTIONS_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 block rounded-2xl bg-white/10 border border-white/15 p-4 hover:bg-white/15 transition"
+          >
             <div className="text-xs uppercase tracking-widest text-white/70">
               Endereço
             </div>
@@ -287,12 +313,15 @@ export default function Home() {
               <br />
               {ADDRESS_LINE_2}
             </div>
-          </div>
+            <div className="mt-2 text-xs text-white/70">
+              Toque para abrir rota no Google Maps →
+            </div>
+          </a>
 
           {/* Botões */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <a
-              href={generalWhatsUrl}
+              href={shareLocationWhatsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-white text-blue-900 px-6 py-3 font-bold hover:opacity-90 transition w-full sm:w-auto"
@@ -300,6 +329,7 @@ export default function Home() {
               Mandar localização no WhatsApp
             </a>
 
+           
             <a
               href={pastorWhatsUrl}
               target="_blank"
