@@ -21,6 +21,9 @@ export default function Devotional() {
   const bibleVersion = "acf";
   const cacheKey = useMemo(() => `devocional:${bibleVersion}:${todayKey()}`, []);
 
+  const logoUrl =
+    "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
+
   useEffect(() => {
     let alive = true;
 
@@ -52,85 +55,35 @@ export default function Devotional() {
 
   const shareUrl = "https://aogimconectinhumas.site/devocional";
 
-  const gerarImagemInstagram = () => {
+  const compartilharWhatsApp = () => {
     if (!data) return;
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 1080;
-    canvas.height = 1920;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const text = `✨ Deus ainda fala hoje. Leia isso com o coração aberto.
 
-    const gradient = ctx.createLinearGradient(0, 0, 1080, 1920);
-    gradient.addColorStop(0, "#0f172a");
-    gradient.addColorStop(0.5, "#1e3a8a");
-    gradient.addColorStop(1, "#0f172a");
+📖 ${data.title}
 
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 1080, 1920);
+"${data.verseText}"
+${data.verseRef}
 
-    ctx.fillStyle = "#ffffff";
-    ctx.textAlign = "center";
+Leia completo:
+${shareUrl}`;
 
-    ctx.font = "bold 70px Arial";
-    ctx.fillText("Devocional do Dia", 540, 250);
-
-    wrapText(ctx, `"${data.verseText}"`, 540, 600, 900, 80);
-
-    ctx.font = "bold 50px Arial";
-    ctx.fillText(data.verseRef, 540, 1100);
-
-    ctx.font = "40px Arial";
-    ctx.fillText("AOGIM Conect", 540, 1700);
-    ctx.fillText("aogimconectinhumas.site", 540, 1780);
-
-    const link = document.createElement("a");
-    link.download = "devocional-aogim.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-
-    setTimeout(() => {
-      window.open("https://www.instagram.com/", "_blank");
-    }, 1000);
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
-
-  function wrapText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) {
-    const words = text.split(" ");
-    let line = "";
-    let testLine = "";
-    let lines = [];
-
-    for (let n = 0; n < words.length; n++) {
-      testLine += `${words[n]} `;
-      const metrics = ctx.measureText(testLine);
-      if (metrics.width > maxWidth && n > 0) {
-        lines.push(line);
-        line = `${words[n]} `;
-        testLine = `${words[n]} `;
-      } else {
-        line = testLine;
-      }
-    }
-    lines.push(line);
-
-    for (let i = 0; i < lines.length; i++) {
-      ctx.fillText(lines[i], x, y + i * lineHeight);
-    }
-  }
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-10 animated-bg relative">
 
-      {/* Logo Responsiva */}
+      {/* Logo */}
       <div className="absolute top-6 w-full flex justify-center">
         <img
-          src="/logo.png"
+          src={logoUrl}
           alt="AOGIM Logo"
-          className="w-40 sm:w-48 md:w-56 lg:w-64"
+          className="w-40 sm:w-48 md:w-56 lg:w-64 object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.3)]"
         />
       </div>
 
-      {/* Glow effects */}
+      {/* Glow Effects */}
       <div className="absolute w-96 h-96 bg-blue-500/20 blur-3xl rounded-full top-20 -left-20"></div>
       <div className="absolute w-96 h-96 bg-purple-500/20 blur-3xl rounded-full bottom-10 -right-20"></div>
 
@@ -167,32 +120,13 @@ export default function Devotional() {
                 ))}
               </div>
 
-              <div className="mt-10 flex flex-col gap-4">
-
+              <div className="mt-10">
                 <button
-                  onClick={() => {
-                    const text = `📖 Devocional do Dia – AOGIM Conect
-
-"${data.verseText}"
-${data.verseRef}
-
-Leia completo:
-${shareUrl}`;
-
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-                  }}
-                  className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white py-3 font-semibold transition"
+                  onClick={compartilharWhatsApp}
+                  className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white py-3 font-semibold transition"
                 >
                   Compartilhar no WhatsApp
                 </button>
-
-                <button
-                  onClick={gerarImagemInstagram}
-                  className="rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white py-3 font-semibold transition"
-                >
-                  Gerar imagem para Instagram
-                </button>
-
               </div>
 
             </>
