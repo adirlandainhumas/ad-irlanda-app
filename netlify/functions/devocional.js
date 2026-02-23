@@ -1,12 +1,7 @@
 import * as cheerio from "cheerio";
 
 function cleanText(t = "") {
-  return t
-    .replace(/\r/g, "")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
+  return t.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export const handler = async (event) => {
@@ -21,6 +16,10 @@ export const handler = async (event) => {
       },
     });
 
+    if (!response.ok) {
+      throw new Error("Erro ao acessar fonte externa");
+    }
+
     const html = await response.text();
     const $ = cheerio.load(html);
 
@@ -31,47 +30,41 @@ export const handler = async (event) => {
         ? $("#content").first()
         : $("body");
 
-    // Título do devocional (mais específico)
-    let title = main.find("h2").first().text().trim() || main.find("h1").first().text().trim();
-    if (!title || title.toLowerCase() === "bíblia online") title = "Devocional do Dia";
+    let title =
+      main.find("h2").first().text().trim() ||
+      main.find("h1").first().text().trim();
 
-    // Heurística para achar versículo e referência
+    if (!title || title.toLowerCase().includes("bíblia")) {
+      title = "Devocional do Dia";
+    }
+
     let verseText = "";
     let verseRef = "";
 
-    const candidates = main.find("p, h3, h4, blockquote, div").toArray();
+    const candidates = main.find("p").toArray();
+
     for (const el of candidates) {
       const text = cleanText($(el).text());
-      if (!verseText && text.length > 20 && text.length < 400) {
-        const refMatch = text.match(/([1-3]?\s?[A-Za-zÀ-ÿ]+)\s(\d{1,3}:\d{1,3})/);
-        if (refMatch) {
-          verseRef = refMatch[0].trim();
-          verseText = text.replace(refMatch[0], "").replace(/[—-]\s*$/, "").trim();
-          break;
-        }
+
+      const refMatch = text.match(/([1-3]?\s?[A-Za-zÀ-ÿ]+)\s(\d{1,3}:\d{1,3})/);
+
+      if (refMatch) {
+        verseRef = refMatch[0];
+        verseText = text.replace(refMatch[0], "").replace(/^\d+\s+/, "").trim();
+        break;
       }
     }
 
-    // Limpa número do versículo no começo (ex: "46 ")
-    verseText = verseText.replace(/^\d+\s+/, "").trim();
-
-    // Monta texto principal pegando parágrafos longos
     const paragraphs = main
       .find("p")
       .toArray()
       .map((p) => cleanText($(p).text()))
-      .filter(Boolean);
+      .filter((t) => t.length > 60);
 
-    const longOnes = paragraphs.filter((t) => t.length > 60);
-    const body = cleanText(longOnes.join("\n\n"));
-
-    // Limita tamanho do body para leitura confortável
-    const MAX = 2200;
-    const safeBody = body.length > MAX ? body.slice(0, MAX).trim() + "..." : body;
+    const body = paragraphs.join("\n\n");
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         ok: true,
         dateLabel: new Date().toLocaleDateString("pt-BR", {
@@ -83,18 +76,23 @@ export const handler = async (event) => {
         title,
         verseText,
         verseRef,
-        body: safeBody,
-        sourceUrl: url,
+        body: body.slice(0, 2000),
       }),
     };
   } catch (error) {
+
+    // 🔥 Fallback automático se der erro externo
     return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8" },
+      statusCode: 200,
       body: JSON.stringify({
-        ok: false,
-        error: String(error?.message || error),
+        ok: true,
+        dateLabel: new Date().toLocaleDateString("pt-BR"),
+        title: "Confie no Senhor",
+        verseText: "Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.",
+        verseRef: "Salmos 37:5",
+        body:
+          "Mesmo quando algo falha tecnicamente, Deus continua no controle. A fé não depende de conexões externas, mas da nossa confiança nEle. Hoje, entregue seu caminho ao Senhor e descanse.",
       }),
     };
   }
-};  s
+};
