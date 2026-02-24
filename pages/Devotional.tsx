@@ -181,7 +181,7 @@ export default function Devotional() {
 
   // Link do seu site (o WhatsApp vai usar o OG do index.html)
   const shareUrl =
-    "https://aogimconectinhumas.site/devocional?utm_source=whatsapp&utm_medium=share";
+    "https://aogimconectinhumas.site/#/devocional?utm_source=whatsapp&utm_medium=share";
 
   const compartilharWhatsApp = () => {
     if (!data) return;
