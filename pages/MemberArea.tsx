@@ -1,6 +1,9 @@
 import { useEffect, useState, type FC, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+ codex/reativar-area-de-membros-com-supabase-40uw2v
+ codex/reativar-area-de-membros-com-supabase-nk9mfn
+ main
 import {
   emptyMemberDetails,
   formatDate,
@@ -29,6 +32,14 @@ import {
 
 const MemberArea: FC = () => {
   const [session, setSession] = useState<Session | null>(null);
+ codex/reativar-area-de-membros-com-supabase-40uw2v
+
+
+import { User, Mail, Lock, LogOut, AlertCircle, Loader2, CheckCircle2, UserCircle, Phone, Calendar, ArrowLeft, Save, CreditCard, ExternalLink, X } from 'lucide-react';
+const MemberArea: React.FC = () => {
+  const [session, setSession] = useState<any>(null);
+ main
+ main
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
