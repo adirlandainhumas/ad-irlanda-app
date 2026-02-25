@@ -33,12 +33,14 @@ export interface MemberDetails {
   address_sector: string;
   address_city: string;
   address_state: string;
+  postal_code: string;
   phone: string;
   email: string;
   church_role_info: string;
   church_entry_date: string;
   baptism_date: string;
   church_function: string;
+  photo_path: string;
 }
 
 export const emptyMemberDetails: MemberDetails = {
@@ -52,12 +54,14 @@ export const emptyMemberDetails: MemberDetails = {
   address_sector: '',
   address_city: '',
   address_state: '',
+  postal_code: '',
   phone: '',
   email: '',
   church_role_info: '',
   church_entry_date: '',
   baptism_date: '',
   church_function: '',
+  photo_path: '',
 };
 
 export const MEMBER_REQUIRED_FIELDS: (keyof MemberDetails)[] = [
@@ -71,6 +75,7 @@ export const MEMBER_REQUIRED_FIELDS: (keyof MemberDetails)[] = [
   'address_sector',
   'address_city',
   'address_state',
+  'postal_code',
   'phone',
   'email',
   'church_role_info',

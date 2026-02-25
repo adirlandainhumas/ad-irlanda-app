@@ -1,69 +1,56 @@
-import { useEffect, useState, type FC, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FC, type FormEvent, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
- codex/reativar-area-de-membros-com-supabase-nk9mfn
-import {
-  emptyMemberDetails,
-  formatDate,
-  isFichaComplete,
-  type MemberDetails,
-} from '../types';
-
 import {
   AlertCircle,
-  Calendar,
+  Camera,
   CheckCircle2,
-  CreditCard,
-  ExternalLink,
   Loader2,
   Lock,
-  LogOut,
   Mail,
-  MapPin,
   Phone,
   Save,
+  Upload,
   User,
   UserCircle,
-  Users,
-  X,
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { emptyMemberDetails, type MemberDetails } from '../types';
+
+const PHOTO_BUCKET = 'member-photos';
 
 const MemberArea: FC = () => {
   const [session, setSession] = useState<Session | null>(null);
-
-import { User, Mail, Lock, LogOut, AlertCircle, Loader2, CheckCircle2, UserCircle, Phone, Calendar, ArrowLeft, Save, CreditCard, ExternalLink, X } from 'lucide-react';
-const MemberArea: React.FC = () => {
-  const [session, setSession] = useState<any>(null);
- main
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
-  const [showFichaForm, setShowFichaForm] = useState(false);
-  const [showCard, setShowCard] = useState(false);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const [memberDetails, setMemberDetails] = useState<MemberDetails>(emptyMemberDetails);
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const [hasFicha, setHasFicha] = useState(false);
-  const [memberDetails, setMemberDetails] = useState<MemberDetails>(emptyMemberDetails);
-
-  const logoUrl = 'https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png';
-
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        fetchMemberDetails(session.user.id, session.user.user_metadata?.full_name, session.user.email);
-      }
-    });
+    const forceLoginEveryRefresh = async () => {
+      await supabase.auth.signOut();
+      setSession(null);
+    };
+
+    forceLoginEveryRefresh();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, currentSession) => {
       setSession(currentSession);
+      setError(null);
+      setSuccessMsg(null);
+
       if (currentSession) {
         fetchMemberDetails(
           currentSession.user.id,
@@ -71,65 +58,157 @@ const MemberArea: React.FC = () => {
           currentSession.user.email,
         );
       } else {
-        setShowFichaForm(false);
-        setHasFicha(false);
-        setShowCard(false);
         setMemberDetails(emptyMemberDetails);
+        setSelectedPhoto(null);
+        setPhotoPreview(null);
+        setPhotoUrl(null);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    };
+  }, [photoPreview]);
+
   const fetchMemberDetails = async (userId: string, profileName?: string, profileEmail?: string) => {
     setFetchingDetails(true);
+
     try {
-      const { data, error } = await supabase.from('member_details').select('*').eq('user_id', userId).maybeSingle();
+      const { data, error: queryError } = await supabase
+        .from('member_details')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (queryError) throw queryError;
 
-      const hydratedData: MemberDetails = {
+      const nextDetails: MemberDetails = {
         ...emptyMemberDetails,
         full_name: profileName || '',
         email: profileEmail || '',
         ...(data || {}),
       };
 
-      setMemberDetails(hydratedData);
-      const complete = isFichaComplete(hydratedData);
-      setHasFicha(complete);
-      if (!complete) {
-        setShowFichaForm(true);
+      setMemberDetails(nextDetails);
+      setSelectedPhoto(null);
+
+      if (nextDetails.photo_path) {
+        await refreshPhotoUrl(nextDetails.photo_path);
+      } else {
+        setPhotoUrl(null);
       }
     } catch (err) {
-      console.error('Error fetching member details:', err);
-      const fallback: MemberDetails = {
+      console.error('Erro ao buscar ficha do membro:', err);
+      setMemberDetails({
         ...emptyMemberDetails,
         full_name: profileName || '',
         email: profileEmail || '',
-      };
-      setMemberDetails(fallback);
-      setHasFicha(false);
-      setShowFichaForm(true);
+      });
+      setPhotoUrl(null);
     } finally {
       setFetchingDetails(false);
     }
+  };
+
+  const refreshPhotoUrl = async (photoPath: string) => {
+    const { data, error: signedUrlError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .createSignedUrl(photoPath, 60 * 60);
+
+    if (signedUrlError) {
+      console.error('Erro ao gerar URL assinada da foto:', signedUrlError);
+      setPhotoUrl(null);
+      return;
+    }
+
+    setPhotoUrl(data?.signedUrl || null);
   };
 
   const updateMemberField = (field: keyof MemberDetails, value: string) => {
     setMemberDetails((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAuth = async (e: FormEvent) => {
-    e.preventDefault();
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Selecione um arquivo de imagem válido.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('A imagem precisa ter no máximo 5MB.');
+      return;
+    }
+
+    setError(null);
+    setSelectedPhoto(file);
+
+    if (photoPreview) {
+      URL.revokeObjectURL(photoPreview);
+    }
+
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const uploadMemberPhoto = async (userId: string) => {
+    if (!selectedPhoto) {
+      return memberDetails.photo_path || null;
+    }
+
+    const extension = selectedPhoto.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const filePath = `${userId}/${Date.now()}.${extension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(filePath, selectedPhoto, { upsert: false, cacheControl: '3600' });
+
+    if (uploadError) throw uploadError;
+
+    if (memberDetails.photo_path) {
+      await supabase.storage.from(PHOTO_BUCKET).remove([memberDetails.photo_path]);
+    }
+
+    return filePath;
+  };
+
+  const validateFicha = (details: MemberDetails) => {
+    if (!details.full_name.trim()) return 'Nome completo é obrigatório.';
+    if (!details.gender.trim()) return 'Sexo é obrigatório.';
+    if (!details.birth_date.trim()) return 'Data de nascimento é obrigatória.';
+    if (!details.marital_status.trim()) return 'Estado civil é obrigatório.';
+    if (!details.address_street.trim()) return 'Logradouro é obrigatório.';
+    if (!details.address_block.trim()) return 'Número é obrigatório.';
+    if (!details.address_sector.trim()) return 'Bairro é obrigatório.';
+    if (!details.postal_code.trim()) return 'CEP é obrigatório.';
+    if (!details.address_city.trim()) return 'Cidade é obrigatória.';
+    if (!details.address_state.trim()) return 'UF é obrigatória.';
+    if (!details.phone.trim()) return 'Número de celular é obrigatório.';
+    if (!details.email.trim()) return 'E-mail é obrigatório.';
+    if (!details.church_entry_date.trim()) return 'Data de entrada na igreja é obrigatória.';
+    if (!details.baptism_date.trim()) return 'Data de batismo é obrigatória.';
+    if (!details.church_function.trim()) return 'Função é obrigatória.';
+    return null;
+  };
+
+  const handleAuth = async (event: FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
 
     try {
       if (isSignUp) {
         if (!fullName.trim()) throw new Error('O nome completo é obrigatório.');
 
-        const { error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -138,60 +217,62 @@ const MemberArea: React.FC = () => {
             },
           },
         });
-        if (error) throw error;
-        setSuccessMsg('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
+
+        if (signUpError) throw signUpError;
+        setSuccessMsg('Cadastro criado. Confirme seu e-mail e faça login.');
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInError) throw signInError;
       }
     } catch (err: any) {
-      setError(err.message || 'Ocorreu um erro inesperado.');
+      setError(err.message || 'Falha na autenticação.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
-
-  const handleSaveFicha = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSaveFicha = async (event: FormEvent) => {
+    event.preventDefault();
     if (!session) return;
 
     setLoading(true);
     setError(null);
+    setSuccessMsg(null);
 
     const payload: MemberDetails = {
       ...memberDetails,
-      full_name: memberDetails.full_name || session.user.user_metadata?.full_name || 'Membro',
+      full_name: memberDetails.full_name || session.user.user_metadata?.full_name || '',
       email: memberDetails.email || session.user.email || '',
     };
 
-    if (!isFichaComplete(payload)) {
+    const validationError = validateFicha(payload);
+    if (validationError) {
+      setError(validationError);
       setLoading(false);
-      setError('Preencha todos os campos da ficha cadastral para continuar.');
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('member_details')
-        .upsert(
-          {
-            user_id: session.user.id,
-            ...payload,
-          },
-          { onConflict: 'user_id' },
-        );
+      const photoPath = await uploadMemberPhoto(session.user.id);
 
-      if (error) throw error;
+      const { error: upsertError } = await supabase.from('member_details').upsert(
+        {
+          user_id: session.user.id,
+          ...payload,
+          photo_path: photoPath,
+        },
+        { onConflict: 'user_id' },
+      );
 
-      setMemberDetails(payload);
-      setHasFicha(true);
-      setSuccessMsg('Ficha cadastral salva com sucesso!');
-      setShowFichaForm(false);
-      setTimeout(() => setSuccessMsg(null), 3000);
+      if (upsertError) throw upsertError;
+
+      setMemberDetails({ ...payload, photo_path: photoPath || '' });
+      setSelectedPhoto(null);
+      setSuccessMsg('Ficha cadastral salva com sucesso.');
+
+      if (photoPath) {
+        await refreshPhotoUrl(photoPath);
+      }
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar ficha cadastral.');
     } finally {
@@ -199,522 +280,313 @@ const MemberArea: React.FC = () => {
     }
   };
 
-  if (session) {
-    const userDisplayName = memberDetails.full_name || session.user.user_metadata?.full_name || 'Membro';
-
+  if (!session) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-in zoom-in-95 duration-300">
-        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 shadow-inner relative">
-          <User className="w-12 h-12" />
-          <div className="absolute -bottom-1 -right-1 bg-green-500 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center">
-            <CheckCircle2 className="w-4 h-4 text-white" />
-          </div>
-        </div>
+      <div className="min-h-[70vh] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
+          <h2 className="text-2xl font-black text-center text-slate-800 mb-2">
+            {isSignUp ? 'Criar conta de membro' : 'Entrar na área de membros'}
+          </h2>
+          <p className="text-center text-sm text-slate-500 mb-6">
+            Após cada refresh o login é solicitado novamente.
+          </p>
 
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-slate-800 leading-tight">Olá, {userDisplayName.split(' ')[0]}!</h2>
-          <p className="text-slate-500 font-medium text-sm">{session.user.email}</p>
-        </div>
-
-        {successMsg && (
-          <div className="w-full max-w-xl bg-green-50 text-green-700 p-4 rounded-2xl text-sm font-bold border border-green-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
-            <CheckCircle2 className="w-5 h-5" />
-            {successMsg}
-          </div>
-        )}
-
-        <div className="w-full max-w-xl space-y-4 pt-4">
-          {!hasFicha && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-              <div>
-                <p className="text-sm font-black text-amber-800 uppercase tracking-wide">Ficha cadastral pendente</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  Complete sua ficha para liberar seu Cartão de Membro Digital no estilo CNH.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={() => (hasFicha ? setShowCard(true) : setShowFichaForm(true))}
-            className={`w-full text-white font-bold py-5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${
-              hasFicha ? 'bg-blue-700 hover:bg-blue-800 shadow-blue-100' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-100'
-            }`}
-          >
-            {hasFicha ? (
-              <>
-                <CreditCard className="w-6 h-6" /> Acessar Cartão de Membro
-              </>
-            ) : (
-              <>
-                <UserCircle className="w-6 h-6" /> Preencher Ficha Cadastral
-              </>
+          <form onSubmit={handleAuth} className="space-y-4">
+            {isSignUp && (
+              <InputField
+                label="Nome completo"
+                value={fullName}
+                onChange={setFullName}
+                icon={<User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
+              />
             )}
-          </button>
+
+            <InputField
+              label="E-mail"
+              value={email}
+              onChange={setEmail}
+              icon={<Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
+              type="email"
+            />
+
+            <InputField
+              label="Senha"
+              value={password}
+              onChange={setPassword}
+              icon={<Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
+              type="password"
+            />
+
+            {error && (
+              <div className="flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-xl text-sm border border-red-100">
+                <AlertCircle className="w-5 h-5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {successMsg && (
+              <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm border border-green-100">
+                <CheckCircle2 className="w-5 h-5" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Criar conta' : 'Entrar'}
+            </button>
+          </form>
 
           <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-400 font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 hover:border-red-100"
+            type="button"
+            onClick={() => {
+              setIsSignUp((prev) => !prev);
+              setError(null);
+              setSuccessMsg(null);
+            }}
+            className="w-full mt-4 text-sm font-semibold text-blue-700 hover:text-blue-900"
           >
-            <LogOut className="w-5 h-5" />
-            Sair da Conta
+            {isSignUp ? 'Já tem conta? Entre aqui' : 'Não tem conta? Cadastre-se'}
           </button>
         </div>
-
-        {showFichaForm && (
-          <div className="fixed inset-0 top-16 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
-            <div className="bg-white w-full max-w-3xl rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95 duration-300 my-6">
-              <button
-                onClick={() => setShowFichaForm(false)}
-                className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              <div className="space-y-6">
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Ficha Cadastral de Membro</h2>
-                  <p className="text-slate-500 text-sm">
-                    Complete os dados para liberar seu cartão de membro digital.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSaveFicha} className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Nome Completo</label>
-                      <div className="relative">
-                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="text"
-                          value={memberDetails.full_name}
-                          onChange={(e) => updateMemberField('full_name', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Sexo</label>
-                      <select
-                        value={memberDetails.gender}
-                        onChange={(e) => updateMemberField('gender', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      >
-                        <option value="">Selecione</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Feminino">Feminino</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Nascimento</label>
-                      <div className="relative">
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="date"
-                          value={memberDetails.birth_date}
-                          onChange={(e) => updateMemberField('birth_date', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Estado Civil</label>
-                      <select
-                        value={memberDetails.marital_status}
-                        onChange={(e) => updateMemberField('marital_status', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      >
-                        <option value="">Selecione</option>
-                        <option value="Solteiro(a)">Solteiro(a)</option>
-                        <option value="Casado(a)">Casado(a)</option>
-                        <option value="Divorciado(a)">Divorciado(a)</option>
-                        <option value="Viúvo(a)">Viúvo(a)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Número de Contato</label>
-                      <div className="relative">
-                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="tel"
-                          placeholder="(00) 00000-0000"
-                          value={memberDetails.phone}
-                          onChange={(e) => updateMemberField('phone', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">E-mail</label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="email"
-                          placeholder="exemplo@email.com"
-                          value={memberDetails.email}
-                          onChange={(e) => updateMemberField('email', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1 md:col-span-2">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">
-                        Endereço Completo (Rua/Av)
-                      </label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="text"
-                          placeholder="Rua ou Av"
-                          value={memberDetails.address_street}
-                          onChange={(e) => updateMemberField('address_street', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Quadra</label>
-                      <input
-                        type="text"
-                        value={memberDetails.address_block}
-                        onChange={(e) => updateMemberField('address_block', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Lote</label>
-                      <input
-                        type="text"
-                        value={memberDetails.address_lot}
-                        onChange={(e) => updateMemberField('address_lot', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Setor</label>
-                      <input
-                        type="text"
-                        value={memberDetails.address_sector}
-                        onChange={(e) => updateMemberField('address_sector', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Cidade</label>
-                      <input
-                        type="text"
-                        value={memberDetails.address_city}
-                        onChange={(e) => updateMemberField('address_city', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Estado</label>
-                      <input
-                        type="text"
-                        placeholder="GO"
-                        value={memberDetails.address_state}
-                        onChange={(e) => updateMemberField('address_state', e.target.value.toUpperCase())}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">
-                        Informações Eclesiásticas (Função na igreja)
-                      </label>
-                      <div className="relative">
-                        <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="text"
-                          value={memberDetails.church_role_info}
-                          onChange={(e) => updateMemberField('church_role_info', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Função</label>
-                      <input
-                        type="text"
-                        value={memberDetails.church_function}
-                        onChange={(e) => updateMemberField('church_function', e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Entrada na Igreja</label>
-                      <div className="relative">
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="date"
-                          value={memberDetails.church_entry_date}
-                          onChange={(e) => updateMemberField('church_entry_date', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Batismo</label>
-                      <div className="relative">
-                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                          type="date"
-                          value={memberDetails.baptism_date}
-                          onChange={(e) => updateMemberField('baptism_date', e.target.value)}
-                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {error && (
-                    <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
-                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                      <span>{error}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : (
-                      <>
-                        <Save className="w-5 h-5" /> Salvar Ficha Cadastral
-                      </>
-                    )}
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showCard && hasFicha && (
-          <div className="fixed inset-0 top-16 z-50 flex flex-col items-center justify-center p-6 bg-slate-900/95 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="w-full max-w-md flex flex-col items-center gap-8">
-              <div className="w-full relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 rounded-[2rem] blur opacity-40" />
-                <div className="relative bg-gradient-to-br from-emerald-900 via-cyan-900 to-blue-900 rounded-[2rem] p-6 text-white shadow-2xl overflow-hidden border border-white/20">
-                  <div className="absolute top-0 right-0 w-56 h-56 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-
-                  <div className="relative z-10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <img src={logoUrl} alt="Logo AD" className="h-10 w-auto object-contain" />
-                      <div>
-                        <p className="text-[10px] uppercase tracking-[0.25em] font-black">Cartão de Membro Digital</p>
-                        <p className="text-[10px] opacity-80">Estilo CNH • Ministério Irlanda</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] uppercase font-black bg-emerald-400/20 border border-emerald-300/30 px-3 py-1 rounded-full">
-                      Ativo
-                    </span>
-                  </div>
-
-                  <div className="relative z-10 mt-6 space-y-2">
-                    <p className="text-xs uppercase tracking-[0.35em] text-emerald-200 font-black">Nome</p>
-                    <h3 className="text-2xl font-black leading-tight uppercase">{memberDetails.full_name}</h3>
-                    <p className="text-sm text-cyan-100">{memberDetails.church_function}</p>
-                  </div>
-
-                  <div className="relative z-10 mt-6 grid grid-cols-2 gap-3 text-xs border-t border-white/20 pt-4">
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Sexo</p>
-                      <p className="font-bold">{memberDetails.gender}</p>
-                    </div>
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Nascimento</p>
-                      <p className="font-bold">{formatDate(memberDetails.birth_date)}</p>
-                    </div>
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Contato</p>
-                      <p className="font-bold">{memberDetails.phone}</p>
-                    </div>
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Estado Civil</p>
-                      <p className="font-bold">{memberDetails.marital_status}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Endereço</p>
-                      <p className="font-bold leading-tight">
-                        {memberDetails.address_street}, Qd {memberDetails.address_block}, Lt {memberDetails.address_lot},
-                        {' '}
-                        {memberDetails.address_sector} - {memberDetails.address_city}/{memberDetails.address_state}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Entrada na Igreja</p>
-                      <p className="font-bold">{formatDate(memberDetails.church_entry_date)}</p>
-                    </div>
-                    <div>
-                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Batismo</p>
-                      <p className="font-bold">{formatDate(memberDetails.baptism_date)}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full space-y-4">
-                <button
-                  onClick={() => {
-                    setShowCard(false);
-                    setShowFichaForm(true);
-                  }}
-                  className="w-full py-4 px-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Atualizar Informações
-                </button>
-
-                <button
-                  onClick={() => setShowCard(false)}
-                  className="w-full py-5 bg-white text-blue-900 rounded-3xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
+  const photoToRender = photoPreview || photoUrl;
+
   return (
-    <div className="p-6 flex flex-col min-h-[70vh] items-center justify-center">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-blue-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-            <User className="w-8 h-8" />
-          </div>
-          <h2 className="text-2xl font-bold text-blue-900">Área do Membro</h2>
-          <p className="text-slate-500 mt-1">Acesse sua conta para se cadastrar e preencher sua ficha cadastral.</p>
+    <div className="min-h-[70vh] flex items-start justify-center p-4 sm:p-8">
+      <div className="w-full max-w-3xl bg-[#f4f4f4] rounded-2xl border border-slate-300 shadow-xl p-6 sm:p-10">
+        <div className="flex flex-col items-center text-center mb-8">
+          <img
+            src="https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png"
+            alt="Logo Assembleia de Deus"
+            className="w-24 h-24 object-contain"
+          />
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">FICHA CADASTRAL DE MEMBRO</h2>
         </div>
 
-        {successMsg && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-sm font-bold border border-green-100">{successMsg}</div>
+        {fetchingDetails && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl text-sm border border-blue-100">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Carregando dados da ficha...
+          </div>
         )}
 
-        <form onSubmit={handleAuth} className="space-y-4">
-          {isSignUp && (
-            <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
-              <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Nome completo</label>
-              <div className="relative">
-                <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Seu nome completo"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-                  required={isSignUp}
-                />
+        {error && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 text-red-700 rounded-xl text-sm border border-red-100">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm border border-green-100">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveFicha} className="space-y-6">
+          <div className="space-y-2 border border-slate-300 rounded-xl p-4 bg-white">
+            <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Foto do membro</label>
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
+                {photoToRender ? (
+                  <img src={photoToRender} alt="Foto do membro" className="w-full h-full object-cover" />
+                ) : (
+                  <UserCircle className="w-10 h-10 text-slate-500" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-[220px]">
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 text-sm font-semibold text-slate-700">
+                  <Upload className="w-4 h-4" />
+                  Enviar foto da galeria
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                </label>
+                <label className="flex items-center gap-2 px-4 py-3 rounded-xl border border-slate-300 bg-slate-50 cursor-pointer hover:bg-slate-100 text-sm font-semibold text-slate-700 mt-2">
+                  <Camera className="w-4 h-4" />
+                  Capturar foto
+                  <input type="file" accept="image/*" capture="user" className="hidden" onChange={handlePhotoChange} />
+                </label>
               </div>
             </div>
-          )}
+          </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">E-mail</label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="email"
-                placeholder="exemplo@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-                required
+          <InputField label="Nome completo" value={memberDetails.full_name} onChange={(v) => updateMemberField('full_name', v)} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SelectField
+              label="Sexo"
+              value={memberDetails.gender}
+              onChange={(v) => updateMemberField('gender', v)}
+              options={['Masculino', 'Feminino']}
+            />
+            <InputField
+              label="Data de nascimento"
+              value={memberDetails.birth_date}
+              onChange={(v) => updateMemberField('birth_date', v)}
+              type="date"
+            />
+          </div>
+
+          <SelectField
+            label="Estado civil"
+            value={memberDetails.marital_status}
+            onChange={(v) => updateMemberField('marital_status', v)}
+            options={['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União estável']}
+          />
+
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-slate-800">Endereço completo</h3>
+            <InputField
+              label="Logradouro (rua, avenida, estrada, etc.)"
+              value={memberDetails.address_street}
+              onChange={(v) => updateMemberField('address_street', v)}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Número" value={memberDetails.address_block} onChange={(v) => updateMemberField('address_block', v)} />
+              <InputField
+                label="Complemento"
+                value={memberDetails.address_lot}
+                onChange={(v) => updateMemberField('address_lot', v)}
+                required={false}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Bairro" value={memberDetails.address_sector} onChange={(v) => updateMemberField('address_sector', v)} />
+              <InputField label="CEP" value={memberDetails.postal_code} onChange={(v) => updateMemberField('postal_code', v)} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Cidade" value={memberDetails.address_city} onChange={(v) => updateMemberField('address_city', v)} />
+              <InputField
+                label="UF"
+                value={memberDetails.address_state}
+                onChange={(v) => updateMemberField('address_state', v.toUpperCase())}
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Senha</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-                required
-              />
-            </div>
-          </div>
+          <InputField
+            label="Número celular"
+            value={memberDetails.phone}
+            onChange={(v) => updateMemberField('phone', v)}
+            icon={<Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
+          />
 
-          {error && (
-            <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 animate-in shake-1">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
+          <InputField
+            label="E-mail"
+            value={memberDetails.email}
+            onChange={(v) => updateMemberField('email', v)}
+            icon={<Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />}
+            type="email"
+          />
+
+          <div className="space-y-3">
+            <h3 className="text-xl font-black text-slate-800">Informações eclesiásticas</h3>
+            <InputField
+              label="Data de entrada na igreja"
+              value={memberDetails.church_entry_date}
+              onChange={(v) => updateMemberField('church_entry_date', v)}
+              type="date"
+            />
+            <InputField
+              label="Data de batismo"
+              value={memberDetails.baptism_date}
+              onChange={(v) => updateMemberField('baptism_date', v)}
+              type="date"
+            />
+            <InputField
+              label="Função"
+              value={memberDetails.church_function}
+              onChange={(v) => updateMemberField('church_function', v)}
+            />
+          </div>
 
           <button
             type="submit"
-            disabled={loading || fetchingDetails}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
+            disabled={loading}
+            className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            {loading || fetchingDetails ? (
+            {loading ? (
               <Loader2 className="w-6 h-6 animate-spin" />
-            ) : isSignUp ? (
-              'Criar Conta'
             ) : (
-              'Entrar'
+              <>
+                <Save className="w-5 h-5" /> Salvar ficha cadastral
+              </>
             )}
           </button>
         </form>
-
-        <div className="text-center">
-          <button
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setError(null);
-              setSuccessMsg(null);
-            }}
-            className="text-blue-600 text-sm font-bold hover:underline"
-          >
-            {isSignUp ? 'Já tem uma conta? Entre aqui' : 'Não tem conta? Cadastre-se agora'}
-          </button>
-        </div>
       </div>
     </div>
   );
 };
+
+const InputField = ({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  required = true,
+  icon,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  icon?: ReactNode;
+}) => (
+  <div className="space-y-1">
+    <label className="text-sm font-bold text-slate-700">{label}</label>
+    <div className="relative">
+      {icon}
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`w-full border border-slate-300 rounded-xl py-3 ${icon ? 'pl-12' : 'pl-4'} pr-4 bg-white`}
+        required={required}
+      />
+    </div>
+  </div>
+);
+
+const SelectField = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) => (
+  <div className="space-y-1">
+    <label className="text-sm font-bold text-slate-700">{label}</label>
+    <select
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="w-full border border-slate-300 rounded-xl py-3 px-4 bg-white"
+      required
+    >
+      <option value="">Selecione</option>
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </div>
+);
 
 export default MemberArea;
