@@ -26,8 +26,30 @@ create table if not exists public.member_details (
   updated_at timestamptz not null default now()
 );
 
+-- Compatibilidade para bases já existentes (evita erro de schema cache por colunas ausentes)
+alter table public.member_details add column if not exists user_id uuid references auth.users(id) on delete cascade;
+alter table public.member_details add column if not exists full_name text;
+alter table public.member_details add column if not exists gender text;
+alter table public.member_details add column if not exists birth_date date;
+alter table public.member_details add column if not exists marital_status text;
+alter table public.member_details add column if not exists address_street text;
+alter table public.member_details add column if not exists address_block text;
+alter table public.member_details add column if not exists address_lot text;
+alter table public.member_details add column if not exists address_sector text;
+alter table public.member_details add column if not exists address_city text;
+alter table public.member_details add column if not exists address_state text;
 alter table public.member_details add column if not exists postal_code text not null default '';
+alter table public.member_details add column if not exists phone text;
+alter table public.member_details add column if not exists email text;
+alter table public.member_details add column if not exists church_role_info text not null default '';
+alter table public.member_details add column if not exists church_entry_date date;
+alter table public.member_details add column if not exists baptism_date date;
+alter table public.member_details add column if not exists church_function text;
 alter table public.member_details add column if not exists photo_path text;
+alter table public.member_details add column if not exists created_at timestamptz not null default now();
+alter table public.member_details add column if not exists updated_at timestamptz not null default now();
+
+create unique index if not exists idx_member_details_user_id on public.member_details(user_id);
 alter table public.member_details enable row level security;
 
 create or replace function public.set_updated_at_member_details()

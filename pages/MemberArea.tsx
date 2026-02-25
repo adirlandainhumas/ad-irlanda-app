@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FC, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { AlertCircle, CheckCircle2, Loader2, Mail, Phone, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, Loader2, Mail, Phone, Save } from 'lucide-react';
 import { AuthPanel } from '../components/member-area/AuthPanel';
 import { InputField, SelectField } from '../components/member-area/FieldControls';
 import { PhotoUploadField } from '../components/member-area/PhotoUploadField';
@@ -14,6 +14,7 @@ const MemberArea: FC = () => {
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showCard, setShowCard] = useState(false);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -53,6 +54,7 @@ const MemberArea: FC = () => {
         setSelectedPhoto(null);
         setPhotoPreview(null);
         setPhotoUrl(null);
+        setShowCard(false);
       }
     });
 
@@ -93,6 +95,7 @@ const MemberArea: FC = () => {
         await refreshPhotoUrl(nextDetails.photo_path);
       } else {
         setPhotoUrl(null);
+        setShowCard(false);
       }
     } catch (err) {
       console.error('Erro ao buscar ficha do membro:', err);
@@ -259,7 +262,8 @@ const MemberArea: FC = () => {
 
       setMemberDetails({ ...payload, photo_path: photoPath || '' });
       setSelectedPhoto(null);
-      setSuccessMsg('Ficha cadastral salva com sucesso.');
+      setSuccessMsg('Ficha cadastral salva com sucesso. Cartão liberado automaticamente!');
+      setShowCard(true);
 
       if (photoPath) {
         await refreshPhotoUrl(photoPath);
@@ -425,6 +429,16 @@ const MemberArea: FC = () => {
             />
           </div>
 
+
+          <button
+            type="button"
+            onClick={() => setShowCard((prev) => !prev)}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-xl flex items-center justify-center gap-2"
+          >
+            <CreditCard className="w-5 h-5" />
+            {showCard ? 'Ocultar Cartão Digital' : 'Ver Cartão Digital'}
+          </button>
+
           <button
             type="submit"
             disabled={loading}
@@ -438,6 +452,29 @@ const MemberArea: FC = () => {
               </>
             )}
           </button>
+
+
+          {showCard && (
+            <div className="bg-white border-2 border-blue-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase text-blue-700 tracking-widest">CNH Digital • Cartão de Membro</p>
+              <div className="mt-3 flex items-start gap-4">
+                <div className="w-20 h-24 rounded-lg bg-slate-100 overflow-hidden flex items-center justify-center border">
+                  {currentPhoto ? (
+                    <img src={currentPhoto} alt="Foto do membro" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs text-slate-500">Sem foto</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-slate-900 text-lg">{memberDetails.full_name || 'Membro'}</p>
+                  <p className="text-sm text-slate-600">CPF não informado</p>
+                  <p className="text-sm text-slate-600">Função: {memberDetails.church_function || '—'}</p>
+                  <p className="text-sm text-slate-600">Validade: {memberDetails.church_entry_date || '—'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
         </form>
       </div>
     </div>
