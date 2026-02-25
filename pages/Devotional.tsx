@@ -180,7 +180,7 @@ export default function Devotional() {
   }, []);
 
   const shareUrl =
-    "https://aogimconectinhumas.site/#/devocional?utm_source=share&utm_medium=app";
+    "https://aogimconectinhumas.site/#/devocional?utm_source=whatsapp&utm_medium=share";
 
   const getShareText = (dev: DevocionalData) => {
     const emotionalLine = pickThemePhrase(dev);
