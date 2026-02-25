@@ -67,8 +67,9 @@ const MemberArea: FC = () => {
 
   const tryUpsertWithSchemaFallback = async (payload: Record<string, unknown>) => {
     let currentPayload = { ...payload };
+    const maxAttempts = Math.max(Object.keys(currentPayload).length + 2, 12);
 
-    for (let attempt = 0; attempt < 8; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const { error: upsertError } = await supabase
         .from('member_details')
         .upsert(currentPayload, { onConflict: 'user_id' });
@@ -91,7 +92,7 @@ const MemberArea: FC = () => {
     }
 
     return {
-      error: new Error('Não foi possível salvar todos os campos. Atualize o schema no Supabase.'),
+      error: new Error('Não foi possível salvar os dados da ficha. Atualize o schema no Supabase e tente novamente.'),
       payloadUsed: currentPayload,
     };
   };
