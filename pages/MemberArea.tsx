@@ -18,71 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-
-type MemberDetails = {
-  full_name: string;
-  gender: string;
-  birth_date: string;
-  marital_status: string;
-  address_street: string;
-  address_block: string;
-  address_lot: string;
-  address_sector: string;
-  address_city: string;
-  address_state: string;
-  phone: string;
-  email: string;
-  church_role_info: string;
-  church_entry_date: string;
-  baptism_date: string;
-  church_function: string;
-};
-
-const emptyMemberDetails: MemberDetails = {
-  full_name: '',
-  gender: '',
-  birth_date: '',
-  marital_status: '',
-  address_street: '',
-  address_block: '',
-  address_lot: '',
-  address_sector: '',
-  address_city: '',
-  address_state: '',
-  phone: '',
-  email: '',
-  church_role_info: '',
-  church_entry_date: '',
-  baptism_date: '',
-  church_function: '',
-};
-
-const MEMBER_REQUIRED_FIELDS: (keyof MemberDetails)[] = [
-  'full_name',
-  'gender',
-  'birth_date',
-  'marital_status',
-  'address_street',
-  'address_block',
-  'address_lot',
-  'address_sector',
-  'address_city',
-  'address_state',
-  'phone',
-  'email',
-  'church_role_info',
-  'church_entry_date',
-  'baptism_date',
-  'church_function',
-];
-
-const formatDate = (value?: string) => {
-  if (!value) return '--/--/----';
-  return new Date(`${value}T00:00:00`).toLocaleDateString('pt-BR');
-};
-
-const isFichaComplete = (details: Partial<MemberDetails>) =>
-  MEMBER_REQUIRED_FIELDS.every((field) => String(details[field] ?? '').trim().length > 0);
+import { MemberDetails, emptyMemberDetails, formatDate, isFichaComplete } from '../types';
 
 const MemberArea: React.FC = () => {
   const [session, setSession] = useState<any>(null);
