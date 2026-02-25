@@ -1,10 +1,28 @@
 [build]
+codex/reativar-area-de-membros-com-supabase-et33zr
   command = "npm ci && npm run build"
   publish = "dist"
 
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--include=dev"
+
+main
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
 
+codex/reativar-area-de-membros-com-supabase-et33zr
+
+[dev]
+  command = "npm run dev"
+  targetPort = 4173
+  port = 8888
+
+main
 [[redirects]]
   from = "/*"
   to = "/index.html"
