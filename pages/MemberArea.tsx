@@ -1,14 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Mail, Lock, LogOut, AlertCircle, Loader2, CheckCircle2, UserCircle, Phone, Calendar, ArrowLeft, Save, CreditCard, ExternalLink, X, Construction, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-
-// FLAG PARA BLOQUEIO TEMPORÁRIO
-const MEMBERS_AREA_ENABLED = false;
-
+import { User, Mail, Lock, LogOut, AlertCircle, Loader2, CheckCircle2, UserCircle, Phone, Calendar, ArrowLeft, Save, CreditCard, ExternalLink, X } from 'lucide-react';
 const MemberArea: React.FC = () => {
-  const navigate = useNavigate();
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
@@ -31,9 +25,6 @@ const MemberArea: React.FC = () => {
   const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
 
   useEffect(() => {
-    // Manter listeners ativos mesmo se desativado para evitar problemas de estado futuro
-    if (!MEMBERS_AREA_ENABLED) return;
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) fetchMemberDetails(session.user.id);
@@ -144,44 +135,6 @@ const MemberArea: React.FC = () => {
     }
   };
 
-  // TELA EM CONSTRUÇÃO
-  if (!MEMBERS_AREA_ENABLED) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] px-8 text-center animate-in fade-in duration-700">
-        <div className="relative mb-8">
-          <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
-          <div className="relative w-24 h-24 bg-white rounded-[2rem] shadow-xl flex items-center justify-center border border-slate-100">
-            <Construction className="w-12 h-12 text-blue-600" />
-          </div>
-        </div>
-        
-        <div className="space-y-4 max-w-sm">
-          <h2 className="text-3xl font-black text-slate-900 leading-tight">
-            Área de Membros <br />
-            <span className="text-blue-600">em Construção</span>
-          </h2>
-          <p className="text-slate-500 font-medium leading-relaxed">
-            Em breve você poderá emitir seu cartão de membro oficial e atualizar seus dados por aqui.
-          </p>
-        </div>
-
-        <button 
-          onClick={() => navigate('/')}
-          className="mt-12 flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-black px-10 py-5 rounded-[2rem] shadow-xl shadow-blue-900/10 hover:shadow-blue-900/20 transition-all hover:scale-105 active:scale-95 group"
-        >
-          Voltar para Início
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </button>
-
-        <div className="mt-16 flex items-center gap-2 opacity-30">
-          <img src={logoUrl} alt="AD" className="h-4 grayscale" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">AD Ministério Irlanda</span>
-        </div>
-      </div>
-    );
-  }
-
-  // CÓDIGO ORIGINAL PRESERVADO ABAIXO
   if (session) {
     const userDisplayName = session.user.user_metadata?.full_name || 'Membro';
 
