@@ -479,11 +479,6 @@ const MemberArea: FC = () => {
           <div className="space-y-3">
             <h3 className="text-xl font-black text-slate-800">Informações eclesiásticas</h3>
             <InputField
-              label="Informações eclesiásticas (cargo/ministério)"
-              value={memberDetails.church_role_info}
-              onChange={(v) => updateMemberField('church_role_info', v)}
-            />
-            <InputField
               label="Data de entrada na igreja"
               value={memberDetails.church_entry_date}
               onChange={(v) => updateMemberField('church_entry_date', v)}
