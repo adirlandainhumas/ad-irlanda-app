@@ -1,71 +1,125 @@
-
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState, type FC, type FormEvent } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+codex/reativar-area-de-membros-com-supabase-r40i6e
+import {
+  emptyMemberDetails,
+  formatDate,
+  isFichaComplete,
+  type MemberDetails,
+} from '../types';
+
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  CreditCard,
+  ExternalLink,
+  Loader2,
+  Lock,
+  LogOut,
+  Mail,
+  MapPin,
+  Phone,
+  Save,
+  User,
+  UserCircle,
+  Users,
+  X,
+} from 'lucide-react';
+
+const MemberArea: FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
 import { User, Mail, Lock, LogOut, AlertCircle, Loader2, CheckCircle2, UserCircle, Phone, Calendar, ArrowLeft, Save, CreditCard, ExternalLink, X } from 'lucide-react';
 const MemberArea: React.FC = () => {
   const [session, setSession] = useState<any>(null);
+main
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showFichaForm, setShowFichaForm] = useState(false);
   const [showCard, setShowCard] = useState(false);
-  
-  // Auth states
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Ficha / Member Details states
   const [hasFicha, setHasFicha] = useState(false);
-  const [fichaPhone, setFichaPhone] = useState('');
-  const [fichaBirthDate, setFichaBirthDate] = useState('');
+  const [memberDetails, setMemberDetails] = useState<MemberDetails>(emptyMemberDetails);
 
-  const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
+  const logoUrl = 'https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png';
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchMemberDetails(session.user.id);
+      if (session) {
+        fetchMemberDetails(session.user.id, session.user.user_metadata?.full_name, session.user.email);
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session) {
-        fetchMemberDetails(session.user.id);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession);
+      if (currentSession) {
+        fetchMemberDetails(
+          currentSession.user.id,
+          currentSession.user.user_metadata?.full_name,
+          currentSession.user.email,
+        );
       } else {
         setShowFichaForm(false);
         setHasFicha(false);
         setShowCard(false);
+        setMemberDetails(emptyMemberDetails);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchMemberDetails = async (userId: string) => {
+  const fetchMemberDetails = async (userId: string, profileName?: string, profileEmail?: string) => {
     setFetchingDetails(true);
     try {
-      const { data, error } = await supabase
-        .from('member_details')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { data, error } = await supabase.from('member_details').select('*').eq('user_id', userId).maybeSingle();
 
-      if (data) {
-        setHasFicha(true);
-        setFichaPhone(data.phone || '');
-        setFichaBirthDate(data.birth_date || '');
+      if (error) throw error;
+
+      const hydratedData: MemberDetails = {
+        ...emptyMemberDetails,
+        full_name: profileName || '',
+        email: profileEmail || '',
+        ...(data || {}),
+      };
+
+      setMemberDetails(hydratedData);
+      const complete = isFichaComplete(hydratedData);
+      setHasFicha(complete);
+      if (!complete) {
+        setShowFichaForm(true);
       }
     } catch (err) {
       console.error('Error fetching member details:', err);
+      const fallback: MemberDetails = {
+        ...emptyMemberDetails,
+        full_name: profileName || '',
+        email: profileEmail || '',
+      };
+      setMemberDetails(fallback);
+      setHasFicha(false);
+      setShowFichaForm(true);
     } finally {
       setFetchingDetails(false);
     }
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const updateMemberField = (field: keyof MemberDetails, value: string) => {
+    setMemberDetails((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -73,15 +127,15 @@ const MemberArea: React.FC = () => {
     try {
       if (isSignUp) {
         if (!fullName.trim()) throw new Error('O nome completo é obrigatório.');
-        
-        const { error } = await supabase.auth.signUp({ 
-          email, 
+
+        const { error } = await supabase.auth.signUp({
+          email,
           password,
           options: {
             data: {
-              full_name: fullName
-            }
-          }
+              full_name: fullName,
+            },
+          },
         });
         if (error) throw error;
         setSuccessMsg('Cadastro realizado! Verifique seu e-mail para confirmar a conta.');
@@ -100,43 +154,52 @@ const MemberArea: React.FC = () => {
     await supabase.auth.signOut();
   };
 
-  const handleSaveFicha = async (e: React.FormEvent) => {
+  const handleSaveFicha = async (e: FormEvent) => {
     e.preventDefault();
     if (!session) return;
-    
+
     setLoading(true);
     setError(null);
 
-    const userFullName = session.user.user_metadata?.full_name || 'Membro';
+    const payload: MemberDetails = {
+      ...memberDetails,
+      full_name: memberDetails.full_name || session.user.user_metadata?.full_name || 'Membro',
+      email: memberDetails.email || session.user.email || '',
+    };
+
+    if (!isFichaComplete(payload)) {
+      setLoading(false);
+      setError('Preencha todos os campos da ficha cadastral para continuar.');
+      return;
+    }
 
     try {
       const { error } = await supabase
         .from('member_details')
         .upsert(
-          { 
-            user_id: session.user.id, 
-            full_name: userFullName, 
-            phone: fichaPhone, 
-            birth_date: fichaBirthDate 
-          }, 
-          { onConflict: 'user_id' }
+          {
+            user_id: session.user.id,
+            ...payload,
+          },
+          { onConflict: 'user_id' },
         );
 
       if (error) throw error;
 
+      setMemberDetails(payload);
       setHasFicha(true);
-      setSuccessMsg('Ficha salva com sucesso!');
+      setSuccessMsg('Ficha cadastral salva com sucesso!');
       setShowFichaForm(false);
       setTimeout(() => setSuccessMsg(null), 3000);
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar ficha.');
+      setError(err.message || 'Erro ao salvar ficha cadastral.');
     } finally {
       setLoading(false);
     }
   };
 
   if (session) {
-    const userDisplayName = session.user.user_metadata?.full_name || 'Membro';
+    const userDisplayName = memberDetails.full_name || session.user.user_metadata?.full_name || 'Membro';
 
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-in zoom-in-95 duration-300">
@@ -146,45 +209,62 @@ const MemberArea: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
         </div>
-        
+
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-slate-800 leading-tight">Olá, {userDisplayName.split(' ')[0]}!</h2>
           <p className="text-slate-500 font-medium text-sm">{session.user.email}</p>
         </div>
 
         {successMsg && (
-          <div className="w-full max-w-xs bg-green-50 text-green-700 p-4 rounded-2xl text-sm font-bold border border-green-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
+          <div className="w-full max-w-xl bg-green-50 text-green-700 p-4 rounded-2xl text-sm font-bold border border-green-100 flex items-center gap-2 animate-in fade-in slide-in-from-top-4">
             <CheckCircle2 className="w-5 h-5" />
             {successMsg}
           </div>
         )}
 
-        <div className="w-full max-w-xs space-y-4 pt-4">
+        <div className="w-full max-w-xl space-y-4 pt-4">
+          {!hasFicha && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+              <div>
+                <p className="text-sm font-black text-amber-800 uppercase tracking-wide">Ficha cadastral pendente</p>
+                <p className="text-sm text-amber-700 mt-1">
+                  Complete sua ficha para liberar seu Cartão de Membro Digital no estilo CNH.
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
-            onClick={() => hasFicha ? setShowCard(true) : setShowFichaForm(true)}
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-5 px-6 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            onClick={() => (hasFicha ? setShowCard(true) : setShowFichaForm(true))}
+            className={`w-full text-white font-bold py-5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${
+              hasFicha ? 'bg-blue-700 hover:bg-blue-800 shadow-blue-100' : 'bg-amber-500 hover:bg-amber-600 shadow-amber-100'
+            }`}
           >
             {hasFicha ? (
-              <><CreditCard className="w-6 h-6" /> Acessar Cartão de Membro</>
+              <>
+                <CreditCard className="w-6 h-6" /> Acessar Cartão de Membro
+              </>
             ) : (
-              <><UserCircle className="w-6 h-6" /> Preencher Ficha de Membro</>
+              <>
+                <UserCircle className="w-6 h-6" /> Preencher Ficha Cadastral
+              </>
             )}
           </button>
-          
+
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-400 font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 hover:border-red-100 mt-8"
+            className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-400 font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100 hover:border-red-100"
           >
             <LogOut className="w-5 h-5" />
             Sair da Conta
           </button>
         </div>
 
-        {/* MODAL FICHA */}
         {showFichaForm && (
-          <div className="fixed inset-0 top-16 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95 duration-300">
-              <button 
+          <div className="fixed inset-0 top-16 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
+            <div className="bg-white w-full max-w-3xl rounded-[2.5rem] p-8 shadow-2xl relative animate-in zoom-in-95 duration-300 my-6">
+              <button
                 onClick={() => setShowFichaForm(false)}
                 className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
               >
@@ -193,56 +273,234 @@ const MemberArea: React.FC = () => {
 
               <div className="space-y-6">
                 <div className="flex flex-col gap-1">
-                  <h2 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Ficha de Membro</h2>
-                  <p className="text-slate-500 text-sm">Atualize seus dados na nossa secretaria.</p>
+                  <h2 className="text-2xl font-black text-blue-900 uppercase tracking-tighter">Ficha Cadastral de Membro</h2>
+                  <p className="text-slate-500 text-sm">
+                    Complete os dados para liberar seu cartão de membro digital.
+                  </p>
                 </div>
 
                 <form onSubmit={handleSaveFicha} className="space-y-5">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Nome completo</label>
-                    <div className="relative">
-                      <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Nome Completo</label>
+                      <div className="relative">
+                        <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={memberDetails.full_name}
+                          onChange={(e) => updateMemberField('full_name', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Sexo</label>
+                      <select
+                        value={memberDetails.gender}
+                        onChange={(e) => updateMemberField('gender', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      >
+                        <option value="">Selecione</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Nascimento</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="date"
+                          value={memberDetails.birth_date}
+                          onChange={(e) => updateMemberField('birth_date', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Estado Civil</label>
+                      <select
+                        value={memberDetails.marital_status}
+                        onChange={(e) => updateMemberField('marital_status', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      >
+                        <option value="">Selecione</option>
+                        <option value="Solteiro(a)">Solteiro(a)</option>
+                        <option value="Casado(a)">Casado(a)</option>
+                        <option value="Divorciado(a)">Divorciado(a)</option>
+                        <option value="Viúvo(a)">Viúvo(a)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Número de Contato</label>
+                      <div className="relative">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="tel"
+                          placeholder="(00) 00000-0000"
+                          value={memberDetails.phone}
+                          onChange={(e) => updateMemberField('phone', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">E-mail</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="email"
+                          placeholder="exemplo@email.com"
+                          value={memberDetails.email}
+                          onChange={(e) => updateMemberField('email', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 md:col-span-2">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">
+                        Endereço Completo (Rua/Av)
+                      </label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Rua ou Av"
+                          value={memberDetails.address_street}
+                          onChange={(e) => updateMemberField('address_street', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Quadra</label>
                       <input
                         type="text"
-                        value={userDisplayName}
-                        disabled
-                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-slate-500 cursor-not-allowed"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Telefone / WhatsApp</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                      <input
-                        type="tel"
-                        placeholder="(00) 00000-0000"
-                        value={fichaPhone}
-                        onChange={(e) => setFichaPhone(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
+                        value={memberDetails.address_block}
+                        onChange={(e) => updateMemberField('address_block', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Nascimento</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Lote</label>
                       <input
-                        type="date"
-                        value={fichaBirthDate}
-                        onChange={(e) => setFichaBirthDate(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
+                        type="text"
+                        value={memberDetails.address_lot}
+                        onChange={(e) => updateMemberField('address_lot', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
                         required
                       />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Setor</label>
+                      <input
+                        type="text"
+                        value={memberDetails.address_sector}
+                        onChange={(e) => updateMemberField('address_sector', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Cidade</label>
+                      <input
+                        type="text"
+                        value={memberDetails.address_city}
+                        onChange={(e) => updateMemberField('address_city', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Estado</label>
+                      <input
+                        type="text"
+                        placeholder="GO"
+                        value={memberDetails.address_state}
+                        onChange={(e) => updateMemberField('address_state', e.target.value.toUpperCase())}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">
+                        Informações Eclesiásticas (Função na igreja)
+                      </label>
+                      <div className="relative">
+                        <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="text"
+                          value={memberDetails.church_role_info}
+                          onChange={(e) => updateMemberField('church_role_info', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Função</label>
+                      <input
+                        type="text"
+                        value={memberDetails.church_function}
+                        onChange={(e) => updateMemberField('church_function', e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-4"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Entrada na Igreja</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="date"
+                          value={memberDetails.church_entry_date}
+                          onChange={(e) => updateMemberField('church_entry_date', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Data de Batismo</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                          type="date"
+                          value={memberDetails.baptism_date}
+                          onChange={(e) => updateMemberField('baptism_date', e.target.value)}
+                          className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4"
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {error && (
                     <div className="flex items-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100">
-                      <AlertCircle className="w-5 h-5" />
+                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
                       <span>{error}</span>
                     </div>
                   )}
@@ -250,9 +508,15 @@ const MemberArea: React.FC = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
+                    className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-100 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
                   >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Salvar Ficha</>}
+                    {loading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="w-5 h-5" /> Salvar Ficha Cadastral
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -260,68 +524,72 @@ const MemberArea: React.FC = () => {
           </div>
         )}
 
-        {/* MODAL CARTÃO DIGITAL */}
-        {showCard && (
+        {showCard && hasFicha && (
           <div className="fixed inset-0 top-16 z-50 flex flex-col items-center justify-center p-6 bg-slate-900/95 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="w-full max-w-sm flex flex-col items-center gap-8">
-              
-              {/* O CARTÃO */}
-              <div className="w-full relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-[2.5rem] blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-                
-                <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-950 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-blue-900/40 overflow-hidden aspect-[1.58/1] flex flex-col justify-between border border-white/10">
-                  
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none"></div>
-                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl pointer-events-none"></div>
+            <div className="w-full max-w-md flex flex-col items-center gap-8">
+              <div className="w-full relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 rounded-[2rem] blur opacity-40" />
+                <div className="relative bg-gradient-to-br from-emerald-900 via-cyan-900 to-blue-900 rounded-[2rem] p-6 text-white shadow-2xl overflow-hidden border border-white/20">
+                  <div className="absolute top-0 right-0 w-56 h-56 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
 
-                  {/* Topo do Cartão */}
-                  <div className="flex justify-between items-start relative z-10">
+                  <div className="relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <img 
-                        src={logoUrl} 
-                        alt="Logo AD" 
-                        className="h-10 md:h-12 w-auto object-contain"
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] leading-none">Ministério Irlanda</span>
-                        <span className="text-[8px] md:text-[9px] opacity-60 uppercase tracking-widest font-bold">Inhumas - GO</span>
+                      <img src={logoUrl} alt="Logo AD" className="h-10 w-auto object-contain" />
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.25em] font-black">Cartão de Membro Digital</p>
+                        <p className="text-[10px] opacity-80">Estilo CNH • Ministério Irlanda</p>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-col items-end">
-                       <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest bg-blue-400/20 px-3 py-1.5 rounded-full border border-blue-400/20 text-blue-100">Ativo</span>
+                    <span className="text-[10px] uppercase font-black bg-emerald-400/20 border border-emerald-300/30 px-3 py-1 rounded-full">
+                      Ativo
+                    </span>
+                  </div>
+
+                  <div className="relative z-10 mt-6 space-y-2">
+                    <p className="text-xs uppercase tracking-[0.35em] text-emerald-200 font-black">Nome</p>
+                    <h3 className="text-2xl font-black leading-tight uppercase">{memberDetails.full_name}</h3>
+                    <p className="text-sm text-cyan-100">{memberDetails.church_function}</p>
+                  </div>
+
+                  <div className="relative z-10 mt-6 grid grid-cols-2 gap-3 text-xs border-t border-white/20 pt-4">
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Sexo</p>
+                      <p className="font-bold">{memberDetails.gender}</p>
                     </div>
-                  </div>
-
-                  {/* Meio - Nome */}
-                  <div className="relative z-10 mt-2">
-                    <p className="text-[9px] uppercase tracking-[0.4em] font-black text-blue-300 mb-1 opacity-80">Membro Titular</p>
-                    <h3 className="text-xl md:text-2xl font-black uppercase tracking-tight leading-none drop-shadow-md">
-                      {userDisplayName}
-                    </h3>
-                  </div>
-
-                  {/* Base - Detalhes */}
-                  <div className="flex justify-between items-end relative z-10 border-t border-white/10 pt-4 mt-2">
-                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 w-full">
-                      <div className="flex flex-col">
-                        <span className="text-[7px] uppercase tracking-widest opacity-50 font-black">Contato</span>
-                        <span className="text-xs font-bold tracking-wider">{fichaPhone}</span>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-[7px] uppercase tracking-widest opacity-50 font-black">Nascimento</span>
-                        <span className="text-xs font-bold tracking-wider">
-                          {fichaBirthDate ? new Date(fichaBirthDate).toLocaleDateString('pt-BR') : '--/--/----'}
-                        </span>
-                      </div>
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Nascimento</p>
+                      <p className="font-bold">{formatDate(memberDetails.birth_date)}</p>
+                    </div>
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Contato</p>
+                      <p className="font-bold">{memberDetails.phone}</p>
+                    </div>
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Estado Civil</p>
+                      <p className="font-bold">{memberDetails.marital_status}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Endereço</p>
+                      <p className="font-bold leading-tight">
+                        {memberDetails.address_street}, Qd {memberDetails.address_block}, Lt {memberDetails.address_lot},
+                        {' '}
+                        {memberDetails.address_sector} - {memberDetails.address_city}/{memberDetails.address_state}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Entrada na Igreja</p>
+                      <p className="font-bold">{formatDate(memberDetails.church_entry_date)}</p>
+                    </div>
+                    <div>
+                      <p className="opacity-60 uppercase tracking-widest text-[9px]">Batismo</p>
+                      <p className="font-bold">{formatDate(memberDetails.baptism_date)}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Controles do Modal */}
               <div className="w-full space-y-4">
-                <button 
+                <button
                   onClick={() => {
                     setShowCard(false);
                     setShowFichaForm(true);
@@ -332,7 +600,7 @@ const MemberArea: React.FC = () => {
                   Atualizar Informações
                 </button>
 
-                <button 
+                <button
                   onClick={() => setShowCard(false)}
                   className="w-full py-5 bg-white text-blue-900 rounded-3xl font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all"
                 >
@@ -354,13 +622,11 @@ const MemberArea: React.FC = () => {
             <User className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold text-blue-900">Área do Membro</h2>
-          <p className="text-slate-500 mt-1">Acesse sua conta para ver informações exclusivas.</p>
+          <p className="text-slate-500 mt-1">Acesse sua conta para se cadastrar e preencher sua ficha cadastral.</p>
         </div>
 
         {successMsg && (
-          <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-sm font-bold border border-green-100">
-            {successMsg}
-          </div>
+          <div className="p-4 bg-green-50 text-green-700 rounded-2xl text-sm font-bold border border-green-100">{successMsg}</div>
         )}
 
         <form onSubmit={handleAuth} className="space-y-4">
@@ -420,10 +686,16 @@ const MemberArea: React.FC = () => {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || fetchingDetails}
             className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-70"
           >
-            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (isSignUp ? 'Criar Conta' : 'Entrar')}
+            {loading || fetchingDetails ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : isSignUp ? (
+              'Criar Conta'
+            ) : (
+              'Entrar'
+            )}
           </button>
         </form>
 

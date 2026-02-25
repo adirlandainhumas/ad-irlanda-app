@@ -1,13 +1,21 @@
+[build]
+  command = "npm ci --include=dev && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--include=dev"
+
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
 
 [dev]
   command = "npm run dev"
-  targetPort = 3000
+  targetPort = 4173
   port = 8888
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
