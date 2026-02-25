@@ -1,13 +1,11 @@
+[build]
+  command = "npm ci && npm run build"
+  publish = "dist"
+
 [functions]
   directory = "netlify/functions"
-
-[dev]
-  command = "npm run dev"
-  targetPort = 3000
-  port = 8888
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
