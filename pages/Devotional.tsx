@@ -202,13 +202,13 @@ ${shareUrl}`;
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-10 animated-bg relative">
+    <main className="min-h-screen flex items-start justify-center px-4 pt-6 pb-10 animated-bg relative">
       {/* Logo */}
-      <div className="absolute top-6 w-full flex justify-center">
+      <div className="absolute top-4 w-full flex justify-center">
         <img
           src={logoUrl}
           alt="AOGIM Conect"
-          className="w-40 sm:w-48 md:w-56 lg:w-64 object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.28)]"
+          className="w-24 sm:w-28 md:w-32 lg:w-36 object-contain drop-shadow-[0_0_28px_rgba(255,255,255,0.32)]"
         />
       </div>
 
@@ -216,8 +216,8 @@ ${shareUrl}`;
       <div className="absolute w-96 h-96 bg-blue-500/20 blur-3xl rounded-full top-20 -left-20" />
       <div className="absolute w-96 h-96 bg-purple-500/20 blur-3xl rounded-full bottom-10 -right-20" />
 
-      <div className="relative w-full max-w-xl mt-32">
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
+      <div className="relative w-full max-w-xl mt-24 sm:mt-28">
+        <div className="backdrop-blur-2xl bg-white/12 border border-white/25 rounded-3xl p-6 sm:p-8 shadow-[0_16px_60px_rgba(7,18,56,0.45)]">
           {loading && (
             <p className="text-center text-white text-lg">Carregando devocional...</p>
           )}
@@ -230,22 +230,22 @@ ${shareUrl}`;
 
           {data && (
             <>
-              <p className="text-sm uppercase tracking-widest text-white/70 text-center">
+              <p className="text-xs sm:text-sm uppercase tracking-[0.18em] text-white/75 text-center">
                 Devocional do Dia {data.dateLabel ? `• ${data.dateLabel}` : ""}
               </p>
 
-              <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-white text-center">
+              <h1 className="mt-3 text-xl sm:text-2xl font-semibold text-white text-center leading-tight">
                 {data.title}
               </h1>
 
-              <div className="mt-8 text-center">
-                <p className="text-lg sm:text-xl text-white leading-relaxed">
+              <div className="mt-6 text-center">
+                <p className="text-base sm:text-lg text-white leading-relaxed">
                   “{data.verseText}”
                 </p>
                 <p className="mt-3 text-sm font-semibold text-white/80">{data.verseRef}</p>
               </div>
 
-              <div className="mt-8 space-y-4 text-white/90 text-base leading-relaxed">
+              <div className="mt-7 space-y-4 text-white/95 text-[15px] sm:text-base leading-7">
                 {data.body
                   .split("\n")
                   .map((p) => p.trim())
