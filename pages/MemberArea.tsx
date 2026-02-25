@@ -5,7 +5,7 @@ import { AuthPanel } from '../components/member-area/AuthPanel';
 import { InputField, SelectField } from '../components/member-area/FieldControls';
 import { PhotoUploadField } from '../components/member-area/PhotoUploadField';
 import { supabase } from '../lib/supabase';
-import { emptyMemberDetails, type MemberDetails } from '../types';
+import { emptyMemberDetails, isFichaComplete, type MemberDetails } from '../types';
 
 const PHOTO_BUCKET = 'member-photos';
 
@@ -16,6 +16,7 @@ const MemberArea: FC = () => {
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [showCard, setShowCard] = useState(false);
+  const [hasCompleteFicha, setHasCompleteFicha] = useState(false);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -59,6 +60,7 @@ const MemberArea: FC = () => {
         setPhotoPreview(null);
         setPhotoUrl(null);
         setShowCard(false);
+        setHasCompleteFicha(false);
       }
     });
 
@@ -126,6 +128,8 @@ const MemberArea: FC = () => {
 
       setMemberDetails(nextDetails);
       setSelectedPhoto(null);
+      const completeFromDb = isFichaComplete(nextDetails);
+      setHasCompleteFicha(completeFromDb);
 
       if (nextDetails.photo_path) {
         await refreshPhotoUrl(nextDetails.photo_path);
@@ -141,6 +145,8 @@ const MemberArea: FC = () => {
         email: profileEmail || '',
       });
       setPhotoUrl(null);
+      setHasCompleteFicha(false);
+      setShowCard(false);
     } finally {
       setFetchingDetails(false);
     }
@@ -286,7 +292,7 @@ const MemberArea: FC = () => {
     try {
       const photoPath = await uploadMemberPhoto(session.user.id);
 
-      const { error: upsertError } = await tryUpsertWithSchemaFallback({
+      const { error: upsertError, payloadUsed } = await tryUpsertWithSchemaFallback({
         user_id: session.user.id,
         ...payload,
         photo_path: photoPath,
@@ -294,10 +300,16 @@ const MemberArea: FC = () => {
 
       if (upsertError) throw upsertError;
 
+      const completeAfterSave = isFichaComplete(payloadUsed as Partial<MemberDetails>);
       setMemberDetails({ ...payload, photo_path: photoPath || '' });
       setSelectedPhoto(null);
-      setSuccessMsg('Ficha cadastral salva com sucesso. Cartão liberado automaticamente!');
-      setShowCard(true);
+      setHasCompleteFicha(completeAfterSave);
+      setSuccessMsg(
+        completeAfterSave
+          ? 'Ficha cadastral salva com sucesso. Cartão liberado automaticamente!'
+          : 'Ficha salva parcialmente. Complete todos os campos para liberar o cartão.',
+      );
+      setShowCard(completeAfterSave);
 
       if (photoPath) {
         await refreshPhotoUrl(photoPath);
@@ -313,6 +325,7 @@ const MemberArea: FC = () => {
     await supabase.auth.signOut();
     setSession(null);
     setShowCard(false);
+    setHasCompleteFicha(false);
   };
 
   if (!authReady) {
@@ -466,6 +479,11 @@ const MemberArea: FC = () => {
           <div className="space-y-3">
             <h3 className="text-xl font-black text-slate-800">Informações eclesiásticas</h3>
             <InputField
+              label="Informações eclesiásticas (cargo/ministério)"
+              value={memberDetails.church_role_info}
+              onChange={(v) => updateMemberField('church_role_info', v)}
+            />
+            <InputField
               label="Data de entrada na igreja"
               value={memberDetails.church_entry_date}
               onChange={(v) => updateMemberField('church_entry_date', v)}
@@ -495,11 +513,18 @@ const MemberArea: FC = () => {
 
           <button
             type="button"
-            onClick={() => setShowCard((prev) => !prev)}
-            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-xl flex items-center justify-center gap-2"
+            onClick={() => {
+              if (!hasCompleteFicha) {
+                setError('Preencha e salve a ficha completa para liberar o Cartão de Membro.');
+                return;
+              }
+              setShowCard((prev) => !prev);
+            }}
+            disabled={!hasCompleteFicha}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <CreditCard className="w-5 h-5" />
-            {showCard ? 'Ocultar Cartão Digital' : 'Ver Cartão Digital'}
+            {hasCompleteFicha ? (showCard ? 'Ocultar Cartão Digital' : 'Ver Cartão Digital') : 'Cartão bloqueado até ficha completa'}
           </button>
 
           <button
