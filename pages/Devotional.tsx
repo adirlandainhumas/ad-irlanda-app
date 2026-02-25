@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import DevotionalShareActions from "../components/DevotionalShareActions";
 
 type DevocionalData = {
   ok?: boolean;
@@ -130,6 +131,19 @@ function pickThemePhrase(dev: DevocionalData) {
   return base[idx];
 }
 
+function buildShareText(dev: DevocionalData, shareUrl: string) {
+  const emotionalLine = pickThemePhrase(dev);
+  return `${emotionalLine}
+
+📖 ${dev.title}
+
+"${dev.verseText}"
+${dev.verseRef}
+
+Leia completo:
+${shareUrl}`;
+}
+
 export default function Devotional() {
   const [data, setData] = useState<DevocionalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,48 +193,26 @@ export default function Devotional() {
     };
   }, []);
 
-  // Link do seu site (o WhatsApp vai usar o OG do index.html)
   const shareUrl =
-    "https://aogimconectinhumas.site/devocional?utm_source=whatsapp&utm_medium=share";
-
-  const compartilharWhatsApp = () => {
-    if (!data) return;
-
-    const emotionalLine = pickThemePhrase(data);
-
-    const text = `${emotionalLine}
-
-📖 ${data.title}
-
-"${data.verseText}"
-${data.verseRef}
-
-Leia completo:
-${shareUrl}`;
-
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  };
+    "https://aogimconectinhumas.site/#/devocional?utm_source=whatsapp&utm_medium=share";
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 py-10 animated-bg relative">
-      {/* Logo */}
-      <div className="absolute top-6 w-full flex justify-center">
+    <main className="min-h-screen flex items-start justify-center px-4 pt-6 pb-10 animated-bg relative">
+      <div className="absolute top-4 w-full flex justify-center">
         <img
           src={logoUrl}
           alt="AOGIM Conect"
-          className="w-40 sm:w-48 md:w-56 lg:w-64 object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.28)]"
+          className="w-24 sm:w-28 md:w-32 lg:w-36 object-contain drop-shadow-[0_0_28px_rgba(255,255,255,0.32)]"
         />
       </div>
 
-      {/* Glow Effects */}
       <div className="absolute w-96 h-96 bg-blue-500/20 blur-3xl rounded-full top-20 -left-20" />
+      <div className="absolute w-96 h-96 bg-cyan-400/15 blur-3xl rounded-full top-24 right-0" />
       <div className="absolute w-96 h-96 bg-purple-500/20 blur-3xl rounded-full bottom-10 -right-20" />
 
-      <div className="relative w-full max-w-xl mt-32">
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
-          {loading && (
-            <p className="text-center text-white text-lg">Carregando devocional...</p>
-          )}
+      <div className="relative w-full max-w-2xl mt-20 sm:mt-24">
+        <div className="backdrop-blur-2xl bg-white/12 border border-white/30 rounded-3xl p-5 sm:p-8 shadow-[0_20px_70px_rgba(7,18,56,0.5)]">
+          {loading && <p className="text-center text-white text-lg">Carregando devocional...</p>}
 
           {!loading && !data && (
             <p className="text-center text-white/90">
@@ -230,22 +222,25 @@ ${shareUrl}`;
 
           {data && (
             <>
-              <p className="text-sm uppercase tracking-widest text-white/70 text-center">
-                Devocional do Dia {data.dateLabel ? `• ${data.dateLabel}` : ""}
-              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <span className="px-3 py-1 rounded-full bg-white/15 border border-white/25 text-[11px] uppercase tracking-[0.16em] text-white/85">
+                  Devocional Diário
+                </span>
+                <span className="px-3 py-1 rounded-full bg-sky-300/15 border border-sky-100/30 text-[11px] uppercase tracking-[0.12em] text-sky-100">
+                  {data.dateLabel || "Hoje"}
+                </span>
+              </div>
 
-              <h1 className="mt-4 text-2xl sm:text-3xl font-bold text-white text-center">
+              <h1 className="mt-4 text-lg sm:text-xl font-semibold text-white text-center leading-snug">
                 {data.title}
               </h1>
 
-              <div className="mt-8 text-center">
-                <p className="text-lg sm:text-xl text-white leading-relaxed">
-                  “{data.verseText}”
-                </p>
-                <p className="mt-3 text-sm font-semibold text-white/80">{data.verseRef}</p>
+              <div className="mt-5 rounded-2xl bg-white/10 border border-white/20 p-4 sm:p-5 text-center">
+                <p className="text-base sm:text-lg text-white leading-relaxed">“{data.verseText}”</p>
+                <p className="mt-3 text-sm font-semibold text-white/85">{data.verseRef}</p>
               </div>
 
-              <div className="mt-8 space-y-4 text-white/90 text-base leading-relaxed">
+              <div className="mt-6 space-y-4 text-white/95 text-[15px] sm:text-base leading-7">
                 {data.body
                   .split("\n")
                   .map((p) => p.trim())
@@ -255,14 +250,11 @@ ${shareUrl}`;
                   ))}
               </div>
 
-              <div className="mt-10">
-                <button
-                  onClick={compartilharWhatsApp}
-                  className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white py-3 font-semibold transition"
-                >
-                  Compartilhar no WhatsApp
-                </button>
-              </div>
+              <DevotionalShareActions
+                data={data}
+                shareUrl={shareUrl}
+                buildShareText={buildShareText}
+              />
             </>
           )}
         </div>
