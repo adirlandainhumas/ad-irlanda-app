@@ -130,6 +130,19 @@ function pickThemePhrase(dev: DevocionalData) {
   return base[idx];
 }
 
+function buildShareText(dev: DevocionalData, shareUrl: string) {
+  const emotionalLine = pickThemePhrase(dev);
+  return `${emotionalLine}
+
+📖 ${dev.title}
+
+"${dev.verseText}"
+${dev.verseRef}
+
+Leia completo:
+${shareUrl}`;
+}
+
 export default function Devotional() {
   const [data, setData] = useState<DevocionalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -182,21 +195,16 @@ export default function Devotional() {
   const shareUrl =
     "https://aogimconectinhumas.site/#/devocional?utm_source=whatsapp&utm_medium=share";
 
-  const getShareText = (dev: DevocionalData) => {
-    const emotionalLine = pickThemePhrase(dev);
-    return `${emotionalLine}\n\n📖 ${dev.title}\n\n"${dev.verseText}"\n${dev.verseRef}\n\nLeia completo:\n${shareUrl}`;
-  };
-
   const compartilharWhatsApp = () => {
     if (!data) return;
-    window.open(`https://wa.me/?text=${encodeURIComponent(getShareText(data))}`, "_blank");
+    window.open(`https://wa.me/?text=${encodeURIComponent(buildShareText(data, shareUrl))}`, "_blank");
   };
 
   const compartilharTelegram = () => {
     if (!data) return;
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(
-        getShareText(data)
+        buildShareText(data, shareUrl)
       )}`,
       "_blank"
     );
@@ -207,7 +215,7 @@ export default function Devotional() {
     try {
       await navigator.share({
         title: `Devocional • ${data.title}`,
-        text: getShareText(data),
+        text: buildShareText(data, shareUrl),
         url: shareUrl,
       });
     } catch {
@@ -217,7 +225,7 @@ export default function Devotional() {
 
   const copiarLink = async () => {
     if (!data) return;
-    const text = getShareText(data);
+    const text = buildShareText(data, shareUrl);
     try {
       await navigator.clipboard.writeText(text);
       alert("Mensagem do devocional copiada!");
