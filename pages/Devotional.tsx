@@ -235,12 +235,12 @@ export default function Devotional() {
   };
 
   return (
-    <main className="min-h-screen flex items-start justify-center px-4 pt-5 pb-10 animated-bg relative">
-      <div className="absolute top-3 w-full flex justify-center">
+    <main className="min-h-screen flex items-start justify-center px-4 pt-6 pb-10 animated-bg relative">
+      <div className="absolute top-4 w-full flex justify-center">
         <img
           src={logoUrl}
           alt="AOGIM Conect"
-          className="w-20 sm:w-24 md:w-28 object-contain drop-shadow-[0_0_28px_rgba(255,255,255,0.35)]"
+          className="w-24 sm:w-28 md:w-32 lg:w-36 object-contain drop-shadow-[0_0_28px_rgba(255,255,255,0.32)]"
         />
       </div>
 
