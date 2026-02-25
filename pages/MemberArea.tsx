@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FC, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { AlertCircle, CheckCircle2, CreditCard, Loader2, Mail, Phone, Save } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, Loader2, LogOut, Mail, Phone, Save } from 'lucide-react';
 import { AuthPanel } from '../components/member-area/AuthPanel';
 import { InputField, SelectField } from '../components/member-area/FieldControls';
 import { PhotoUploadField } from '../components/member-area/PhotoUploadField';
@@ -11,6 +11,7 @@ const PHOTO_BUCKET = 'member-photos';
 
 const MemberArea: FC = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -27,11 +28,13 @@ const MemberArea: FC = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [schemaWarning, setSchemaWarning] = useState<string | null>(null);
 
   useEffect(() => {
     const forceLoginEveryRefresh = async () => {
       await supabase.auth.signOut();
       setSession(null);
+      setAuthReady(true);
     };
 
     forceLoginEveryRefresh();
@@ -42,6 +45,7 @@ const MemberArea: FC = () => {
       setSession(currentSession);
       setError(null);
       setSuccessMsg(null);
+      setSchemaWarning(null);
 
       if (currentSession) {
         fetchMemberDetails(
@@ -60,6 +64,37 @@ const MemberArea: FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const tryUpsertWithSchemaFallback = async (payload: Record<string, unknown>) => {
+    let currentPayload = { ...payload };
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const { error: upsertError } = await supabase
+        .from('member_details')
+        .upsert(currentPayload, { onConflict: 'user_id' });
+
+      if (!upsertError) {
+        return { error: null, payloadUsed: currentPayload };
+      }
+
+      const message = String(upsertError.message || '');
+      const missingColumn = message.match(/Could not find the '([^']+)' column/)?.[1];
+
+      if (!missingColumn || !(missingColumn in currentPayload)) {
+        return { error: upsertError, payloadUsed: currentPayload };
+      }
+
+      delete currentPayload[missingColumn];
+      setSchemaWarning(
+        `A coluna '${missingColumn}' não existe no seu Supabase ainda. Salvei os dados possíveis, mas execute o SQL atualizado para guardar tudo.`,
+      );
+    }
+
+    return {
+      error: new Error('Não foi possível salvar todos os campos. Atualize o schema no Supabase.'),
+      payloadUsed: currentPayload,
+    };
+  };
 
   useEffect(() => {
     return () => {
@@ -232,6 +267,7 @@ const MemberArea: FC = () => {
     setLoading(true);
     setError(null);
     setSuccessMsg(null);
+    setSchemaWarning(null);
 
     const payload: MemberDetails = {
       ...memberDetails,
@@ -249,14 +285,11 @@ const MemberArea: FC = () => {
     try {
       const photoPath = await uploadMemberPhoto(session.user.id);
 
-      const { error: upsertError } = await supabase.from('member_details').upsert(
-        {
-          user_id: session.user.id,
-          ...payload,
-          photo_path: photoPath,
-        },
-        { onConflict: 'user_id' },
-      );
+      const { error: upsertError } = await tryUpsertWithSchemaFallback({
+        user_id: session.user.id,
+        ...payload,
+        photo_path: photoPath,
+      });
 
       if (upsertError) throw upsertError;
 
@@ -274,6 +307,20 @@ const MemberArea: FC = () => {
       setLoading(false);
     }
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setShowCard(false);
+  };
+
+  if (!authReady) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
+      </div>
+    );
+  }
 
   if (!session) {
     return (
@@ -330,6 +377,13 @@ const MemberArea: FC = () => {
           <div className="mb-4 flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm border border-green-100">
             <CheckCircle2 className="w-5 h-5" />
             <span>{successMsg}</span>
+          </div>
+        )}
+
+        {schemaWarning && (
+          <div className="mb-4 flex items-center gap-2 p-3 bg-amber-50 text-amber-800 rounded-xl text-sm border border-amber-200">
+            <AlertCircle className="w-5 h-5" />
+            <span>{schemaWarning}</span>
           </div>
         )}
 
@@ -429,6 +483,14 @@ const MemberArea: FC = () => {
             />
           </div>
 
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-xl flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-5 h-5" /> Sair da conta
+          </button>
 
           <button
             type="button"
