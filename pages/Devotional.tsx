@@ -144,6 +144,17 @@ Leia completo:
 ${shareUrl}`;
 }
 
+function getShortTitle(title: string) {
+  const clean = (title || "").trim();
+  if (!clean) return "Devocional";
+
+  const words = clean.split(/\s+/);
+  const shortByWords = words.slice(0, 4).join(" ");
+  const short = shortByWords.length > 36 ? `${shortByWords.slice(0, 33).trim()}...` : shortByWords;
+
+  return short;
+}
+
 export default function Devotional() {
   const [data, setData] = useState<DevocionalData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -231,8 +242,8 @@ export default function Devotional() {
                 </span>
               </div>
 
-              <h1 className="mt-4 text-lg sm:text-xl font-semibold text-white text-center leading-snug">
-                {data.title}
+              <h1 className="mt-4 text-base sm:text-lg font-semibold text-white text-center leading-snug">
+                {getShortTitle(data.title)}
               </h1>
 
               <div className="mt-5 rounded-2xl bg-white/10 border border-white/20 p-4 sm:p-5 text-center">
