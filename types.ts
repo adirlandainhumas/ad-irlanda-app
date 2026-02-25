@@ -39,6 +39,7 @@ export interface MemberDetails {
   church_entry_date: string;
   baptism_date: string;
   church_function: string;
+  photo_path: string;
 }
 
 export const emptyMemberDetails: MemberDetails = {
@@ -58,6 +59,7 @@ export const emptyMemberDetails: MemberDetails = {
   church_entry_date: '',
   baptism_date: '',
   church_function: '',
+  photo_path: '',
 };
 
 export const MEMBER_REQUIRED_FIELDS: (keyof MemberDetails)[] = [
