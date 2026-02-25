@@ -1,5 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FC, type FormEvent } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import {
+  emptyMemberDetails,
+  formatDate,
+  isFichaComplete,
+  type MemberDetails,
+} from '../types';
+
 import {
   AlertCircle,
   Calendar,
@@ -18,10 +26,9 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { MemberDetails, emptyMemberDetails, formatDate, isFichaComplete } from '../types';
 
-const MemberArea: React.FC = () => {
-  const [session, setSession] = useState<any>(null);
+const MemberArea: FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
@@ -107,7 +114,7 @@ const MemberArea: React.FC = () => {
     setMemberDetails((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -142,7 +149,7 @@ const MemberArea: React.FC = () => {
     await supabase.auth.signOut();
   };
 
-  const handleSaveFicha = async (e: React.FormEvent) => {
+  const handleSaveFicha = async (e: FormEvent) => {
     e.preventDefault();
     if (!session) return;
 
