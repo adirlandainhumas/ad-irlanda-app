@@ -19,22 +19,35 @@ const DAYS_SHORT = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
 function toYMD(dateStr?: string | null): string {
   if (!dateStr) return "";
+  // Se vier só a data (YYYY-MM-DD), lê diretamente sem converter para UTC
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
+  // Para datas com horário, usa local para evitar desvio de fuso
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+// Interpreta datas "YYYY-MM-DD" como local (não UTC) para evitar desvio de fuso
+function parseLocalDate(dateStr?: string | null): Date | null {
+  if (!dateStr) return null;
+  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return new Date(parseInt(match[1]), parseInt(match[2])-1, parseInt(match[3]));
+  const d = new Date(dateStr);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function formatDateFull(dateStr?: string | null) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return dateStr;
+  const d = parseLocalDate(dateStr);
+  if (!d) return dateStr;
   return d.toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
 }
 
 function daysUntil(dateStr?: string | null): number | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return null;
+  const d = parseLocalDate(dateStr);
+  if (!d) return null;
   const now = new Date(); now.setHours(0,0,0,0); d.setHours(0,0,0,0);
   return Math.ceil((d.getTime() - now.getTime()) / 86400000);
 }
