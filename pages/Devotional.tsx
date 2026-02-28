@@ -253,6 +253,7 @@ export default function Devotional() {
   const [data, setData] = useState<DevocionalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [gerandoImagem, setGerandoImagem] = useState(false);
+  const [compartilhandoImagem, setCompartilhandoImagem] = useState(false);
   const [imagemGerada, setImagemGerada] = useState<string | null>(null);
 
   const bibleVersion = "acf";
@@ -298,6 +299,35 @@ export default function Devotional() {
     a.href = imagemGerada;
     a.download = `devocional-story-${todayKey()}.png`;
     a.click();
+  };
+
+  const handleCompartilharStory = async () => {
+    if (!imagemGerada) return;
+
+    try {
+      setCompartilhandoImagem(true);
+
+      const response = await fetch(imagemGerada);
+      const blob = await response.blob();
+      const file = new File([blob], `devocional-story-${todayKey()}.png`, { type: "image/png" });
+      const nav = navigator as Navigator & { canShare?: (data?: ShareData) => boolean };
+
+      if (typeof nav.share === "function" && (!nav.canShare || nav.canShare({ files: [file] }))) {
+        await nav.share({
+          files: [file],
+          title: "Devocional do dia",
+          text: "Story devocional pronto para postar no Instagram.",
+        });
+        return;
+      }
+
+      handleDownload();
+      window.open("https://www.instagram.com/", "_blank");
+    } catch {
+      handleDownload();
+    } finally {
+      setCompartilhandoImagem(false);
+    }
   };
 
   return (
@@ -552,6 +582,9 @@ export default function Devotional() {
                       <img src={imagemGerada} alt="Story" style={{ width: "100%", display: "block" }} />
                     </div>
                     <div style={{ display: "flex", gap: 10 }}>
+                      <button className="dv-btn-sec" onClick={handleCompartilharStory} disabled={compartilhandoImagem}>
+                        {compartilhandoImagem ? "Abrindo opções..." : "Compartilhar Story"}
+                      </button>
                       <button className="dv-btn-dl" onClick={handleDownload}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 15, height: 15 }}>
                           <path d="M12 3v12m0 0l-4-4m4 4l4-4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round"/>
