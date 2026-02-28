@@ -14,50 +14,65 @@ type Notice = {
 };
 
 const MONTHS_PT  = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const DAYS_FULL  = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
 const DAYS_SHORT = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
-function toYMD(dateStr?: string | null): string {
-  if (!dateStr) return "";
-  // Se vier só a data (YYYY-MM-DD), lê diretamente sem converter para UTC
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+// ── Funções de data ──────────────────────────────────────────────────────────
+
+// Lê "YYYY-MM-DD" como data LOCAL (evita desvio UTC→Brasília)
+function parseLocalDate(dateStr?: string | null): Date | null {
+  if (!dateStr) return null;
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
   const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return "";
-  // Para datas com horário, usa local para evitar desvio de fuso
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function toYMD(dateStr?: string | null): string {
+  const m = dateStr?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  const d = parseLocalDate(dateStr);
+  if (!d) return "";
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// Interpreta datas "YYYY-MM-DD" como local (não UTC) para evitar desvio de fuso
-function parseLocalDate(dateStr?: string | null): Date | null {
-  if (!dateStr) return null;
-  const match = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) return new Date(parseInt(match[1]), parseInt(match[2])-1, parseInt(match[3]));
-  const d = new Date(dateStr);
-  return Number.isNaN(d.getTime()) ? null : d;
+function dateToYMD(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
 function formatDateFull(dateStr?: string | null) {
-  if (!dateStr) return "";
   const d = parseLocalDate(dateStr);
-  if (!d) return dateStr;
+  if (!d) return dateStr ?? "";
   return d.toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
 }
 
 function daysUntil(dateStr?: string | null): number | null {
-  if (!dateStr) return null;
   const d = parseLocalDate(dateStr);
   if (!d) return null;
   const now = new Date(); now.setHours(0,0,0,0); d.setHours(0,0,0,0);
   return Math.ceil((d.getTime() - now.getTime()) / 86400000);
 }
 
+// Semana começa na Segunda-feira, termina no Domingo
+function getWeekStart(date: Date): Date {
+  const d = new Date(date); d.setHours(0,0,0,0);
+  const dow = d.getDay(); // 0=Dom, 1=Seg … 6=Sáb
+  const diff = dow === 0 ? -6 : 1 - dow; // domingo → recua 6; demais → vai pra segunda
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function addDays(date: Date, n: number): Date {
+  const d = new Date(date); d.setDate(d.getDate() + n); return d;
+}
+
+// ── Sub-componentes ──────────────────────────────────────────────────────────
+
 function DaysBadge({ days }: { days: number | null }) {
   if (days === null) return null;
-  if (days < 0)      return <span className="nt-badge nt-badge-done">Realizado</span>;
-  if (days === 0)    return <span className="nt-badge nt-badge-today">Hoje!</span>;
-  if (days === 1)    return <span className="nt-badge nt-badge-soon">Amanhã</span>;
-  if (days <= 7)     return <span className="nt-badge nt-badge-week">Em {days} dias</span>;
+  if (days < 0)   return <span className="nt-badge nt-badge-done">Realizado</span>;
+  if (days === 0) return <span className="nt-badge nt-badge-today">Hoje!</span>;
+  if (days === 1) return <span className="nt-badge nt-badge-soon">Amanhã</span>;
+  if (days <= 7)  return <span className="nt-badge nt-badge-week">Em {days} dias</span>;
   return null;
 }
 
@@ -74,17 +89,7 @@ function shareWhatsApp(n: Notice) {
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
 }
 
-function getWeekStart(date: Date): Date {
-  const d = new Date(date); d.setHours(0,0,0,0); d.setDate(d.getDate() - d.getDay()); return d;
-}
-function addDays(date: Date, n: number): Date {
-  const d = new Date(date); d.setDate(d.getDate() + n); return d;
-}
-function dateToYMD(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-}
-
-// ─── Componente principal ─────────────────────────────────────────────────────
+// ── Componente principal ─────────────────────────────────────────────────────
 export default function Notices() {
   const [loading, setLoading] = useState(true);
   const [items, setItems]     = useState<Notice[]>([]);
@@ -96,12 +101,9 @@ export default function Notices() {
 
   const [weekStart, setWeekStart] = useState<Date>(() => getWeekStart(new Date()));
 
-  // Segunda → Domingo (ordem cascata)
+  // Seg(0) → Dom(6): offsets 0,1,2,3,4,5,6 a partir da segunda
   const weekDays = useMemo(() =>
-    [1,2,3,4,5,6,0].map((offset) => {
-      const base = addDays(weekStart, offset);
-      return base;
-    }),
+    Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
     [weekStart]
   );
 
@@ -128,16 +130,14 @@ export default function Notices() {
     return map;
   }, [items]);
 
-  // Label do intervalo da semana
   const weekLabel = useMemo(() => {
-    const mon = weekDays[0];
-    const sun = weekDays[6];
-    if (mon.getMonth() === sun.getMonth())
-      return `${mon.getDate()} – ${sun.getDate()} de ${MONTHS_PT[mon.getMonth()]} ${mon.getFullYear()}`;
-    return `${mon.getDate()} ${MONTHS_PT[mon.getMonth()]} – ${sun.getDate()} ${MONTHS_PT[sun.getMonth()]} ${sun.getFullYear()}`;
+    const seg = weekDays[0]; // Segunda
+    const dom = weekDays[6]; // Domingo
+    if (seg.getMonth() === dom.getMonth())
+      return `${seg.getDate()} – ${dom.getDate()} de ${MONTHS_PT[seg.getMonth()]} ${seg.getFullYear()}`;
+    return `${seg.getDate()} ${MONTHS_PT[seg.getMonth()]} – ${dom.getDate()} ${MONTHS_PT[dom.getMonth()]} ${dom.getFullYear()}`;
   }, [weekDays]);
 
-  // Quantos eventos nesta semana
   const weekEventCount = useMemo(() =>
     weekDays.reduce((acc, d) => acc + (noticesByDate[dateToYMD(d)]?.length ?? 0), 0),
     [weekDays, noticesByDate]
@@ -157,12 +157,8 @@ export default function Notices() {
         * { box-sizing: border-box; }
         .nt-root { font-family:'Lato',sans-serif; min-height:100vh; background:#f0f4ff; }
 
-        /* ── Hero ── */
-        .nt-hero {
-          background:linear-gradient(155deg,#060d20 0%,#0a1535 40%,#0e1d50 70%,#050f28 100%);
-          padding:44px 20px 52px; position:relative; overflow:hidden;
-          border-radius:0 0 2.5rem 2.5rem;
-        }
+        /* Hero */
+        .nt-hero { background:linear-gradient(155deg,#060d20 0%,#0a1535 40%,#0e1d50 70%,#050f28 100%); padding:44px 20px 52px; position:relative; overflow:hidden; border-radius:0 0 2.5rem 2.5rem; }
         .nt-hero::before { content:''; position:absolute; top:-80px; right:-80px; width:340px; height:340px; border-radius:50%; background:radial-gradient(circle,rgba(0,120,255,.15) 0%,transparent 70%); pointer-events:none; }
         .nt-hero::after  { content:''; position:absolute; bottom:-60px; left:-60px; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle,rgba(30,60,200,.11) 0%,transparent 70%); pointer-events:none; }
         .nt-hero-inner { position:relative; z-index:1; max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:13px; }
@@ -175,17 +171,11 @@ export default function Notices() {
         .nt-refresh { display:inline-flex; align-items:center; gap:6px; background:rgba(26,85,208,.2); border:1px solid rgba(60,140,255,.22); border-radius:999px; padding:5px 14px; font-size:11px; font-weight:700; color:rgba(100,180,255,.85); cursor:pointer; transition:background .18s; font-family:'Lato',sans-serif; }
         .nt-refresh:hover { background:rgba(26,85,208,.32); }
 
-        /* ── Conteúdo ── */
+        /* Conteúdo */
         .nt-content { max-width:680px; margin:0 auto; padding:24px 16px 80px; }
 
-        /* ── Navegação da semana ── */
-        .nt-week-nav {
-          display:flex; align-items:center; justify-content:space-between;
-          background:#fff; border-radius:18px;
-          border:1px solid rgba(26,85,208,.08);
-          box-shadow:0 2px 12px rgba(26,85,208,.06);
-          padding:12px 16px; margin-bottom:20px;
-        }
+        /* Navegação semanal */
+        .nt-week-nav { display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:18px; border:1px solid rgba(26,85,208,.08); box-shadow:0 2px 12px rgba(26,85,208,.06); padding:12px 16px; margin-bottom:20px; }
         .nt-nav-btn { width:34px; height:34px; border-radius:50%; border:1px solid rgba(26,85,208,.15); background:rgba(26,85,208,.05); color:#1a55d0; display:grid; place-items:center; cursor:pointer; font-size:16px; transition:background .15s; }
         .nt-nav-btn:hover { background:rgba(26,85,208,.12); }
         .nt-week-center { display:flex; flex-direction:column; align-items:center; gap:5px; }
@@ -193,95 +183,67 @@ export default function Notices() {
         .nt-today-btn { font-size:10px; font-weight:700; color:rgba(26,85,208,.7); background:rgba(26,85,208,.07); border:1px solid rgba(26,85,208,.15); border-radius:999px; padding:3px 11px; cursor:pointer; transition:background .15s; font-family:'Lato',sans-serif; }
         .nt-today-btn:hover { background:rgba(26,85,208,.13); }
 
-        /* ── Cascata ── */
-        .nt-cascade { display:flex; flex-direction:column; gap:0; position:relative; }
+        /* Cascata */
+        .nt-cascade { display:flex; flex-direction:column; position:relative; }
+        .nt-cascade::before { content:''; position:absolute; left:38px; top:0; bottom:0; width:2px; background:linear-gradient(180deg,rgba(26,85,208,.2) 0%,rgba(26,85,208,.05) 100%); border-radius:2px; }
 
-        /* Linha vertical da timeline */
-        .nt-cascade::before {
-          content:''; position:absolute;
-          left:38px; top:0; bottom:0; width:2px;
-          background:linear-gradient(180deg, rgba(26,85,208,.25) 0%, rgba(26,85,208,.08) 100%);
-          border-radius:2px;
-        }
+        /* Linha de dia */
+        .nt-day-row { display:flex; position:relative; padding-bottom:2px; }
 
-        /* ── Linha de dia ── */
-        .nt-day-row { display:flex; gap:0; position:relative; padding-bottom:4px; }
+        /* Marcador */
+        .nt-day-marker { display:flex; flex-direction:column; align-items:center; width:78px; flex-shrink:0; padding-top:14px; position:relative; z-index:1; }
 
-        /* Marcador do dia na linha */
-        .nt-day-marker {
-          display:flex; flex-direction:column; align-items:center;
-          width:78px; flex-shrink:0; padding-top:14px; position:relative; z-index:1;
-        }
-
+        /* Círculo do dia — SEM evento: apagado */
         .nt-day-circle {
           width:32px; height:32px; border-radius:50%;
           display:grid; place-items:center;
           font-size:13px; font-weight:700;
-          background:#fff;
-          border:2px solid rgba(26,85,208,.18);
-          color:#4a5578;
-          box-shadow:0 2px 8px rgba(26,85,208,.08);
           transition:all .2s;
           flex-shrink:0;
         }
-        .nt-day-circle-today {
-          background:linear-gradient(135deg,#1a55d0,#0090ff);
-          border-color:transparent;
-          color:#fff;
-          box-shadow:0 4px 16px rgba(26,85,208,.35);
-        }
-        .nt-day-circle-has-event {
-          border-color:#1a55d0;
-          color:#1a55d0;
+        /* Sem evento */
+        .nt-day-circle-empty {
           background:#f0f4ff;
+          border:1.5px dashed rgba(26,85,208,.15);
+          color:#c0ccee;
         }
+        /* Com evento futuro */
+        .nt-day-circle-event {
+          background:#fff;
+          border:2px solid #1a55d0;
+          color:#1a55d0;
+          box-shadow:0 2px 10px rgba(26,85,208,.18);
+        }
+        /* Com evento realizado */
         .nt-day-circle-done {
-          border-color:rgba(26,85,208,.1);
+          background:#f7f8ff;
+          border:2px solid rgba(26,85,208,.2);
           color:#aabbdd;
-          background:#f7f9ff;
+        }
+        /* Hoje */
+        .nt-day-circle-today {
+          background:linear-gradient(135deg,#1a55d0,#0090ff) !important;
+          border:none !important;
+          color:#fff !important;
+          box-shadow:0 4px 16px rgba(26,85,208,.4) !important;
         }
 
-        .nt-day-name-label {
-          font-size:9px; font-weight:700; letter-spacing:.1em;
-          color:rgba(26,85,208,.4); text-transform:uppercase;
-          margin-top:5px; text-align:center;
-        }
-        .nt-day-name-today { color:#1a55d0; }
+        /* Label do dia */
+        .nt-day-name-label { font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-top:5px; text-align:center; }
+        .nt-day-name-empty  { color:rgba(26,85,208,.25); }
+        .nt-day-name-event  { color:#1a55d0; }
+        .nt-day-name-today  { color:#1a55d0; }
 
-        /* Conteúdo à direita do marcador */
-        .nt-day-content {
-          flex:1; padding:10px 0 10px 12px;
-          display:flex; flex-direction:column; gap:8px;
-          min-height:60px;
-          justify-content:center;
-        }
+        /* Conteúdo à direita */
+        .nt-day-content { flex:1; padding:10px 0 10px 12px; display:flex; flex-direction:column; gap:8px; min-height:60px; justify-content:center; }
+        .nt-day-empty-line { height:1px; background:linear-gradient(90deg,rgba(26,85,208,.07),transparent); border-radius:1px; align-self:center; width:100%; }
 
-        /* Dia sem evento — linha tracejada sutil */
-        .nt-day-empty-line {
-          height:1px;
-          background:linear-gradient(90deg, rgba(26,85,208,.1), transparent);
-          border-radius:1px;
-          align-self:center;
-          width:100%;
-        }
-
-        /* ── Cards de evento ── */
+        /* Cards */
         @keyframes ntFadeIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
         @keyframes ntSpin   { to{transform:rotate(360deg)} }
         @keyframes ntPulse  { 0%,100%{opacity:.6} 50%{opacity:1} }
 
-        .nt-event-card {
-          background:#fff;
-          border-radius:16px;
-          border:1px solid rgba(26,85,208,.09);
-          box-shadow:0 2px 10px rgba(26,85,208,.06);
-          overflow:hidden;
-          cursor:pointer;
-          transition:transform .18s, box-shadow .18s;
-          animation:ntFadeIn .35s ease forwards;
-          font-family:'Lato',sans-serif;
-          text-align:left; width:100%;
-        }
+        .nt-event-card { background:#fff; border-radius:16px; border:1px solid rgba(26,85,208,.09); box-shadow:0 2px 10px rgba(26,85,208,.06); overflow:hidden; cursor:pointer; transition:transform .18s,box-shadow .18s; animation:ntFadeIn .35s ease forwards; font-family:'Lato',sans-serif; text-align:left; width:100%; }
         .nt-event-card:hover { transform:translateX(3px); box-shadow:0 6px 24px rgba(26,85,208,.13); }
         .nt-event-card-accent { height:3px; background:linear-gradient(90deg,#1a55d0,#0090ff); }
         .nt-event-card-accent-done { background:linear-gradient(90deg,#8899cc,#aabbdd); }
@@ -301,17 +263,12 @@ export default function Notices() {
         .nt-badge-soon  { background:rgba(255,160,0,.1); color:#d08000; }
         .nt-badge-week  { background:rgba(26,85,208,.1); color:#1a55d0; }
 
-        /* Semana sem eventos */
-        .nt-empty-week {
-          text-align:center; padding:32px 20px;
-          background:#fff; border-radius:18px;
-          border:1px solid rgba(26,85,208,.07);
-          margin-top:8px;
-        }
+        /* Semana vazia */
+        .nt-empty-week { text-align:center; padding:32px 20px; background:#fff; border-radius:18px; border:1px solid rgba(26,85,208,.07); }
         .nt-empty-week-icon { font-size:28px; margin-bottom:8px; }
         .nt-empty-week-text { font-family:'Playfair Display',Georgia,serif; font-size:15px; color:#8899bb; font-style:italic; }
 
-        /* Loading */
+        /* Loading / erro */
         .nt-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 0; gap:14px; }
         .nt-spinner { width:28px; height:28px; border:2px solid rgba(26,85,208,.15); border-top-color:rgba(26,85,208,.8); border-radius:50%; animation:ntSpin .85s linear infinite; }
         .nt-loading-text { font-family:'Playfair Display',Georgia,serif; font-size:14px; font-style:italic; color:rgba(26,85,208,.45); }
@@ -339,7 +296,7 @@ export default function Notices() {
 
       <div className="nt-root">
 
-        {/* ── Hero ── */}
+        {/* Hero */}
         <header className="nt-hero">
           <div className="nt-hero-inner">
             <p className="nt-hero-kicker">Fique por dentro</p>
@@ -364,7 +321,7 @@ export default function Notices() {
           </div>
         </header>
 
-        {/* ── Conteúdo ── */}
+        {/* Conteúdo */}
         <div className="nt-content">
           {error && <div className="nt-error">⚠️ {error}</div>}
 
@@ -377,97 +334,101 @@ export default function Notices() {
 
           {!loading && (
             <>
-              {/* Navegação da semana */}
+              {/* Navegação */}
               <div className="nt-week-nav">
-                <button className="nt-nav-btn" onClick={prevWeek} aria-label="Semana anterior">‹</button>
+                <button className="nt-nav-btn" onClick={prevWeek}>‹</button>
                 <div className="nt-week-center">
                   <span className="nt-week-label">{weekLabel}</span>
                   <button className="nt-today-btn" onClick={goToday}>Esta semana</button>
                 </div>
-                <button className="nt-nav-btn" onClick={nextWeek} aria-label="Próxima semana">›</button>
+                <button className="nt-nav-btn" onClick={nextWeek}>›</button>
               </div>
 
-              {/* Cascata vertical */}
-              {weekEventCount === 0 ? (
-                <div className="nt-empty-week">
-                  <div className="nt-empty-week-icon">🕊</div>
-                  <p className="nt-empty-week-text">Nenhum aviso nesta semana.</p>
-                </div>
-              ) : (
-                <div className="nt-cascade">
-                  {weekDays.map((dayDate, rowIdx) => {
-                    const key      = dateToYMD(dayDate);
-                    const notices  = noticesByDate[key] ?? [];
-                    const isToday  = key === todayStr;
-                    const hasEvent = notices.length > 0;
-                    const isPast   = dayDate < today;
+              {/* Cascata */}
+              <div className="nt-cascade">
+                {weekDays.map((dayDate, rowIdx) => {
+                  const key      = dateToYMD(dayDate);
+                  const notices  = noticesByDate[key] ?? [];
+                  const isToday  = key === todayStr;
+                  const hasEvent = notices.length > 0;
+                  const allDone  = hasEvent && notices.every(n => (daysUntil(n.event_date) ?? 0) < 0);
 
-                    return (
-                      <div key={key} className="nt-day-row">
-                        {/* Marcador */}
-                        <div className="nt-day-marker">
-                          <div className={`nt-day-circle ${isToday ? "nt-day-circle-today" : hasEvent ? (isPast ? "nt-day-circle-done" : "nt-day-circle-has-event") : ""}`}>
-                            {dayDate.getDate()}
-                          </div>
-                          <span className={`nt-day-name-label ${isToday ? "nt-day-name-today" : ""}`}>
-                            {DAYS_SHORT[dayDate.getDay()]}
-                          </span>
-                        </div>
+                  // Classe do círculo
+                  const circleClass = isToday
+                    ? "nt-day-circle nt-day-circle-today"
+                    : hasEvent
+                      ? allDone
+                        ? "nt-day-circle nt-day-circle-done"
+                        : "nt-day-circle nt-day-circle-event"
+                      : "nt-day-circle nt-day-circle-empty";
 
-                        {/* Conteúdo */}
-                        <div className="nt-day-content">
-                          {hasEvent ? (
-                            notices.map((n, ni) => {
-                              const days = daysUntil(n.event_date);
-                              const done = days !== null && days < 0;
-                              return (
-                                <button
-                                  key={n.id}
-                                  className="nt-event-card"
-                                  style={{ animationDelay: `${(rowIdx * 0.06) + (ni * 0.04)}s` }}
-                                  onClick={() => setActive(n)}
-                                >
-                                  <div className={`nt-event-card-accent ${done ? "nt-event-card-accent-done" : ""}`} />
-                                  <div className="nt-event-card-body">
-                                    <div className="nt-event-card-meta">
-                                      <DaysBadge days={days} />
-                                    </div>
-                                    <h3 className="nt-event-card-title">{n.title}</h3>
-                                    <p className="nt-event-card-preview">{n.body}</p>
-                                    <div className="nt-event-card-footer">
-                                      <span className="nt-event-card-cta">
-                                        Ler completo
-                                        <svg viewBox="0 0 16 16" fill="currentColor" style={{width:10,height:10}}>
-                                          <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L7.28 11.78a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd"/>
-                                        </svg>
-                                      </span>
-                                      <button
-                                        className="nt-event-card-share"
-                                        onClick={(e) => { e.stopPropagation(); shareWhatsApp(n); }}
-                                      >
-                                        <WaIcon size={14} />
-                                        Compartilhar
-                                      </button>
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })
-                          ) : (
-                            <div className="nt-day-empty-line" />
-                          )}
-                        </div>
+                  const nameClass = isToday
+                    ? "nt-day-name-label nt-day-name-today"
+                    : hasEvent
+                      ? "nt-day-name-label nt-day-name-event"
+                      : "nt-day-name-label nt-day-name-empty";
+
+                  return (
+                    <div key={key} className="nt-day-row">
+                      {/* Marcador */}
+                      <div className="nt-day-marker">
+                        <div className={circleClass}>{dayDate.getDate()}</div>
+                        <span className={nameClass}>{DAYS_SHORT[dayDate.getDay()]}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      {/* Conteúdo */}
+                      <div className="nt-day-content">
+                        {hasEvent ? (
+                          notices.map((n, ni) => {
+                            const days = daysUntil(n.event_date);
+                            const done = (days ?? 0) < 0;
+                            return (
+                              <button
+                                key={n.id}
+                                className="nt-event-card"
+                                style={{ animationDelay: `${rowIdx * 0.05 + ni * 0.04}s` }}
+                                onClick={() => setActive(n)}
+                              >
+                                <div className={`nt-event-card-accent ${done ? "nt-event-card-accent-done" : ""}`} />
+                                <div className="nt-event-card-body">
+                                  <div className="nt-event-card-meta">
+                                    <DaysBadge days={days} />
+                                  </div>
+                                  <h3 className="nt-event-card-title">{n.title}</h3>
+                                  <p className="nt-event-card-preview">{n.body}</p>
+                                  <div className="nt-event-card-footer">
+                                    <span className="nt-event-card-cta">
+                                      Ler completo
+                                      <svg viewBox="0 0 16 16" fill="currentColor" style={{width:10,height:10}}>
+                                        <path fillRule="evenodd" d="M6.22 4.22a.75.75 0 011.06 0l3.25 3.25a.75.75 0 010 1.06L7.28 11.78a.75.75 0 01-1.06-1.06L8.94 8 6.22 5.28a.75.75 0 010-1.06z" clipRule="evenodd"/>
+                                      </svg>
+                                    </span>
+                                    <button
+                                      className="nt-event-card-share"
+                                      onClick={(e) => { e.stopPropagation(); shareWhatsApp(n); }}
+                                    >
+                                      <WaIcon size={14} />
+                                      Compartilhar
+                                    </button>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="nt-day-empty-line" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </>
           )}
         </div>
       </div>
 
-      {/* ── Modal ── */}
+      {/* Modal */}
       {active && (
         <div className="nt-backdrop" onClick={() => setActive(null)}>
           <div className="nt-modal" onClick={(e) => e.stopPropagation()}>
