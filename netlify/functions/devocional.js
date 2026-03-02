@@ -1,223 +1,69 @@
-import * as cheerio from "cheerio";
+const https = require("https");
 
-function cleanText(t = "") {
-  return t
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+\n/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .trim();
-}
-
-function normalizeDateLabel() {
-  return new Date().toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+function fetchUrl(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { "User-Agent": "Mozilla/5.0" } }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => resolve(data));
+    }).on("error", reject);
   });
 }
 
-function firstNonEmpty(values = []) {
-  return values.map((v) => cleanText(v || "")).find(Boolean) || "";
-}
-
-function extractVerseFromText(text = "") {
-  const normalized = cleanText(text);
-  const refRegex = /((?:[1-3]\s*)?[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+){0,3})\s(\d{1,3}:\d{1,3}(?:-\d{1,3})?)/;
-  const refMatch = normalized.match(refRegex);
-
-  if (!refMatch) return null;
-
-  const verseRef = cleanText(refMatch[0]);
-  const verseText = cleanText(
-    normalized
-      .replace(refMatch[0], "")
-      .replace(/^[-–—:\s]+/, "")
-      .replace(/["“”]/g, "")
-  );
-
-  return {
-    verseRef,
-    verseText,
-  };
-}
-
-async function fetchHtml(url) {
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Erro ao acessar fonte externa: ${url}`);
-  }
-
-  return response.text();
-}
-
-function parseFromBibliaOn(html) {
-  const $ = cheerio.load(html);
-  const root = $("main").first().length ? $("main").first() : $("article").first().length ? $("article").first() : $("body");
-
-  const title = firstNonEmpty([
-    root.find("h1").first().text(),
-    root.find("h2").first().text(),
-  ]) || "Devocional do Dia";
-
-  const verseCandidates = [
-    root.find("blockquote").first().text(),
-    root.find(".versiculo").first().text(),
-    ...root.find("p").toArray().slice(0, 8).map((el) => $(el).text()),
-  ];
-
-  let verseText = "";
-  let verseRef = "";
-
-  for (const candidate of verseCandidates) {
-    const extracted = extractVerseFromText(candidate);
-    if (extracted) {
-      verseText = extracted.verseText;
-      verseRef = extracted.verseRef;
-      break;
-    }
-  }
-
-  const paragraphs = root
-    .find("p")
-    .toArray()
-    .map((el) => cleanText($(el).text()))
-    .filter((text) => text.length > 60)
-    .filter((text) => !text.includes("Compartilhar"))
-    .filter((text) => !text.includes("Leia também"));
-
-  const body = cleanText(paragraphs.join("\n\n"));
-
-  if (!body) {
-    throw new Error("Fonte primária sem conteúdo suficiente");
-  }
-
-  return {
-    title,
-    verseText,
-    verseRef,
-    body,
-  };
-}
-
-function parseFromBibliaOnline(html) {
-  const $ = cheerio.load(html);
-
-  const main =
-    $("main").first().length
-      ? $("main").first()
-      : $("#content").first().length
-      ? $("#content").first()
-      : $("body");
-
-  let title = firstNonEmpty([
-    main.find("h2").first().text(),
-    main.find("h1").first().text(),
-  ]);
-
-  if (!title || title.toLowerCase().includes("bíblia")) {
-    title = "Devocional do Dia";
-  }
-
-  let verseText = "";
-  let verseRef = "";
-
-  const candidates = main.find("p").toArray();
-
-  for (const el of candidates) {
-    const extracted = extractVerseFromText($(el).text());
-    if (extracted) {
-      verseRef = extracted.verseRef;
-      verseText = extracted.verseText;
-      break;
-    }
-  }
-
-  const paragraphs = main
-    .find("p")
-    .toArray()
-    .map((p) => cleanText($(p).text()))
-    .filter((t) => t.length > 60);
-
-  const body = cleanText(paragraphs.join("\n\n"));
-
-  if (!body) {
-    throw new Error("Fonte secundária sem conteúdo suficiente");
-  }
-
-  return {
-    title,
-    verseText,
-    verseRef,
-    body,
-  };
-}
-
-export const handler = async (event) => {
+exports.handler = async () => {
   try {
-    const version = event.queryStringParameters?.b || "acf";
+    const now = new Date();
+    const day   = String(now.getDate()).padStart(2, "0");
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year  = now.getFullYear();
 
-    const sources = [
-      {
-        name: "BibliaOn",
-        url: "https://www.bibliaon.com/devocional_diario/",
-        parse: parseFromBibliaOn,
-      },
-      {
-        name: "BibliaOnline",
-        url: `https://www.bibliaonline.com.br/devocional-diario?b=${version}`,
-        parse: parseFromBibliaOnline,
-      },
-    ];
+    const html = await fetchUrl("https://www.devocionaldiario.com.br/");
 
-    let data = null;
+    // Extrai o primeiro devocional do dia (o mais recente)
+    // Versículo: está em <em><strong>...</strong></em>
+    const verseMatch = html.match(/<em><strong>([\s\S]*?)<\/strong><\/em>/);
+    const verseRaw = verseMatch
+      ? verseMatch[1].replace(/<[^>]+>/g, "").trim()
+      : "";
 
-    for (const source of sources) {
-      try {
-        const html = await fetchHtml(source.url);
-        data = source.parse(html);
-        if (data?.body) {
-          break;
-        }
-      } catch (_error) {
-        // Tenta a próxima fonte automaticamente.
-      }
-    }
+    // Separa texto do versículo da referência
+    // Formato: "texto do versículo" Livro X:Y
+    const verseRefMatch = verseRaw.match(/^([\s\S]+?)\s+([\w\s]+\d+:\d+[\d\-,]*)\s*$/);
+    const verseText = verseRefMatch ? verseRefMatch[1].replace(/^"|"$/g, "").trim() : verseRaw;
+    const verseRef  = verseRefMatch ? verseRefMatch[2].trim() : "";
 
-    if (!data) {
-      throw new Error("Não foi possível carregar nenhuma fonte de devocional");
-    }
+    // Pensamento: entre <strong>Pensamento:</strong> e <strong>Oração:</strong>
+    const thoughtMatch = html.match(/<strong>Pensamento:<\/strong>([\s\S]*?)<strong>Ora/);
+    const thought = thoughtMatch
+      ? thoughtMatch[1].replace(/<[^>]+>/g, "").trim()
+      : "";
+
+    // Oração: entre <strong>Oração:</strong> e próximo bloco
+    const prayerMatch = html.match(/<strong>Ora[çc][ãa]o:<\/strong>([\s\S]*?)<\/p>/);
+    const prayer = prayerMatch
+      ? prayerMatch[1].replace(/<[^>]+>/g, "").trim()
+      : "";
+
+    const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+    const dateLabel = `${parseInt(day)} de ${MONTHS_PT[now.getMonth()]} de ${year}`;
 
     return {
       statusCode: 200,
+      headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify({
         ok: true,
-        dateLabel: normalizeDateLabel(),
-        title: data.title,
-        verseText: data.verseText,
-        verseRef: data.verseRef,
-        body: data.body,
+        dateLabel,
+        verseText,
+        verseRef,
+        thought,
+        prayer,
+        source: "devocionaldiario.com.br",
       }),
     };
-  } catch (_error) {
+  } catch (err) {
     return {
-      statusCode: 200,
-      body: JSON.stringify({
-        ok: true,
-        dateLabel: new Date().toLocaleDateString("pt-BR"),
-        title: "Confie no Senhor",
-        verseText: "Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.",
-        verseRef: "Salmos 37:5",
-        body:
-          "Mesmo quando algo falha tecnicamente, Deus continua no controle. A fé não depende de conexões externas, mas da nossa confiança nEle. Hoje, entregue seu caminho ao Senhor e descanse.",
-      }),
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: err.message }),
     };
   }
 };
