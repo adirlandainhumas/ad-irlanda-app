@@ -9,7 +9,7 @@ import { supabase } from '../lib/supabase';
 import { emptyMemberDetails, formatDate, isFichaComplete, type MemberDetails } from '../types';
 
 const PHOTO_BUCKET = 'member-photos';
-const ADMIN_WHATSAPP = '5562944788817'; // 55 + 62 + 944788817
+const ADMIN_WHATSAPP = '556294478817'; // +55 62 9 4478-817
 const LOGO_URL = 'https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png';
 
 // ─── Geração do Cartão CNH Digital ───────────────────────────────────────────
@@ -437,13 +437,18 @@ const MemberArea: FC = () => {
           });
         }
 
+        // DESLOGA imediatamente — só entra após aprovação
+        await supabase.auth.signOut();
+
         // Abre WhatsApp do admin
         const adminUrl = 'https://aogimconectinhumas.site/#/admin';
         const msg = `🔔 *Novo cadastro de membro no site!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n\n✅ Acesse a área Admin para aprovar:\n${adminUrl}`;
-        window.open(`https://api.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, '_blank');
+        const waUrl = `https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`;
+        window.open(waUrl, '_blank');
 
-        setSuccessMsg('Cadastro enviado! Aguarde a aprovação da liderança. Você será notificado.');
+        setSuccessMsg('✅ Cadastro enviado! Aguarde a aprovação da liderança para fazer login.');
         setIsSignUp(false);
+        setFullName(''); setTelefone(''); setEmail(''); setPassword('');
         return;
       }
 
