@@ -509,7 +509,7 @@ export default function Home() {
             <img src={LOGO_FULL} alt="AD Ministério Irlanda" className="hm-logo" style={{ display: "block", margin: "0 auto" }} />
 
             <p className="hm-tagline">
-              Um espaço digital feito com cuidado para quem ama a casa de Deus.
+              Uma família de fé que cresce unida, servindo a Deus e cuidando de pessoas.
             </p>
 
             <div className="hm-hero-btns">
