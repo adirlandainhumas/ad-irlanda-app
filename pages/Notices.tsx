@@ -253,8 +253,8 @@ export default function Notices() {
         .nt-event-card-preview { font-size:12px; color:#4a5578; line-height:1.6; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .nt-event-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid rgba(26,85,208,.06); }
         .nt-event-card-cta { font-size:11px; font-weight:700; color:#1a55d0; display:flex; align-items:center; gap:3px; }
-        .nt-event-card-share { display:inline-flex; align-items:center; gap:5px; background:rgba(0,180,80,.08); border:1px solid rgba(0,180,80,.15); border-radius:999px; padding:4px 10px; font-size:11px; font-weight:700; color:#00a050; cursor:pointer; transition:background .15s; font-family:'Lato',sans-serif; }
-        .nt-event-card-share:hover { background:rgba(0,180,80,.15); }
+        .nt-event-card-share { display:inline-flex; align-items:center; gap:5px; background:#25D366; border:none; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:700; color:#fff; cursor:pointer; transition:background .15s, transform .15s; font-family:'Lato',sans-serif; box-shadow:0 2px 8px rgba(37,211,102,.25); }
+        .nt-event-card-share:hover { background:#1ebe5d; transform:translateY(-1px); }
 
         /* Badges */
         .nt-badge { font-size:10px; font-weight:700; letter-spacing:.06em; border-radius:999px; padding:2px 8px; }
@@ -334,16 +334,6 @@ export default function Notices() {
 
           {!loading && (
             <>
-              {/* Navegação */}
-              <div className="nt-week-nav">
-                <button className="nt-nav-btn" onClick={prevWeek}>‹</button>
-                <div className="nt-week-center">
-                  <span className="nt-week-label">{weekLabel}</span>
-                  <button className="nt-today-btn" onClick={goToday}>Esta semana</button>
-                </div>
-                <button className="nt-nav-btn" onClick={nextWeek}>›</button>
-              </div>
-
               {/* Cascata */}
               <div className="nt-cascade">
                 {weekDays.map((dayDate, rowIdx) => {
