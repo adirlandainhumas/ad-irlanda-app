@@ -1,30 +1,27 @@
 const https = require("https");
-const http  = require("http");
 
 function fetchUrl(url) {
   return new Promise((resolve, reject) => {
-    const lib = url.startsWith("https") ? https : http;
-    lib.get(url, {
+    https.get(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "pt-BR,pt;q=0.9",
       }
     }, (res) => {
-      // Segue redirecionamentos
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return fetchUrl(res.headers.location).then(resolve).catch(reject);
       }
       const chunks = [];
-      res.on("data", (chunk) => chunks.push(chunk));
-      res.on("end", () => resolve(Buffer.concat(chunks).toString("latin1")));
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
     }).on("error", reject);
   });
 }
 
-function cleanHtml(str) {
+function stripHtml(str) {
   return str
-    .replace(/<[^>]+>/g, " ")   // remove tags
+    .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -37,84 +34,56 @@ function cleanHtml(str) {
 
 exports.handler = async () => {
   try {
-    const now   = new Date();
-    const day   = String(now.getDate()).padStart(2, "0");
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const year  = now.getFullYear();
-
+    const now = new Date();
     const MONTHS_PT = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                        "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-    const dateLabel = `${parseInt(day)} de ${MONTHS_PT[now.getMonth()]} de ${year}`;
+    const dateLabel = `${now.getDate()} de ${MONTHS_PT[now.getMonth()]} de ${now.getFullYear()}`;
 
-    const html = await fetchUrl("https://www.devocionaldiario.com.br/");
+    const html = await fetchUrl("https://www.bibliaon.com/devocional_diario/");
 
-    // ── Versículo ──────────────────────────────────────────────────────────
-    // No HTML vem como: <em><strong>"texto do verso" Livro X:Y</strong></em>
-    // ou às vezes só com <strong><em>
-    let verseRaw = "";
-    const versePatterns = [
-      /<em><strong>([\s\S]*?)<\/strong><\/em>/i,
-      /<strong><em>([\s\S]*?)<\/em><\/strong>/i,
-      /<i><b>([\s\S]*?)<\/b><\/i>/i,
-      /<b><i>([\s\S]*?)<\/i><\/b>/i,
-    ];
-    for (const pat of versePatterns) {
-      const m = html.match(pat);
-      if (m && m[1] && m[1].length > 10) {
-        verseRaw = cleanHtml(m[1]);
-        break;
+    // ── Título ────────────────────────────────────────────────────────────
+    // Está em <h3> dentro da seção "Devocional de Hoje"
+    const titleMatch = html.match(/Devocional de Hoje[\s\S]*?<h3[^>]*>([\s\S]*?)<\/h3>/i);
+    const title = titleMatch ? stripHtml(titleMatch[1]).trim() : "";
+
+    // ── Versículo ─────────────────────────────────────────────────────────
+    // Está em <blockquote> logo após o primeiro parágrafo
+    // Formato: texto <br> - Livro X:Y
+    const blockquoteMatch = html.match(/Devocional de Hoje[\s\S]*?<blockquote[^>]*>([\s\S]*?)<\/blockquote>/i);
+    let verseText = "";
+    let verseRef  = "";
+
+    if (blockquoteMatch) {
+      const bq = stripHtml(blockquoteMatch[1]);
+      // Separa na referência: "- Livro X:Y" no final
+      const refMatch = bq.match(/^([\s\S]+?)\s*[-–]\s*((?:\d\s)?[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][\wÀ-ÿ\s]+\d+:\d+[\d\-,\s]*)$/);
+      if (refMatch) {
+        verseText = refMatch[1].trim();
+        verseRef  = refMatch[2].trim();
+      } else {
+        verseText = bq;
       }
     }
 
-    // Se não achou pelas tags, tenta pelo padrão de texto: texto entre aspas + referência
-    if (!verseRaw) {
-      // Busca parágrafo que contém versículo bíblico (tem aspas e referência como "João 3:16")
-      const pMatch = html.match(/<p[^>]*>([\s\S]*?[""][^<]{10,}[""]\s*[\w\s]+\d+:\d+[\d\-,\s]*)<\/p>/i);
-      if (pMatch) verseRaw = cleanHtml(pMatch[1]);
-    }
-
-    // Separa texto da referência
-    // Referência bíblica: palavra(s) seguida(s) de número:número (ex: "João 3:16", "Efésios 3:20-21")
-    let verseText = verseRaw;
-    let verseRef  = "";
-    const refPattern = /^([\s\S]+?)\s+((?:\d\s)?[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]+(?:\s+[A-ZÁÀÂÃÉÊÍÓÔÕÚÇ][a-záàâãéêíóôõúç]+)*\s+\d+:\d+[\d\-,\s]*(?:e\s+\w+\s+\d+:\d+[\d\-,\s]*)?)$/;
-    const refMatch = verseRaw.match(refPattern);
-    if (refMatch) {
-      verseText = refMatch[1].replace(/^[""\u201C\u201D]+|[""\u201C\u201D]+$/g, "").trim();
-      verseRef  = refMatch[2].trim();
-    }
-
-    // ── Pensamento ────────────────────────────────────────────────────────
-    // Padrão: <strong>Pensamento:</strong> texto até <strong>Oração:</strong>
-    let thought = "";
-    const thoughtMatch = html.match(
-      /<strong>Pensamento:<\/strong>([\s\S]*?)(?=<strong>Ora[çc][ãa]o:|<br\s*\/?>[\s\S]{0,20}<strong>|Papel de Parede)/i
-    );
-    if (thoughtMatch) {
-      thought = cleanHtml(thoughtMatch[1]);
+    // ── Corpo (reflexão) ──────────────────────────────────────────────────
+    // Parágrafos entre o blockquote e a seção de pontos/oração
+    // Pega tudo entre </blockquote> e "#### Para orar" dentro da seção de hoje
+    const bodyMatch = html.match(/<\/blockquote>([\s\S]*?)(?=<h4|Para orar:|Devocional de Ontem)/i);
+    let body = "";
+    if (bodyMatch) {
+      // Remove listas de reflexão (bullet points) — pega só parágrafos <p>
+      const paragraphs = [...bodyMatch[1].matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)]
+        .map(m => stripHtml(m[1]).trim())
+        .filter(p => p.length > 20 && !p.startsWith("Veja também"));
+      body = paragraphs.join("\n\n");
     }
 
     // ── Oração ────────────────────────────────────────────────────────────
-    // Padrão: <strong>Oração:</strong> texto até próximo bloco
+    // Após "Para orar:" até próximo bloco
+    const prayerMatch = html.match(/Para orar:([\s\S]*?)(?=Veja também:|Devocional de Ontem|<\/section|<h2)/i);
     let prayer = "";
-    const prayerMatch = html.match(
-      /<strong>Ora[çc][ãa]o:<\/strong>([\s\S]*?)(?=<strong>Enviado|<strong>Papel|Papel de Parede|\n\s*\n\s*\n)/i
-    );
     if (prayerMatch) {
-      prayer = cleanHtml(prayerMatch[1]);
-    }
-
-    // Fallback: tenta extrair do texto corrido
-    if (!thought || !prayer) {
-      const text = cleanHtml(html);
-      if (!thought) {
-        const tm = text.match(/Pensamento:\s*([\s\S]*?)(?=\s*Ora[çc][ãa]o:|Papel de Parede)/i);
-        if (tm) thought = tm[1].trim();
-      }
-      if (!prayer) {
-        const pm = text.match(/Ora[çc][ãa]o:\s*([\s\S]*?)(?=\s*Enviado por:|Papel de Parede|Download)/i);
-        if (pm) prayer = pm[1].trim();
-      }
+      prayer = stripHtml(prayerMatch[1]).trim();
     }
 
     return {
@@ -122,15 +91,17 @@ exports.handler = async () => {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
         "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=3600",
       },
       body: JSON.stringify({
         ok: true,
         dateLabel,
-        verseText: verseText || "Versículo não disponível",
+        title:     title     || "Devocional do Dia",
+        verseText: verseText || "",
         verseRef:  verseRef  || "",
-        thought:   thought   || "Pensamento não disponível",
-        prayer:    prayer    || "Oração não disponível",
-        source: "devocionaldiario.com.br",
+        body:      body      || "",
+        prayer:    prayer    || "",
+        source: "bibliaon.com",
       }),
     };
   } catch (err) {

@@ -3,9 +3,10 @@ import React, { useEffect, useState } from "react";
 type DevocionalData = {
   ok?: boolean;
   dateLabel: string;
+  title: string;
   verseText: string;
   verseRef: string;
-  thought: string;
+  body: string;
   prayer: string;
   source?: string;
 };
@@ -23,20 +24,17 @@ function gerarStory(data: DevocionalData): Promise<string> {
     c.width=W; c.height=H;
     const ctx=c.getContext("2d")!;
 
-    // Fundo
     const bg=ctx.createLinearGradient(0,0,W*.6,H);
     bg.addColorStop(0,"#020d1f"); bg.addColorStop(.3,"#041428");
     bg.addColorStop(.65,"#051c3a"); bg.addColorStop(1,"#020b18");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    // Glows
-    [[0,H*.35,W*.8,"rgba(30,100,220,0.22)","rgba(20,70,180,0.08)"],[W,H*.1,W*.7,"rgba(0,180,255,0.15)","transparent"],[W*.3,H,W*.9,"rgba(40,60,200,0.18)","transparent"]].forEach(([x,y,r,c1,c2])=>{
-      const g=ctx.createRadialGradient(x as number,y as number,0,x as number,y as number,r as number);
-      g.addColorStop(0,c1 as string); g.addColorStop(1,c2 as string);
+    [[0,H*.35,W*.8,"rgba(30,100,220,0.22)","rgba(20,70,180,0.08)"],[W,H*.1,W*.7,"rgba(0,180,255,0.15)","transparent"],[W*.3,H,W*.9,"rgba(40,60,200,0.18)","transparent"]].forEach(([x,y,r,c1,c2]:any)=>{
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,c1); g.addColorStop(1,c2);
       ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
     });
 
-    // Waves
     const drawWave=(oY:number,amp:number,freq:number,phase:number,cs:string,ce:string)=>{
       ctx.beginPath(); ctx.moveTo(0,H);
       for(let x=0;x<=W;x+=4){
@@ -52,7 +50,6 @@ function gerarStory(data: DevocionalData): Promise<string> {
     drawWave(H*.70,70,2.8,1.1,"rgba(15,80,200,0.5)","rgba(5,25,100,0.5)");
     drawWave(H*.78,55,3.4,2.0,"rgba(0,120,255,0.35)","rgba(0,40,120,0.55)");
 
-    // Cristas das waves
     ctx.save(); ctx.globalAlpha=.18;
     [{oY:H*.62,amp:90,freq:2.2,ph:.4},{oY:H*.70,amp:70,freq:2.8,ph:1.1},{oY:H*.78,amp:55,freq:3.4,ph:2.0}].forEach(p=>{
       ctx.beginPath();
@@ -60,7 +57,6 @@ function gerarStory(data: DevocionalData): Promise<string> {
       ctx.strokeStyle="rgba(120,200,255,0.7)"; ctx.lineWidth=2.5; ctx.stroke();
     }); ctx.restore();
 
-    // Partículas
     ctx.save();
     for(let i=0;i<80;i++){
       const px=Math.random()*W,py=Math.random()*H*.75,pr=Math.random()*1.8+.3;
@@ -69,7 +65,6 @@ function gerarStory(data: DevocionalData): Promise<string> {
       ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
     } ctx.restore();
 
-    // Helpers
     const wrap=(text:string,maxW:number,font:string)=>{
       ctx.font=font;
       return text.split(" ").reduce((lines:string[],word)=>{
@@ -88,47 +83,56 @@ function gerarStory(data: DevocionalData): Promise<string> {
       ctx.save();
       const l=ctx.createLinearGradient(100,0,W-100,0);
       l.addColorStop(0,"transparent"); l.addColorStop(.5,`rgba(80,160,255,${alpha})`); l.addColorStop(1,"transparent");
-      ctx.strokeStyle=l; ctx.lineWidth=1.2; ctx.globalAlpha=1;
+      ctx.strokeStyle=l; ctx.lineWidth=1.2;
       ctx.beginPath(); ctx.moveTo(100,y); ctx.lineTo(W-100,y); ctx.stroke(); ctx.restore();
     };
 
-    // Conteúdo
     hline(165);
     center("AOGIM  CONECT",130,"300 28px Georgia,serif","rgba(100,180,255,0.65)");
     center("DEVOCIONAL  DO  DIA",228,"700 24px sans-serif","rgba(80,160,255,0.6)");
     center(data.dateLabel,278,"italic 300 26px Georgia,serif","rgba(120,190,255,0.45)");
     hline(315);
 
+    // Título
+    let ty=380;
+    if(data.title){
+      const tlines=wrap(data.title,W-160,"600 62px Georgia,serif");
+      ctx.save(); ctx.font="600 62px Georgia,serif"; ctx.fillStyle="#e8f4ff";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.3)"; ctx.shadowBlur=20;
+      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=80;}); ctx.restore();
+      ty+=20;
+    }
+
+    center("✦",ty,"22px serif","rgba(80,160,255,0.5)"); ty+=50;
+
     // Versículo
-    let ty=390;
-    ctx.save();
-    ctx.font="italic 130px Georgia,serif"; ctx.fillStyle="rgba(50,130,255,0.08)";
-    ctx.textAlign="left"; ctx.fillText("\u201C",85,ty+20); ctx.restore();
+    ctx.save(); ctx.font="italic 110px Georgia,serif"; ctx.fillStyle="rgba(50,130,255,0.08)";
+    ctx.textAlign="left"; ctx.fillText("\u201C",85,ty+10); ctx.restore();
 
-    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 44px Georgia,serif");
-    ctx.save(); ctx.font="italic 44px Georgia,serif";
+    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 40px Georgia,serif");
+    ctx.save(); ctx.font="italic 40px Georgia,serif";
     ctx.fillStyle="rgba(210,235,255,0.93)"; ctx.textAlign="center";
-    ctx.shadowColor="rgba(0,100,255,0.15)"; ctx.shadowBlur=10;
-    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=66;}); ctx.restore();
-    ty+=16;
+    ctx.shadowColor="rgba(0,100,255,0.12)"; ctx.shadowBlur=8;
+    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+    ty+=14;
 
-    hline(ty,0.25); ty+=50;
-    ctx.save(); ctx.font="600 38px Georgia,serif"; ctx.fillStyle="rgba(100,190,255,0.9)";
-    ctx.textAlign="center"; ctx.shadowColor="rgba(0,120,255,0.3)"; ctx.shadowBlur=15;
-    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=60;
+    hline(ty,0.22); ty+=48;
+    ctx.save(); ctx.font="600 36px Georgia,serif"; ctx.fillStyle="rgba(100,190,255,0.9)";
+    ctx.textAlign="center"; ctx.shadowColor="rgba(0,120,255,0.3)"; ctx.shadowBlur=14;
+    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=55;
 
-    center("✦",ty,"22px serif","rgba(80,160,255,0.5)"); ty+=55;
+    center("✦",ty,"20px serif","rgba(80,160,255,0.45)"); ty+=50;
 
-    // Pensamento (primeiras 2 linhas)
-    const shortThought = data.thought.length > 220 ? data.thought.slice(0,220).replace(/\s\w+$/,"") + "…" : data.thought;
-    const tlines=wrap(shortThought,W-180,"400 36px Georgia,serif");
-    ctx.save(); ctx.font="400 36px Georgia,serif";
-    ctx.fillStyle="rgba(190,220,255,0.75)"; ctx.textAlign="center";
-    tlines.slice(0,5).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=54;}); ctx.restore();
+    // Corpo (primeiras linhas)
+    const shortBody = data.body.length>240 ? data.body.slice(0,240).replace(/\s\w+$/,"")+"…" : data.body;
+    const blines=wrap(shortBody,W-180,"400 34px Georgia,serif");
+    ctx.save(); ctx.font="400 34px Georgia,serif";
+    ctx.fillStyle="rgba(185,215,255,0.72)"; ctx.textAlign="center";
+    blines.slice(0,6).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore();
 
     // Rodapé
     const footY=H-155;
-    hline(footY-40,0.25);
+    hline(footY-40,0.22);
     ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
     ctx.shadowColor="rgba(0,140,255,0.6)"; ctx.shadowBlur=24;
     const hg=ctx.createLinearGradient(W/2-150,0,W/2+150,0);
@@ -146,10 +150,10 @@ export default function Devotional() {
   const [gerandoImg, setGerandoImg]         = useState(false);
   const [compartilhando, setCompartilhando] = useState(false);
   const [imgGerada, setImgGerada]           = useState<string|null>(null);
-  const [expandedThought, setExpandedThought] = useState(false);
-  const [expandedPrayer, setExpandedPrayer]   = useState(false);
+  const [expandedBody, setExpandedBody]     = useState(false);
+  const [expandedPrayer, setExpandedPrayer] = useState(false);
 
-  const cacheKey = `devocional:devdiario:${todayKey()}`;
+  const cacheKey = `devocional:bibliaon:${todayKey()}`;
   const logoUrl  = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
   const shareUrl = "https://aogimconectinhumas.site/#/devocional";
 
@@ -172,7 +176,7 @@ export default function Devotional() {
 
   const compartilharWA=()=>{
     if(!data)return;
-    const text=`📖 *Devocional do Dia*\n\n_"${data.verseText}"_\n*${data.verseRef}*\n\n${data.thought.slice(0,200)}…\n\n🙏 Leia o devocional completo:\n${shareUrl}`;
+    const text=`📖 *${data.title}*\n\n_"${data.verseText}"_\n*${data.verseRef}*\n\n${data.body.slice(0,200)}…\n\n🙏 Leia o devocional completo:\n${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank");
   };
 
@@ -206,12 +210,10 @@ export default function Devotional() {
     finally{setCompartilhando(false);}
   };
 
-  // Trunca texto para preview
-  const preview=(text:string,lines=3)=>{
+  const preview=(text:string,wordLimit=36)=>{
     const words=text.split(" ");
-    const limit=lines*12;
-    if(words.length<=limit)return{short:text,truncated:false};
-    return{short:words.slice(0,limit).join(" ")+"…",truncated:true};
+    if(words.length<=wordLimit)return{short:text,truncated:false};
+    return{short:words.slice(0,wordLimit).join(" ")+"…",truncated:true};
   };
 
   return(
@@ -226,8 +228,6 @@ export default function Devotional() {
           background:linear-gradient(155deg,#060d20 0%,#0a1535 40%,#0e1d50 70%,#050f28 100%);
           position:relative; overflow-x:hidden;
         }
-
-        /* Glows */
         .dv-glow-a{position:fixed;pointer-events:none;z-index:0;top:-10%;left:-15%;width:60vw;height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(30,90,210,0.13) 0%,transparent 70%);}
         .dv-glow-b{position:fixed;pointer-events:none;z-index:0;bottom:-10%;right:-10%;width:50vw;height:50vw;border-radius:50%;background:radial-gradient(circle,rgba(0,140,255,0.1) 0%,transparent 70%);}
 
@@ -241,10 +241,8 @@ export default function Devotional() {
         .dv-in-4{animation-delay:.42s}
         .dv-in-5{animation-delay:.56s}
 
-        /* Card do versículo */
         .dv-verse-card{
-          border-radius:20px;
-          padding:26px 22px 20px;
+          border-radius:20px; padding:26px 22px 20px;
           background:linear-gradient(135deg,rgba(20,70,180,0.16),rgba(0,100,220,0.07));
           border:1px solid rgba(60,140,255,0.2);
           position:relative; overflow:hidden;
@@ -257,7 +255,6 @@ export default function Devotional() {
           line-height:1; pointer-events:none;
         }
 
-        /* Cards de seção (Pensamento / Oração) */
         .dv-section-card{
           border-radius:18px;
           background:rgba(255,255,255,0.03);
@@ -268,8 +265,7 @@ export default function Devotional() {
           display:flex; align-items:center; justify-content:space-between;
           padding:14px 18px;
           border-bottom:1px solid rgba(60,140,255,0.08);
-          cursor:pointer;
-          user-select:none;
+          cursor:pointer; user-select:none;
         }
         .dv-section-header:hover{background:rgba(60,140,255,0.05);}
         .dv-section-label{
@@ -277,33 +273,24 @@ export default function Devotional() {
           text-transform:uppercase; color:rgba(80,160,255,0.7);
           display:flex; align-items:center; gap:8px;
         }
-        .dv-section-chevron{
-          font-size:12px; color:rgba(80,160,255,0.5);
-          transition:transform .25s;
-        }
+        .dv-section-chevron{font-size:12px;color:rgba(80,160,255,0.5);transition:transform .25s;}
         .dv-section-chevron-open{transform:rotate(180deg);}
         .dv-section-body{padding:16px 18px 18px;}
         .dv-section-text{
           font-family:'Playfair Display',Georgia,serif;
           font-size:clamp(14px,4vw,16px);
-          line-height:1.85;
-          color:rgba(190,215,250,0.82);
-          margin:0;
+          line-height:1.85; color:rgba(190,215,250,0.82); margin:0;
         }
         .dv-read-more{
           background:none; border:none; cursor:pointer;
-          font-size:12px; font-weight:700;
-          color:rgba(80,160,255,0.7);
-          padding:8px 0 0; display:block;
-          font-family:'Lato',sans-serif;
+          font-size:12px; font-weight:700; color:rgba(80,160,255,0.7);
+          padding:8px 0 0; display:block; font-family:'Lato',sans-serif;
           transition:color .15s;
         }
         .dv-read-more:hover{color:rgba(120,180,255,0.9);}
 
-        /* Divisor */
         .dv-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(60,140,255,0.25),transparent);}
 
-        /* Botões */
         .dv-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:none;border-radius:16px;padding:15px 0;cursor:pointer;font-family:'Lato',sans-serif;font-size:15px;font-weight:700;color:#fff;transition:transform .18s,box-shadow .18s,opacity .18s;}
         .dv-btn:hover{transform:translateY(-2px);}
         .dv-btn:active{transform:translateY(1px);}
@@ -352,15 +339,20 @@ export default function Devotional() {
                   ✦ &nbsp;Devocional do Dia&nbsp; ✦
                 </span>
                 {data.dateLabel&&(
-                  <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,color:"rgba(100,180,255,0.45)",fontStyle:"italic",margin:"6px 0 0"}}>
+                  <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,color:"rgba(100,180,255,0.45)",fontStyle:"italic",margin:"6px 0 4px"}}>
                     {data.dateLabel}
                   </p>
+                )}
+                {data.title&&(
+                  <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(20px,5.5vw,26px)",fontWeight:700,color:"#ddeeff",margin:"8px 0 0",lineHeight:1.25}}>
+                    {data.title}
+                  </h1>
                 )}
               </div>
 
               <div className="dv-divider dv-in dv-in-1" style={{marginBottom:24}}/>
 
-              {/* Card versículo */}
+              {/* Versículo */}
               <div className="dv-verse-card dv-in dv-in-2" style={{marginBottom:16}}>
                 <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(15px,4.5vw,18px)",color:"rgba(215,235,255,0.93)",lineHeight:1.7,fontStyle:"italic",textAlign:"center",position:"relative",zIndex:1,margin:0}}>
                   "{data.verseText}"
@@ -372,34 +364,27 @@ export default function Devotional() {
                 </div>
               </div>
 
-              {/* Card Pensamento */}
+              {/* Card Reflexão */}
               <div className="dv-section-card dv-in dv-in-3" style={{marginBottom:10}}>
-                <div className="dv-section-header" onClick={()=>setExpandedThought(v=>!v)}>
+                <div className="dv-section-header" onClick={()=>setExpandedBody(v=>!v)}>
                   <span className="dv-section-label">
                     <svg viewBox="0 0 16 16" fill="currentColor" style={{width:11,height:11}}>
                       <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 12.5a5.5 5.5 0 110-11 5.5 5.5 0 010 11zm.75-8.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM7.25 7a.75.75 0 011.5 0v3.5a.75.75 0 01-1.5 0V7z"/>
                     </svg>
-                    Pensamento
+                    Reflexão
                   </span>
-                  <span className={`dv-section-chevron ${expandedThought?"dv-section-chevron-open":""}`}>▼</span>
+                  <span className={`dv-section-chevron${expandedBody?" dv-section-chevron-open":""}`}>▼</span>
                 </div>
-                {expandedThought&&(
-                  <div className="dv-section-body">
-                    <p className="dv-section-text">{data.thought}</p>
-                  </div>
-                )}
-                {!expandedThought&&(
-                  <div className="dv-section-body" style={{paddingTop:14}}>
-                    <p className="dv-section-text">
-                      {preview(data.thought).short}
-                    </p>
-                    {preview(data.thought).truncated&&(
-                      <button className="dv-read-more" onClick={()=>setExpandedThought(true)}>
-                        Ler tudo →
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="dv-section-body" style={{paddingTop:14}}>
+                  <p className="dv-section-text">
+                    {expandedBody ? data.body : preview(data.body).short}
+                  </p>
+                  {preview(data.body).truncated&&(
+                    <button className="dv-read-more" onClick={()=>setExpandedBody(v=>!v)}>
+                      {expandedBody ? "← Menos" : "Ler tudo →"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Card Oração */}
@@ -411,25 +396,18 @@ export default function Devotional() {
                     </svg>
                     Oração
                   </span>
-                  <span className={`dv-section-chevron ${expandedPrayer?"dv-section-chevron-open":""}`}>▼</span>
+                  <span className={`dv-section-chevron${expandedPrayer?" dv-section-chevron-open":""}`}>▼</span>
                 </div>
-                {expandedPrayer&&(
-                  <div className="dv-section-body">
-                    <p className="dv-section-text" style={{fontStyle:"italic"}}>{data.prayer}</p>
-                  </div>
-                )}
-                {!expandedPrayer&&(
-                  <div className="dv-section-body" style={{paddingTop:14}}>
-                    <p className="dv-section-text" style={{fontStyle:"italic"}}>
-                      {preview(data.prayer,2).short}
-                    </p>
-                    {preview(data.prayer,2).truncated&&(
-                      <button className="dv-read-more" onClick={()=>setExpandedPrayer(true)}>
-                        Ler tudo →
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="dv-section-body" style={{paddingTop:14}}>
+                  <p className="dv-section-text" style={{fontStyle:"italic"}}>
+                    {expandedPrayer ? data.prayer : preview(data.prayer,24).short}
+                  </p>
+                  {preview(data.prayer,24).truncated&&(
+                    <button className="dv-read-more" onClick={()=>setExpandedPrayer(v=>!v)}>
+                      {expandedPrayer ? "← Menos" : "Ler tudo →"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Ações */}
