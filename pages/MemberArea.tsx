@@ -22,24 +22,23 @@ async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'repr
 // ─── Geração do Cartão CNH Digital ───────────────────────────────────────────
 async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, memberId: string): Promise<string> {
   return new Promise(async (resolve) => {
-    const W = 900, H = 560;
+    const W = 900, H = 580;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d')!;
 
-    // ── Fundo geral ──────────────────────────────────────────────────────────
+    // ── Fundo ────────────────────────────────────────────────────────────────
     const bgGrad = ctx.createLinearGradient(0, 0, W, H);
     bgGrad.addColorStop(0, '#08122a'); bgGrad.addColorStop(1, '#0b1c3e');
     ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
 
-    // ── Padrão de pontos decorativo no fundo ─────────────────────────────────
+    // Padrão de pontos
     ctx.save(); ctx.globalAlpha = 0.04;
-    for (let x = 20; x < W; x += 28) {
+    for (let x = 20; x < W; x += 28)
       for (let y = 20; y < H; y += 28) {
         ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2);
         ctx.fillStyle = '#4a90e2'; ctx.fill();
       }
-    }
     ctx.restore();
 
     // ── FAIXA SUPERIOR ───────────────────────────────────────────────────────
@@ -48,7 +47,7 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     faixaGrad.addColorStop(0, '#1040b0'); faixaGrad.addColorStop(0.6, '#1a55d0'); faixaGrad.addColorStop(1, '#0d3a9e');
     ctx.fillStyle = faixaGrad; ctx.fillRect(0, 0, W, faixaH);
 
-    // Ondas decorativas na faixa
+    // Ondas decorativas
     ctx.save(); ctx.globalAlpha = 0.08;
     for (let r = 80; r <= 320; r += 55) {
       ctx.beginPath(); ctx.arc(W - 60, -20, r, 0, Math.PI*2);
@@ -56,45 +55,43 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     }
     ctx.restore();
 
-    // Linha divisória brilhante
+    // Linha divisória
     const lineGrad = ctx.createLinearGradient(0, faixaH, W, faixaH);
     lineGrad.addColorStop(0, 'transparent'); lineGrad.addColorStop(0.2, '#5090ff');
     lineGrad.addColorStop(0.8, '#5090ff'); lineGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = lineGrad; ctx.fillRect(0, faixaH - 2, W, 3);
 
-    // Logo na faixa
+    // Logo
     try {
       const logo = new Image(); logo.crossOrigin = 'anonymous';
       await new Promise<void>((res) => { logo.onload=()=>res(); logo.onerror=()=>res(); logo.src=LOGO_URL; });
       if (logo.complete && logo.naturalWidth > 0) ctx.drawImage(logo, 24, 14, 80, 80);
     } catch {}
 
-    // Nome da igreja na faixa
+    // Textos da faixa
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.font = 'bold 22px Georgia, serif';
-    ctx.fillText('ASSEMBLÉIA DE DEUS', 122, 44);
-    ctx.font = '14px sans-serif';
-    ctx.fillStyle = 'rgba(180,210,255,0.85)';
-    ctx.fillText('MINISTÉRIO IRLANDA  •  INHUMAS - GO', 122, 66);
+    ctx.font = 'bold 23px Georgia, serif';
+    ctx.fillText('ASSEMBLÉIA DE DEUS', 122, 46);
+    ctx.font = '14px sans-serif'; ctx.fillStyle = 'rgba(180,210,255,0.85)';
+    ctx.fillText('MINISTÉRIO IRLANDA  •  INHUMAS - GO', 122, 68);
     ctx.restore();
 
-    // Badge "CARTÃO DE MEMBRO" à direita da faixa
+    // Badge "CARTÃO DE MEMBRO"
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.beginPath(); ctx.roundRect(W - 210, 28, 186, 52, 26); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(W - 215, 28, 190, 52, 26); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(W - 210, 28, 186, 52, 26); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(W - 215, 28, 190, 52, 26); ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('CARTÃO DE MEMBRO', W - 117, 59);
+    ctx.fillText('CARTÃO DE MEMBRO', W - 120, 60);
     ctx.restore();
 
     // ── FOTO ─────────────────────────────────────────────────────────────────
-    const photoW = 140, photoH = 175;
-    const photoX = 28, photoY = faixaH + 20;
+    const photoW = 158, photoH = 198;
+    const photoX = 22, photoY = faixaH + 18;
 
-    // Sombra e borda da foto
     ctx.save();
     ctx.shadowColor = 'rgba(20,80,220,0.5)'; ctx.shadowBlur = 20;
     ctx.strokeStyle = 'rgba(80,150,255,0.6)'; ctx.lineWidth = 2.5;
@@ -107,140 +104,133 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
         const img = new Image(); img.crossOrigin = 'anonymous';
         await new Promise<void>((res) => { img.onload=()=>res(); img.onerror=()=>res(); img.src=photoUrl; });
         if (img.complete && img.naturalWidth > 0) {
-          const aspect = img.naturalWidth / img.naturalHeight, boxAspect = photoW / photoH;
+          const aspect = img.naturalWidth/img.naturalHeight, boxAspect = photoW/photoH;
           let sx=0,sy=0,sw=img.naturalWidth,sh=img.naturalHeight;
           if(aspect>boxAspect){sw=sh*boxAspect;sx=(img.naturalWidth-sw)/2;}
           else{sh=sw/boxAspect;sy=(img.naturalHeight-sh)/2;}
-          ctx.drawImage(img, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
+          ctx.drawImage(img,sx,sy,sw,sh,photoX,photoY,photoW,photoH);
         } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
       } catch { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
     } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
     ctx.restore();
 
-    // Nome sob a foto
-    ctx.save();
-    ctx.textAlign = 'center';
+    // Nome e badge de função sob a foto
+    ctx.save(); ctx.textAlign = 'center';
     let nomeDisplay = details.full_name || 'MEMBRO';
     if (nomeDisplay.split(' ').length > 2) {
       const p = nomeDisplay.split(' '); nomeDisplay = `${p[0]} ${p[p.length-1]}`;
     }
     ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#e8f4ff';
-    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 20);
+    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 22);
 
-    // Função badge
     const funcao = details.church_function || 'Membro';
-    const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 24);
+    const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 28);
     ctx.fillStyle = 'rgba(26,85,208,0.6)';
-    ctx.beginPath(); ctx.roundRect(photoX + photoW/2 - badgeW/2, photoY + photoH + 28, badgeW, 22, 11); ctx.fill();
-    ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
+    ctx.beginPath(); ctx.roundRect(photoX + photoW/2 - badgeW/2, photoY + photoH + 30, badgeW, 24, 12); ctx.fill();
+    ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
+    ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 46);
     ctx.restore();
 
-    // ── DADOS — 3 SEÇÕES ─────────────────────────────────────────────────────
-    const dx = photoX + photoW + 28; // x início dos dados
-    const dy = faixaH + 18;
-    const colW = (W - dx - 20) / 2; // largura de cada coluna
+    // ── DADOS ─────────────────────────────────────────────────────────────────
+    const dx = photoX + photoW + 26;
+    const dy = faixaH + 16;
+    const colW = (W - dx - 20) / 2;
 
-    // Função auxiliar para desenhar campo
-    const drawField = (label: string, value: string, x: number, y: number, maxW = colW - 10) => {
+    const drawField = (label: string, value: string, x: number, y: number, maxW = colW - 12) => {
       ctx.save();
-      ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.7)';
-      ctx.textAlign = 'left'; ctx.letterSpacing = '1px';
+      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.75)';
+      ctx.textAlign = 'left';
       ctx.fillText(label.toUpperCase(), x, y);
-      ctx.font = '14px Georgia, serif'; ctx.fillStyle = 'rgba(220,235,255,0.95)';
-      ctx.letterSpacing = '0px';
+      ctx.font = '15px Georgia, serif'; ctx.fillStyle = 'rgba(220,235,255,0.95)';
       let val = value;
-      while (ctx.measureText(val).width > maxW && val.length > 4) val = val.slice(0, -1);
+      while (ctx.measureText(val).width > maxW && val.length > 4) val = val.slice(0,-1);
       if (val !== value) val += '…';
-      ctx.fillText(val, x, y + 17);
+      ctx.fillText(val, x, y + 19);
       ctx.restore();
     };
 
-    // Função auxiliar para cabeçalho de seção
     const drawSectionHeader = (label: string, x: number, y: number, w: number) => {
       ctx.save();
       ctx.fillStyle = 'rgba(26,85,208,0.35)';
-      ctx.beginPath(); ctx.roundRect(x, y - 13, w, 20, 4); ctx.fill();
-      ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = 'rgba(120,180,255,0.9)';
-      ctx.textAlign = 'left'; ctx.fillText(label, x + 8, y + 2);
+      ctx.beginPath(); ctx.roundRect(x, y - 14, w, 22, 4); ctx.fill();
+      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(120,180,255,0.9)';
+      ctx.textAlign = 'left'; ctx.fillText(label, x + 10, y + 3);
       ctx.restore();
     };
 
-    // ── SEÇÃO PESSOAL ──────────────────────────────────────────────────────
+    const sepLine = (y: number) => {
+      const g = ctx.createLinearGradient(dx, 0, W-20, 0);
+      g.addColorStop(0,'rgba(80,140,255,0.5)'); g.addColorStop(1,'transparent');
+      ctx.fillStyle = g; ctx.fillRect(dx, y, W - dx - 20, 1);
+    };
+
     let sy2 = dy + 10;
+
+    // PESSOAL
     drawSectionHeader('DADOS PESSOAIS', dx, sy2, W - dx - 20);
-    sy2 += 18;
+    sy2 += 20;
     drawField('Nome Completo', details.full_name || '—', dx, sy2, W - dx - 20);
-    sy2 += 34;
+    sy2 += 36;
     drawField('Nascimento', formatDate(details.birth_date), dx, sy2);
     drawField('Estado Civil', details.marital_status || '—', dx + colW, sy2);
-    sy2 += 34;
+    sy2 += 36;
     drawField('Cidade / Estado', `${details.address_city||'—'} / ${details.address_state||'—'}`, dx, sy2, W - dx - 20);
-    sy2 += 38;
+    sy2 += 40;
 
-    // Linha separadora
-    const sep1 = ctx.createLinearGradient(dx, 0, W - 20, 0);
-    sep1.addColorStop(0, 'rgba(80,140,255,0.5)'); sep1.addColorStop(1, 'transparent');
-    ctx.fillStyle = sep1; ctx.fillRect(dx, sy2 - 4, W - dx - 20, 1);
+    sepLine(sy2 - 6);
 
-    // ── SEÇÃO CONTATO ──────────────────────────────────────────────────────
+    // CONTATO
     drawSectionHeader('CONTATO', dx, sy2 + 10, W - dx - 20);
-    sy2 += 26;
+    sy2 += 28;
     drawField('Telefone', details.phone || '—', dx, sy2);
-    drawField('E-mail', details.email || '—', dx + colW, sy2, colW - 10);
-    sy2 += 38;
+    drawField('E-mail', details.email || '—', dx + colW, sy2, colW - 12);
+    sy2 += 40;
 
-    // Linha separadora
-    const sep2 = ctx.createLinearGradient(dx, 0, W - 20, 0);
-    sep2.addColorStop(0, 'rgba(80,140,255,0.5)'); sep2.addColorStop(1, 'transparent');
-    ctx.fillStyle = sep2; ctx.fillRect(dx, sy2 - 4, W - dx - 20, 1);
+    sepLine(sy2 - 6);
 
-    // ── SEÇÃO ECLESIÁSTICA ─────────────────────────────────────────────────
+    // ECLESIÁSTICO — sem repetir Função (já está no badge da foto)
     drawSectionHeader('DADOS ECLESIÁSTICOS', dx, sy2 + 10, W - dx - 20);
-    sy2 += 26;
-    drawField('Função', details.church_function || '—', dx, sy2);
-    drawField('Entrada na Igreja', formatDate(details.church_entry_date), dx + colW, sy2);
-    sy2 += 34;
-    drawField('Data de Batismo', formatDate(details.baptism_date), dx, sy2);
-    drawField('Inf. Eclesiásticas', details.church_role_info || '—', dx + colW, sy2, colW - 10);
-    sy2 += 38;
+    sy2 += 28;
+    drawField('Entrada na Igreja', formatDate(details.church_entry_date), dx, sy2);
+    drawField('Data de Batismo', formatDate(details.baptism_date), dx + colW, sy2);
+    sy2 += 36;
+    drawField('Informações Eclesiásticas', details.church_role_info || '—', dx, sy2, W - dx - 20);
+    sy2 += 40;
 
-    // ── RODAPÉ: número do cartão + validade ─────────────────────────────────
+    // ── RODAPÉ ───────────────────────────────────────────────────────────────
     const ano = new Date().getFullYear();
     const numCartao = `AD-${ano}-${memberId.slice(0,4).toUpperCase()}`;
     const validade = `${String(new Date().getMonth()+1).padStart(2,'0')}/${ano+1}`;
 
-    // Fundo rodapé
-    const rodapeGrad = ctx.createLinearGradient(0, H - 52, 0, H);
-    rodapeGrad.addColorStop(0, 'rgba(10,20,60,0)'); rodapeGrad.addColorStop(1, 'rgba(10,20,60,0.8)');
-    ctx.fillStyle = rodapeGrad; ctx.fillRect(0, H - 52, W, 52);
+    const rodapeGrad = ctx.createLinearGradient(0, H-55, 0, H);
+    rodapeGrad.addColorStop(0,'rgba(10,20,60,0)'); rodapeGrad.addColorStop(1,'rgba(10,20,60,0.8)');
+    ctx.fillStyle = rodapeGrad; ctx.fillRect(0, H-55, W, 55);
 
-    // Linha topo rodapé
     const lineRodape = ctx.createLinearGradient(0, 0, W, 0);
-    lineRodape.addColorStop(0, 'transparent'); lineRodape.addColorStop(0.3, 'rgba(60,120,255,0.4)');
-    lineRodape.addColorStop(0.7, 'rgba(60,120,255,0.4)'); lineRodape.addColorStop(1, 'transparent');
-    ctx.fillStyle = lineRodape; ctx.fillRect(0, H - 52, W, 1);
+    lineRodape.addColorStop(0,'transparent'); lineRodape.addColorStop(0.3,'rgba(60,120,255,0.4)');
+    lineRodape.addColorStop(0.7,'rgba(60,120,255,0.4)'); lineRodape.addColorStop(1,'transparent');
+    ctx.fillStyle = lineRodape; ctx.fillRect(0, H-55, W, 1);
 
     ctx.save(); ctx.textAlign = 'left';
-    ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.6)';
-    ctx.fillText('Nº DO CARTÃO', 28, H - 28);
-    ctx.font = 'bold 14px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(numCartao, 28, H - 12);
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+    ctx.fillText('Nº DO CARTÃO', 28, H-30);
+    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
+    ctx.fillText(numCartao, 28, H-13);
 
-    ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.6)';
-    ctx.fillText('VALIDADE', 220, H - 28);
-    ctx.font = 'bold 14px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(validade, 220, H - 12);
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+    ctx.fillText('VALIDADE', 230, H-30);
+    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
+    ctx.fillText(validade, 230, H-13);
 
-    ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.6)';
-    ctx.textAlign = 'right';
-    ctx.fillText('DOCUMENTO ECLESIÁSTICO — AOGIM', W - 20, H - 12);
+    ctx.textAlign = 'right'; ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = 'rgba(80,160,255,0.5)';
+    ctx.fillText('DOCUMENTO ECLESIÁSTICO — AOGIM', W-20, H-13);
     ctx.restore();
 
-    // ── Borda externa ────────────────────────────────────────────────────────
+    // Borda externa
     ctx.save();
     ctx.strokeStyle = 'rgba(60,140,255,0.25)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(1, 1, W-2, H-2, 16); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(1,1,W-2,H-2,16); ctx.stroke();
     ctx.restore();
 
     resolve(canvas.toDataURL('image/png', 0.95));
