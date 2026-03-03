@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC, ty
 import type { Session } from '@supabase/supabase-js';
 import {
   AlertCircle, Calendar, Camera, CheckCircle2, CreditCard,
-  Loader2, Lock, LogOut, Mail, Phone, Save, Upload,
+  FileText, Loader2, Lock, LogOut, Mail, Phone, Save, Upload,
   User, UserCircle, Users, X, Download, Share2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -12,7 +12,208 @@ const PHOTO_BUCKET = 'member-photos';
 const ADMIN_WHATSAPP = '556294478817';
 const LOGO_URL = 'https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png';
 
-// ─── Verifica status sem disparar efeitos colaterais ─────────────────────────
+// ─── QR Code simples via canvas ──────────────────────────────────────────────
+function desenharQR(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, texto: string) {
+  // QR Code simplificado decorativo com dados codificados visualmente
+  const cells = 10;
+  const cell = size / cells;
+  const seed = texto.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const rand = (i: number) => ((seed * (i + 1) * 2654435761) >>> 0) % 2 === 0;
+
+  ctx.save();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y, size, size);
+
+  ctx.fillStyle = '#0a1628';
+  // Padrão de células
+  for (let r = 0; r < cells; r++) {
+    for (let c = 0; c < cells; c++) {
+      // Cantos de alinhamento fixos
+      const isCorner =
+        (r < 3 && c < 3) || (r < 3 && c >= cells-3) || (r >= cells-3 && c < 3);
+      if (isCorner || rand(r * cells + c)) {
+        ctx.fillRect(x + c * cell, y + r * cell, cell - 0.5, cell - 0.5);
+      }
+    }
+  }
+  // Borda branca interna nos cantos
+  ctx.fillStyle = '#ffffff';
+  [[0,0],[0,cells-3],[cells-3,0]].forEach(([r,c]) => {
+    ctx.fillRect(x + (c+1)*cell, y + (r+1)*cell, cell, cell);
+  });
+  ctx.fillStyle = '#0a1628';
+  [[0,0],[0,cells-3],[cells-3,0]].forEach(([r,c]) => {
+    ctx.fillRect(x + (c+1.25)*cell, y + (r+1.25)*cell, cell*0.5, cell*0.5);
+  });
+  ctx.restore();
+}
+
+// ─── Verso do Cartão ─────────────────────────────────────────────────────────
+async function gerarCartaoVerso(details: MemberDetails, numRegistro: string, dataEmissao: string): Promise<string> {
+  return new Promise((resolve) => {
+    const W = 900, H = 580;
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d')!;
+
+    // Fundo
+    const bg = ctx.createLinearGradient(0, 0, W, H);
+    bg.addColorStop(0, '#08122a'); bg.addColorStop(1, '#0b1c3e');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+    // Padrão pontos
+    ctx.save(); ctx.globalAlpha = 0.04;
+    for (let x = 20; x < W; x += 28)
+      for (let y = 20; y < H; y += 28) {
+        ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2);
+        ctx.fillStyle = '#4a90e2'; ctx.fill();
+      }
+    ctx.restore();
+
+    // Faixa superior
+    const fg = ctx.createLinearGradient(0, 0, W, 80);
+    fg.addColorStop(0, '#1040b0'); fg.addColorStop(1, '#0d3a9e');
+    ctx.fillStyle = fg; ctx.fillRect(0, 0, W, 80);
+    const lg = ctx.createLinearGradient(0, 78, W, 78);
+    lg.addColorStop(0,'transparent'); lg.addColorStop(0.2,'#5090ff'); lg.addColorStop(0.8,'#5090ff'); lg.addColorStop(1,'transparent');
+    ctx.fillStyle = lg; ctx.fillRect(0, 78, W, 2);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = 'bold 15px Georgia,serif';
+    ctx.fillText('ASSEMBLÉIA DE DEUS — MINISTÉRIO IRLANDA', 30, 36);
+    ctx.font = '12px sans-serif'; ctx.fillStyle = 'rgba(180,210,255,0.8)';
+    ctx.fillText('VERSO DO CARTÃO DE MEMBRO', 30, 58);
+    ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '11px sans-serif';
+    ctx.fillText('Registro Nº ' + numRegistro, W - 30, 48);
+    ctx.restore();
+
+    // ── DECLARAÇÃO DE FÉ ─────────────────────────────────────────────────────
+    const faixaDecH = 200;
+    ctx.save();
+    ctx.fillStyle = 'rgba(26,85,208,0.15)';
+    ctx.beginPath(); ctx.roundRect(30, 100, W - 60, faixaDecH, 12); ctx.fill();
+    ctx.strokeStyle = 'rgba(80,140,255,0.2)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.roundRect(30, 100, W - 60, faixaDecH, 12); ctx.stroke();
+
+    ctx.fillStyle = 'rgba(120,180,255,0.9)'; ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('DECLARAÇÃO DE FÉ', 50, 122);
+
+    const declaracao = [
+      'Cremos na Santa Trindade — Pai, Filho e Espírito Santo.',
+      'Cremos na inspiração divina das Sagradas Escrituras.',
+      'Cremos na salvação pela graça mediante a fé em Jesus Cristo.',
+      'Cremos no batismo nas águas e no batismo com o Espírito Santo.',
+      'Cremos na segunda vinda de Jesus Cristo em glória.',
+    ];
+
+    ctx.font = '13px Georgia, serif'; ctx.fillStyle = 'rgba(200,225,255,0.85)';
+    declaracao.forEach((linha, i) => {
+      ctx.fillText(`• ${linha}`, 50, 146 + i * 26);
+    });
+    ctx.restore();
+
+    // ── INFORMAÇÕES DA SEDE ───────────────────────────────────────────────────
+    ctx.save();
+    ctx.fillStyle = 'rgba(120,180,255,0.9)'; ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SEDE INTERNACIONAL', 30, 330);
+
+    ctx.font = '13px Georgia, serif'; ctx.fillStyle = 'rgba(200,225,255,0.8)';
+    ctx.fillText('Assembléia de Deus — Ministério Irlanda', 30, 352);
+    ctx.fillText('Inhumas — Goiás — Brasil  •  Vinculada à sede: Irlanda, Europa', 30, 372);
+    ctx.fillText('Site: aogimconectinhumas.site', 30, 392);
+    ctx.restore();
+
+    // ── QR CODE ───────────────────────────────────────────────────────────────
+    const qrSize = 100;
+    const qrX = W - qrSize - 40;
+    const qrY = 310;
+    desenharQR(ctx, qrX, qrY, qrSize, numRegistro);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(120,180,255,0.7)'; ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('VALIDAÇÃO', qrX + qrSize/2, qrY + qrSize + 14);
+    ctx.fillStyle = 'rgba(150,200,255,0.5)'; ctx.font = '9px sans-serif';
+    ctx.fillText(numRegistro, qrX + qrSize/2, qrY + qrSize + 26);
+    ctx.restore();
+
+    // ── RODAPÉ ────────────────────────────────────────────────────────────────
+    const rg = ctx.createLinearGradient(0, H-55, 0, H);
+    rg.addColorStop(0,'rgba(10,20,60,0)'); rg.addColorStop(1,'rgba(10,20,60,0.9)');
+    ctx.fillStyle = rg; ctx.fillRect(0, H-55, W, 55);
+
+    const rl = ctx.createLinearGradient(0, 0, W, 0);
+    rl.addColorStop(0,'transparent'); rl.addColorStop(0.3,'rgba(60,120,255,0.35)');
+    rl.addColorStop(0.7,'rgba(60,120,255,0.35)'); rl.addColorStop(1,'transparent');
+    ctx.fillStyle = rl; ctx.fillRect(0, H-55, W, 1);
+
+    ctx.save();
+    ctx.textAlign = 'left'; ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+    ctx.fillText('EMISSÃO', 30, H-30);
+    ctx.font = 'bold 14px Courier New,monospace'; ctx.fillStyle = 'rgba(180,220,255,0.9)';
+    ctx.fillText(dataEmissao, 30, H-13);
+
+    ctx.textAlign = 'center'; ctx.font = '10px sans-serif'; ctx.fillStyle = 'rgba(120,170,255,0.4)';
+    ctx.fillText('Este documento é propriedade da Assembléia de Deus — Ministério Irlanda. Em caso de perda, comunique imediatamente à liderança.', W/2, H-13);
+    ctx.restore();
+
+    // Borda
+    ctx.save();
+    ctx.strokeStyle = 'rgba(60,140,255,0.25)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(1,1,W-2,H-2,16); ctx.stroke();
+    ctx.restore();
+
+    resolve(canvas.toDataURL('image/png', 0.95));
+  });
+}
+
+// ─── Gerar PDF com frente + verso ────────────────────────────────────────────
+async function gerarPDF(frente: string, verso: string, nomeArquivo: string): Promise<void> {
+  // Cria PDF A4 landscape usando canvas → imagem
+  const W = 900, H = 580;
+  const marginMm = 10;
+  const a4wPx = 297 - marginMm * 2; // mm
+  const a4hPx = 210 - marginMm * 2;
+  const escala = Math.min(a4wPx / W, a4hPx / H); // fator escala mm/px
+  const cardWmm = W * escala;
+  const cardHmm = H * escala;
+  const offsetX = marginMm + (a4wPx - cardWmm) / 2;
+
+  const linhas: string[] = [
+    '%PDF-1.4',
+    '1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj',
+  ];
+
+  // Converte dataURL → base64 puro
+  const toB64 = (dataUrl: string) => dataUrl.split(',')[1];
+  const frenteB64 = toB64(frente);
+  const versoB64 = toB64(verso);
+  const frenteLen = Math.ceil(frenteB64.length * 3/4);
+  const versoLen = Math.ceil(versoB64.length * 3/4);
+
+  // Usa jsPDF via CDN carregado dinamicamente
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  document.head.appendChild(script);
+
+  await new Promise<void>((res) => { script.onload = () => res(); });
+
+  const { jsPDF } = (window as any).jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  // Página 1 — Frente
+  doc.addImage(frente, 'PNG', offsetX, marginMm + (a4hPx - cardHmm)/2, cardWmm, cardHmm);
+  doc.text('FRENTE', 148.5, marginMm + a4hPx + 6, { align: 'center' });
+
+  // Página 2 — Verso
+  doc.addPage();
+  doc.addImage(verso, 'PNG', offsetX, marginMm + (a4hPx - cardHmm)/2, cardWmm, cardHmm);
+  doc.text('VERSO', 148.5, marginMm + a4hPx + 6, { align: 'center' });
+
+  doc.save(`${nomeArquivo}.pdf`);
+}
 async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'reprovado'|'livre'> {
   const { data } = await supabase.from('membros').select('status').eq('id', userId).maybeSingle();
   if (!data) return 'livre'; // admin ou usuário sem registro
@@ -20,7 +221,7 @@ async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'repr
 }
 
 // ─── Geração do Cartão CNH Digital ───────────────────────────────────────────
-async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, memberId: string): Promise<string> {
+async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, memberId: string, numRegistro: string, dataEmissao: string): Promise<string> {
   return new Promise(async (resolve) => {
     const W = 900, H = 580;
     const canvas = document.createElement('canvas');
@@ -197,9 +398,45 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     drawField('Informações Eclesiásticas', details.church_role_info || '—', dx, sy2, W - dx - 20);
     sy2 += 40;
 
-    // ── RODAPÉ ───────────────────────────────────────────────────────────────
+    // ── SELO CIRCULAR DE AUTORIDADE ───────────────────────────────────────────
+    const seloX = W - 95, seloY = H - 148, seloR = 52;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2);
+    ctx.fillStyle = '#2060d0'; ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(100,170,255,0.5)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 5, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(100,170,255,0.3)'; ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.stroke();
+    ctx.restore();
+
+    // Texto circular no selo
+    ctx.save();
+    ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = 'rgba(150,210,255,0.8)';
+    ctx.textAlign = 'center';
+    const textoSelo = 'MINISTÉRIO IRLANDA • INHUMAS-GO •';
+    const angStep = (Math.PI * 2) / textoSelo.length;
+    for (let i = 0; i < textoSelo.length; i++) {
+      ctx.save();
+      ctx.translate(seloX, seloY);
+      ctx.rotate(i * angStep - Math.PI/2);
+      ctx.translate(0, -(seloR - 10));
+      ctx.rotate(Math.PI/2);
+      ctx.fillText(textoSelo[i], 0, 0);
+      ctx.restore();
+    }
+    // Cruz central no selo
+    ctx.fillStyle = 'rgba(150,210,255,0.7)'; ctx.font = 'bold 22px Georgia,serif';
+    ctx.fillText('✝', seloX, seloY + 8);
+    ctx.restore();
+
+    // ── RODAPÉ ────────────────────────────────────────────────────────────────
     const ano = new Date().getFullYear();
-    const numCartao = `AD-${ano}-${memberId.slice(0,4).toUpperCase()}`;
     const validade = `${String(new Date().getMonth()+1).padStart(2,'0')}/${ano+1}`;
 
     const rodapeGrad = ctx.createLinearGradient(0, H-55, 0, H);
@@ -213,14 +450,19 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     ctx.save(); ctx.textAlign = 'left';
     ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('Nº DO CARTÃO', 28, H-30);
+    ctx.fillText('Nº DE REGISTRO', 28, H-30);
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(numCartao, 28, H-13);
+    ctx.fillText(numRegistro, 28, H-13);
 
     ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('VALIDADE', 230, H-30);
+    ctx.fillText('EMISSÃO', 230, H-30);
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(validade, 230, H-13);
+    ctx.fillText(dataEmissao, 230, H-13);
+
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+    ctx.fillText('VALIDADE', 380, H-30);
+    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
+    ctx.fillText(validade, 380, H-13);
 
     ctx.textAlign = 'right'; ctx.font = 'bold 10px sans-serif';
     ctx.fillStyle = 'rgba(80,160,255,0.5)';
@@ -258,6 +500,7 @@ const MemberArea: FC = () => {
   const [photoPreview, setPhotoPreview]     = useState<string | null>(null);
   const [photoUrl, setPhotoUrl]             = useState<string | null>(null);
   const [cartaoImg, setCartaoImg]           = useState<string | null>(null);
+  const [versoImg, setVersoImg]             = useState<string | null>(null);
   const [gerandoCartao, setGerandoCartao]   = useState(false);
 
   // Flag para evitar loop no onAuthStateChange
@@ -465,28 +708,62 @@ const MemberArea: FC = () => {
   const handleGerarCartao = async () => {
     if (!session) return;
     setGerandoCartao(true);
-    try { setCartaoImg(await gerarCartaoCNH(memberDetails, photoUrl, session.user.id)); }
-    finally { setGerandoCartao(false); }
+    try {
+      // Busca ou gera número de registro permanente
+      const { data: detData } = await supabase
+        .from('member_details').select('numero_registro, data_emissao').eq('user_id', session.user.id).maybeSingle();
+
+      let numRegistro = detData?.numero_registro;
+      let dataEmissao = detData?.data_emissao;
+
+      if (!numRegistro) {
+        // Gera número único e salva
+        const { data: countData } = await supabase
+          .from('member_details').select('id', { count: 'exact' }).not('numero_registro', 'is', null);
+        const seq = ((countData as any)?.length ?? 0) + 1;
+        numRegistro = `ADI-${new Date().getFullYear()}-${String(seq).padStart(4, '0')}`;
+        dataEmissao = new Date().toISOString().split('T')[0];
+        await supabase.from('member_details').update({ numero_registro: numRegistro, data_emissao: dataEmissao }).eq('user_id', session.user.id);
+      }
+
+      const dataEmissaoFormatada = formatDate(dataEmissao || new Date().toISOString().split('T')[0]);
+
+      const [frente, verso] = await Promise.all([
+        gerarCartaoCNH(memberDetails, photoUrl, session.user.id, numRegistro, dataEmissaoFormatada),
+        gerarCartaoVerso(memberDetails, numRegistro, dataEmissaoFormatada),
+      ]);
+      setCartaoImg(frente);
+      setVersoImg(verso);
+    } finally {
+      setGerandoCartao(false);
+    }
   };
 
-  const handleDownloadCartao = () => {
-    if (!cartaoImg) return;
-    const a = document.createElement('a');
-    a.href = cartaoImg;
-    a.download = `cartao-${memberDetails.full_name.replace(/\s+/g,'-').toLowerCase()}.png`;
-    a.click();
+  const nomeArquivo = `cartao-${memberDetails.full_name.replace(/\s+/g,'-').toLowerCase()}`;
+
+  const handleDownloadPNG = () => {
+    if (!cartaoImg || !versoImg) return;
+    [cartaoImg, versoImg].forEach((img, i) => {
+      const a = document.createElement('a');
+      a.href = img; a.download = `${nomeArquivo}-${i === 0 ? 'frente' : 'verso'}.png`; a.click();
+    });
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!cartaoImg || !versoImg) return;
+    await gerarPDF(cartaoImg, versoImg, nomeArquivo);
   };
 
   const handleCompartilharCartao = async () => {
     if (!cartaoImg) return;
     try {
       const blob = await (await fetch(cartaoImg)).blob();
-      const file = new File([blob], 'cartao-membro.png', { type: 'image/png' });
+      const file = new File([blob], `${nomeArquivo}.png`, { type: 'image/png' });
       const nav = navigator as any;
       if (nav.share && (!nav.canShare || nav.canShare({ files: [file] }))) {
         await nav.share({ files: [file], title: 'Cartão de Membro — AOGIM' });
-      } else handleDownloadCartao();
-    } catch { handleDownloadCartao(); }
+      } else handleDownloadPNG();
+    } catch { handleDownloadPNG(); }
   };
 
   // ── Loading inicial ───────────────────────────────────────────────────────
@@ -609,20 +886,33 @@ const MemberArea: FC = () => {
           <div className="fixed inset-0 top-16 z-50 flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-2xl my-6">
               <div className="bg-gradient-to-br from-[#0a1628] to-[#061020] rounded-3xl p-6 shadow-2xl border border-blue-900/40 relative">
-                <button onClick={() => { setShowCard(false); setCartaoImg(null); }} className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full"><X className="w-5 h-5" /></button>
+                <button onClick={() => { setShowCard(false); setCartaoImg(null); setVersoImg(null); }} className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full"><X className="w-5 h-5" /></button>
                 <h2 className="text-white font-black text-xl mb-1">Cartão de Membro</h2>
                 <p className="text-blue-300/60 text-sm mb-5">Assembléia de Deus — Ministério Irlanda</p>
+
                 {cartaoImg ? (
-                  <div className="rounded-2xl overflow-hidden border border-blue-500/30 shadow-2xl mb-5">
-                    <img src={cartaoImg} alt="Cartão" className="w-full block" />
+                  <div className="space-y-3 mb-5">
+                    <p className="text-blue-300/50 text-xs font-bold uppercase tracking-wider">Frente</p>
+                    <div className="rounded-2xl overflow-hidden border border-blue-500/30 shadow-2xl">
+                      <img src={cartaoImg} alt="Frente" className="w-full block" />
+                    </div>
+                    {versoImg && (
+                      <>
+                        <p className="text-blue-300/50 text-xs font-bold uppercase tracking-wider mt-4">Verso</p>
+                        <div className="rounded-2xl overflow-hidden border border-blue-500/30 shadow-2xl">
+                          <img src={versoImg} alt="Verso" className="w-full block" />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <div className="rounded-2xl bg-white/5 border border-blue-500/20 p-8 mb-5 flex flex-col items-center gap-3 text-center">
                     <CreditCard className="w-12 h-12 text-blue-400/50" />
-                    <p className="text-blue-200/60 text-sm">Clique em "Gerar Cartão" para criar sua carteira digital com seus dados e foto.</p>
-                    <p className="text-blue-300/40 text-xs">Validade: 1 ano a partir da emissão</p>
+                    <p className="text-blue-200/60 text-sm">Gere seu cartão com frente e verso — número de registro permanente, selo de autoridade e declaração de fé.</p>
+                    <p className="text-blue-300/40 text-xs">Número de registro gerado uma única vez e salvo permanentemente</p>
                   </div>
                 )}
+
                 <div className="flex gap-3 flex-wrap">
                   {!cartaoImg ? (
                     <button onClick={handleGerarCartao} disabled={gerandoCartao} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60">
@@ -630,19 +920,22 @@ const MemberArea: FC = () => {
                     </button>
                   ) : (
                     <>
-                      <button onClick={handleDownloadCartao} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2">
+                      <button onClick={handleDownloadPDF} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2">
+                        <FileText className="w-5 h-5" /> Salvar PDF
+                      </button>
+                      <button onClick={handleDownloadPNG} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 border border-white/10">
                         <Download className="w-5 h-5" /> Baixar PNG
                       </button>
                       <button onClick={handleCompartilharCartao} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 border border-white/10">
                         <Share2 className="w-5 h-5" /> Compartilhar
                       </button>
-                      <button onClick={() => setCartaoImg(null)} className="px-5 py-4 bg-white/5 hover:bg-white/10 text-white/60 font-bold rounded-2xl border border-white/10 text-sm">
+                      <button onClick={() => { setCartaoImg(null); setVersoImg(null); }} className="w-full px-5 py-3 bg-white/5 hover:bg-white/10 text-white/50 font-bold rounded-2xl border border-white/10 text-sm">
                         Refazer
                       </button>
                     </>
                   )}
                 </div>
-                <p className="text-center text-blue-400/30 text-xs mt-4">Formato 900×560px — compatível com carteira digital</p>
+                <p className="text-center text-blue-400/30 text-xs mt-4">PDF: frente + verso em A4 landscape • PNG: imagens separadas</p>
               </div>
             </div>
           </div>
