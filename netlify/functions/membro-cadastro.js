@@ -1,41 +1,45 @@
 const { createClient } = require("@supabase/supabase-js");
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // chave service_role (não a anon!)
-);
-
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: "Variáveis de ambiente não configuradas." }),
+    };
+  }
+
+  const supabase = createClient(supabaseUrl, serviceKey);
+
   try {
     const { nome, email, telefone, senha } = JSON.parse(event.body);
 
-    // 1. Cria usuário no Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password: senha,
-      email_confirm: true, // já confirma direto, aprovação é manual
+      email_confirm: true,
     });
 
     if (authError) throw new Error(authError.message);
 
     const userId = authData.user.id;
 
-    // 2. Insere na tabela membros com status pendente
     const { error: membroError } = await supabase
       .from("membros")
       .insert({ id: userId, nome, email, telefone, status: "pendente" });
 
     if (membroError) throw new Error(membroError.message);
 
-    // 3. Monta link do WhatsApp para o admin
-    const adminNum = "5562944788817";
+    const adminNum = "556294478817";
     const adminUrl = "https://aogimconectinhumas.site/#/admin";
-    const msg = `🔔 *Novo cadastro de membro no site!*\n\n👤 *Nome:* ${nome}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n\n✅ Acesse a área Admin para aprovar ou reprovar:\n${adminUrl}`;
-    const waLink = `https://wa.me/${adminNum}?text=${encodeURIComponent(msg)}`;
+    const msg = `🔔 *Novo cadastro de membro no site!*\n\n👤 *Nome:* ${nome}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n\n✅ Acesse a área Admin para aprovar:\n${adminUrl}`;
+    const waLink = `https://web.whatsapp.com/send?phone=${adminNum}&text=${encodeURIComponent(msg)}`;
 
     return {
       statusCode: 200,
