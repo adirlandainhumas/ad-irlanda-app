@@ -349,6 +349,20 @@ const MemberArea: FC = () => {
         .eq('id', userId)
         .maybeSingle();
 
+      if (membroData?.status === 'pendente') {
+        await supabase.auth.signOut();
+        setError('⏳ Seu cadastro ainda está aguardando aprovação da liderança.');
+        setFetchingDetails(false);
+        return;
+      }
+
+      if (membroData?.status === 'reprovado') {
+        await supabase.auth.signOut();
+        setError('⚠️ Seu cadastro contém itens a serem verificados, entre em contato com sua liderança.');
+        setFetchingDetails(false);
+        return;
+      }
+
       if (membroData) setStatusMembro(membroData.status as any);
 
       const { data, error: queryError } = await supabase
@@ -420,13 +434,14 @@ const MemberArea: FC = () => {
         if (!fullName.trim()) throw new Error('O nome completo é obrigatório.');
         if (!telefone.trim()) throw new Error('O telefone é obrigatório.');
 
+        // 1. Cria usuário no Auth
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email, password,
           options: { data: { full_name: fullName } },
         });
         if (signUpError) throw signUpError;
 
-        // Insere na tabela membros com status pendente
+        // 2. Insere na tabela membros com status pendente
         if (signUpData.user) {
           await supabase.from('membros').insert({
             id: signUpData.user.id,
@@ -437,14 +452,13 @@ const MemberArea: FC = () => {
           });
         }
 
-        // DESLOGA imediatamente — só entra após aprovação
+        // 3. DESLOGA imediatamente — só entra após aprovação
         await supabase.auth.signOut();
 
-        // Abre WhatsApp do admin
+        // 4. Abre WhatsApp do admin
         const adminUrl = 'https://aogimconectinhumas.site/#/admin';
         const msg = `🔔 *Novo cadastro de membro no site!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n\n✅ Acesse a área Admin para aprovar:\n${adminUrl}`;
-        const waUrl = `https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`;
-        window.open(waUrl, '_blank');
+        window.open(`https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, '_blank');
 
         setSuccessMsg('✅ Cadastro enviado! Aguarde a aprovação da liderança para fazer login.');
         setIsSignUp(false);
@@ -452,26 +466,42 @@ const MemberArea: FC = () => {
         return;
       }
 
+      // ── LOGIN ────────────────────────────────────────────────────────────
+      // 1. Autentica
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) throw signInError;
+      if (signInError) throw new Error('E-mail ou senha incorretos.');
 
-      // Verifica aprovação
-      const { data: membroData } = await supabase
+      // 2. Verifica status ANTES de deixar entrar
+      const { data: membroData, error: membroErr } = await supabase
         .from('membros')
         .select('status')
         .eq('id', signInData.user.id)
         .maybeSingle();
 
-      if (membroData?.status === 'pendente') {
-        await supabase.auth.signOut();
-        throw new Error('Seu cadastro ainda está aguardando aprovação da liderança.');
-      }
-      if (membroData?.status === 'reprovado') {
-        await supabase.auth.signOut();
-        throw new Error('Seu cadastro não foi aprovado. Entre em contato com a liderança.');
+      // Se não achou na tabela membros (usuário antigo sem controle), deixa entrar normalmente
+      if (!membroData && !membroErr) {
+        return; // usuário sem registro na tabela membros — acesso liberado
       }
 
+      if (membroData?.status === 'pendente') {
+        // Desloga e bloqueia
+        await supabase.auth.signOut();
+        setError('⏳ Seu cadastro ainda está aguardando aprovação da liderança. Você receberá uma notificação quando for aprovado.');
+        return;
+      }
+
+      if (membroData?.status === 'reprovado') {
+        // Desloga e mostra mensagem específica
+        await supabase.auth.signOut();
+        setError('⚠️ Seu cadastro contém itens a serem verificados, entre em contato com sua liderança.');
+        return;
+      }
+
+      // status === 'aprovado' — deixa entrar normalmente ✅
+
     } catch (err: any) {
+      // Garante deslogar em qualquer erro inesperado
+      await supabase.auth.signOut();
       setError(err.message || 'Ocorreu um erro inesperado.');
     } finally {
       setLoading(false);
