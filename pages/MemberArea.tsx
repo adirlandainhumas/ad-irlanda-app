@@ -485,7 +485,7 @@ const MemberArea: FC = () => {
                   <InputField label="Cidade" value={memberDetails.address_city} onChange={v=>updateField('address_city',v)} required />
                   <InputField label="Estado (UF)" value={memberDetails.address_state} onChange={v=>updateField('address_state',v.toUpperCase())} required />
                   <InputField label="Informações Eclesiásticas" value={memberDetails.church_role_info} onChange={v=>updateField('church_role_info',v)} icon={<Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"/>} required />
-                  <SelectField label="Função na Igreja" value={memberDetails.church_function} onChange={v=>updateField('church_function',v)} options={['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Auxiliar','Líder de Jovens','Líder de Louvor','Outro']} />
+                  <SelectField label="Função na Igreja" value={memberDetails.church_function} onChange={v=>updateField('church_function',v)} options={['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)']} />
                   <DateField label="Data de Entrada na Igreja" value={memberDetails.church_entry_date} onChange={v=>updateField('church_entry_date',v)} />
                   <DateField label="Data de Batismo" value={memberDetails.baptism_date} onChange={v=>updateField('baptism_date',v)} />
                 </div>
