@@ -45,20 +45,25 @@ async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'repr
 // ─── Geração do Cartão CNH Digital ───────────────────────────────────────────
 async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, memberId: string, numRegistro: string, dataEmissao: string): Promise<string> {
   return new Promise(async (resolve) => {
-    const W = 900, H = 580;
+    // Canvas 2x para alta resolução
+    const W = 1800, H = 1160;
+    const S = 2; // escala — divide todas as coordenadas lógicas por S
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d')!;
+    ctx.scale(S, S); // tudo desenhado em 900×580 lógicos, renderizado em 1800×1160
+
+    const LW = W / S, LH = H / S; // dimensões lógicas
 
     // ── Fundo ────────────────────────────────────────────────────────────────
-    const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+    const bgGrad = ctx.createLinearGradient(0, 0, LW, LH);
     bgGrad.addColorStop(0, '#08122a'); bgGrad.addColorStop(1, '#0b1c3e');
-    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, LW, LH);
 
     // Padrão de pontos
     ctx.save(); ctx.globalAlpha = 0.04;
-    for (let x = 20; x < W; x += 28)
-      for (let y = 20; y < H; y += 28) {
+    for (let x = 20; x < LW; x += 28)
+      for (let y = 20; y < LH; y += 28) {
         ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2);
         ctx.fillStyle = '#4a90e2'; ctx.fill();
       }
@@ -66,23 +71,21 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     // ── FAIXA SUPERIOR ───────────────────────────────────────────────────────
     const faixaH = 110;
-    const faixaGrad = ctx.createLinearGradient(0, 0, W, faixaH);
+    const faixaGrad = ctx.createLinearGradient(0, 0, LW, faixaH);
     faixaGrad.addColorStop(0, '#1040b0'); faixaGrad.addColorStop(0.6, '#1a55d0'); faixaGrad.addColorStop(1, '#0d3a9e');
-    ctx.fillStyle = faixaGrad; ctx.fillRect(0, 0, W, faixaH);
+    ctx.fillStyle = faixaGrad; ctx.fillRect(0, 0, LW, faixaH);
 
-    // Ondas decorativas
     ctx.save(); ctx.globalAlpha = 0.08;
     for (let r = 80; r <= 320; r += 55) {
-      ctx.beginPath(); ctx.arc(W - 60, -20, r, 0, Math.PI*2);
+      ctx.beginPath(); ctx.arc(LW - 60, -20, r, 0, Math.PI*2);
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 22; ctx.stroke();
     }
     ctx.restore();
 
-    // Linha divisória
-    const lineGrad = ctx.createLinearGradient(0, faixaH, W, faixaH);
+    const lineGrad = ctx.createLinearGradient(0, faixaH, LW, faixaH);
     lineGrad.addColorStop(0, 'transparent'); lineGrad.addColorStop(0.2, '#5090ff');
     lineGrad.addColorStop(0.8, '#5090ff'); lineGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = lineGrad; ctx.fillRect(0, faixaH - 2, W, 3);
+    ctx.fillStyle = lineGrad; ctx.fillRect(0, faixaH - 2, LW, 3);
 
     // Logo
     try {
@@ -91,24 +94,21 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
       if (logo.complete && logo.naturalWidth > 0) ctx.drawImage(logo, 24, 14, 80, 80);
     } catch {}
 
-    // Textos da faixa
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.font = 'bold 23px Georgia, serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.font = 'bold 23px Georgia, serif';
     ctx.fillText('ASSEMBLÉIA DE DEUS', 122, 46);
     ctx.font = '14px sans-serif'; ctx.fillStyle = 'rgba(180,210,255,0.85)';
     ctx.fillText('MINISTÉRIO IRLANDA  •  INHUMAS - GO', 122, 68);
     ctx.restore();
 
-    // Badge "CARTÃO DE MEMBRO"
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.beginPath(); ctx.roundRect(W - 215, 28, 190, 52, 26); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(LW - 215, 28, 190, 52, 26); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(W - 215, 28, 190, 52, 26); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(LW - 215, 28, 190, 52, 26); ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('CARTÃO DE MEMBRO', W - 120, 60);
+    ctx.fillText('CARTÃO DE MEMBRO', LW - 120, 60);
     ctx.restore();
 
     // ── FOTO ─────────────────────────────────────────────────────────────────
@@ -137,32 +137,75 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
     ctx.restore();
 
-    // Nome e badge de função sob a foto
+    // Nome sob a foto
     ctx.save(); ctx.textAlign = 'center';
     let nomeDisplay = details.full_name || 'MEMBRO';
     if (nomeDisplay.split(' ').length > 2) {
       const p = nomeDisplay.split(' '); nomeDisplay = `${p[0]} ${p[p.length-1]}`;
     }
     ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#e8f4ff';
-    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 22);
+    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 20);
 
+    // Badge função
     const funcao = details.church_function || 'Membro';
-    const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 28);
-    ctx.fillStyle = 'rgba(26,85,208,0.6)';
-    ctx.beginPath(); ctx.roundRect(photoX + photoW/2 - badgeW/2, photoY + photoH + 30, badgeW, 24, 12); ctx.fill();
-    ctx.font = 'bold 12px sans-serif'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 46);
+    ctx.font = 'bold 11px sans-serif';
+    const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 24);
+    ctx.fillStyle = 'rgba(26,85,208,0.7)';
+    ctx.beginPath(); ctx.roundRect(photoX + photoW/2 - badgeW/2, photoY + photoH + 28, badgeW, 22, 11); ctx.fill();
+    ctx.fillStyle = 'rgba(180,220,255,0.95)';
+    ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
+    ctx.restore();
+
+    // ── SELO PROFISSIONAL (abaixo do badge) ──────────────────────────────────
+    const seloX = photoX + photoW / 2;
+    const seloY = photoY + photoH + 90; // bem abaixo do badge
+    const seloR = 42;
+
+    ctx.save();
+    const seloGrad = ctx.createRadialGradient(seloX, seloY, 0, seloX, seloY, seloR);
+    seloGrad.addColorStop(0, 'rgba(40,80,180,0.95)');
+    seloGrad.addColorStop(1, 'rgba(15,40,120,0.98)');
+    ctx.fillStyle = seloGrad;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
+
+    ctx.strokeStyle = 'rgba(180,210,255,0.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(120,170,255,0.25)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 6, 0, Math.PI*2); ctx.stroke();
+
+    // Texto circular
+    const textoArc = 'MINISTÉRIO  IRLANDA  •  BRASIL  •';
+    ctx.font = 'bold 7.5px sans-serif'; ctx.fillStyle = 'rgba(180,215,255,0.9)'; ctx.textAlign = 'center';
+    const arcR = seloR - 8;
+    const step = (Math.PI * 2) / textoArc.length;
+    for (let i = 0; i < textoArc.length; i++) {
+      ctx.save();
+      ctx.translate(seloX, seloY);
+      ctx.rotate(step * i - Math.PI / 2);
+      ctx.translate(0, -arcR); ctx.rotate(Math.PI / 2);
+      ctx.fillText(textoArc[i], 0, 0);
+      ctx.restore();
+    }
+
+    // Cruz central
+    ctx.strokeStyle = 'rgba(200,225,255,0.85)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    const c = 11;
+    ctx.beginPath();
+    ctx.moveTo(seloX, seloY - c); ctx.lineTo(seloX, seloY + c);
+    ctx.moveTo(seloX - c*0.65, seloY - c*0.2); ctx.lineTo(seloX + c*0.65, seloY - c*0.2);
+    ctx.stroke();
+    ctx.font = 'bold 9px Courier New,monospace'; ctx.fillStyle = 'rgba(160,200,255,0.75)';
+    ctx.fillText(String(new Date().getFullYear()), seloX, seloY + c + 14);
     ctx.restore();
 
     // ── DADOS ─────────────────────────────────────────────────────────────────
     const dx = photoX + photoW + 26;
     const dy = faixaH + 16;
-    const colW = (W - dx - 20) / 2;
+    const colW = (LW - dx - 20) / 2;
 
     const drawField = (label: string, value: string, x: number, y: number, maxW = colW - 12) => {
       ctx.save();
-      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.75)';
-      ctx.textAlign = 'left';
+      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.75)'; ctx.textAlign = 'left';
       ctx.fillText(label.toUpperCase(), x, y);
       ctx.font = '15px Georgia, serif'; ctx.fillStyle = 'rgba(220,235,255,0.95)';
       let val = value;
@@ -182,30 +225,30 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     };
 
     const sepLine = (y: number) => {
-      const g = ctx.createLinearGradient(dx, 0, W-20, 0);
+      const g = ctx.createLinearGradient(dx, 0, LW-20, 0);
       g.addColorStop(0,'rgba(80,140,255,0.5)'); g.addColorStop(1,'transparent');
-      ctx.fillStyle = g; ctx.fillRect(dx, y, W - dx - 20, 1);
+      ctx.fillStyle = g; ctx.fillRect(dx, y, LW - dx - 20, 1);
     };
 
     let sy2 = dy + 10;
 
     // PESSOAL
-    drawSectionHeader('DADOS PESSOAIS', dx, sy2, W - dx - 20);
+    drawSectionHeader('DADOS PESSOAIS', dx, sy2, LW - dx - 20);
     sy2 += 20;
-    drawField('Nome Completo', details.full_name || '—', dx, sy2, W - dx - 20);
+    drawField('Nome Completo', details.full_name || '—', dx, sy2, LW - dx - 20);
     sy2 += 36;
     drawField('Nascimento', formatDate(details.birth_date), dx, sy2);
     drawField('Estado Civil', details.marital_status || '—', dx + colW, sy2);
     sy2 += 36;
-    drawField('Endereço', `${details.address_street||'—'}, ${details.address_lot||''} — ${details.address_sector||''}`, dx, sy2, W - dx - 20);
+    drawField('Endereço', `${details.address_street||'—'}, ${details.address_lot||''} — ${details.address_sector||''}`, dx, sy2, LW - dx - 20);
     sy2 += 36;
-    drawField('Cidade / Estado', `${details.address_city||'—'} / ${details.address_state||'—'}`, dx, sy2, W - dx - 20);
+    drawField('Cidade / Estado', `${details.address_city||'—'} / ${details.address_state||'—'}`, dx, sy2, LW - dx - 20);
     sy2 += 40;
 
     sepLine(sy2 - 6);
 
     // CONTATO
-    drawSectionHeader('CONTATO', dx, sy2 + 10, W - dx - 20);
+    drawSectionHeader('CONTATO', dx, sy2 + 10, LW - dx - 20);
     sy2 += 28;
     drawField('Telefone', details.phone || '—', dx, sy2);
     drawField('E-mail', details.email || '—', dx + colW, sy2, colW - 12);
@@ -214,103 +257,58 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     sepLine(sy2 - 6);
 
     // ECLESIÁSTICO
-    drawSectionHeader('DADOS ECLESIÁSTICOS', dx, sy2 + 10, W - dx - 20);
+    drawSectionHeader('DADOS ECLESIÁSTICOS', dx, sy2 + 10, LW - dx - 20);
     sy2 += 28;
     drawField('Entrada na Igreja', formatDate(details.church_entry_date), dx, sy2);
     drawField('Data de Batismo', formatDate(details.baptism_date), dx + colW, sy2);
     sy2 += 36;
-    drawField('Informações Eclesiásticas', details.church_role_info || '—', dx, sy2, W - dx - 20);
-    sy2 += 40;
 
-    // ── SELO PROFISSIONAL ─────────────────────────────────────────────────────
-    const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 80;
-    const seloR = 44;
-
-    // Fundo do selo com gradiente dourado
+    // Texto ministerial internacional
     ctx.save();
-    const seloGrad = ctx.createRadialGradient(seloX, seloY, 0, seloX, seloY, seloR);
-    seloGrad.addColorStop(0, 'rgba(40,80,180,0.9)');
-    seloGrad.addColorStop(1, 'rgba(15,40,120,0.95)');
-    ctx.fillStyle = seloGrad;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
-
-    // Anel externo duplo
-    ctx.strokeStyle = 'rgba(180,210,255,0.5)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(120,170,255,0.25)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 5, 0, Math.PI*2); ctx.stroke();
-
-    // Texto circular (letra por letra) — "MINISTÉRIO IRLANDA •"
-    const textoArc = 'MINISTÉRIO  IRLANDA  •  BRASIL  •';
-    ctx.font = 'bold 7.5px sans-serif';
-    ctx.fillStyle = 'rgba(180,215,255,0.9)';
-    ctx.textAlign = 'center';
-    const arcR = seloR - 8;
-    const totalAngle = Math.PI * 2;
-    const step = totalAngle / textoArc.length;
-    for (let i = 0; i < textoArc.length; i++) {
-      ctx.save();
-      ctx.translate(seloX, seloY);
-      ctx.rotate(step * i - Math.PI / 2);
-      ctx.translate(0, -arcR);
-      ctx.rotate(Math.PI / 2);
-      ctx.fillText(textoArc[i], 0, 0);
-      ctx.restore();
-    }
-
-    // Cruz central estilizada
-    ctx.strokeStyle = 'rgba(200,225,255,0.85)'; ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    const c = 12;
-    ctx.beginPath();
-    ctx.moveTo(seloX, seloY - c); ctx.lineTo(seloX, seloY + c);
-    ctx.moveTo(seloX - c * 0.65, seloY - c * 0.2); ctx.lineTo(seloX + c * 0.65, seloY - c * 0.2);
-    ctx.stroke();
-
-    // Anno sob a cruz
-    ctx.font = 'bold 9px Courier New,monospace'; ctx.fillStyle = 'rgba(160,200,255,0.75)';
-    ctx.fillText(String(new Date().getFullYear()), seloX, seloY + c + 14);
+    ctx.font = 'italic 12px Georgia, serif';
+    ctx.fillStyle = 'rgba(140,190,255,0.65)';
+    ctx.textAlign = 'left';
+    ctx.fillText('Assembléia de Deus — Ministério Internacional • Irlanda • Inhumas-GO • Brasil', dx, sy2 + 14);
     ctx.restore();
 
     // ── RODAPÉ ────────────────────────────────────────────────────────────────
     const ano = new Date().getFullYear();
     const validade = `${String(new Date().getMonth()+1).padStart(2,'0')}/${ano+1}`;
 
-    const rodapeGrad = ctx.createLinearGradient(0, H-55, 0, H);
+    const rodapeGrad = ctx.createLinearGradient(0, LH-55, 0, LH);
     rodapeGrad.addColorStop(0,'rgba(10,20,60,0)'); rodapeGrad.addColorStop(1,'rgba(10,20,60,0.8)');
-    ctx.fillStyle = rodapeGrad; ctx.fillRect(0, H-55, W, 55);
+    ctx.fillStyle = rodapeGrad; ctx.fillRect(0, LH-55, LW, 55);
 
-    const lineRodape = ctx.createLinearGradient(0, 0, W, 0);
+    const lineRodape = ctx.createLinearGradient(0, 0, LW, 0);
     lineRodape.addColorStop(0,'transparent'); lineRodape.addColorStop(0.3,'rgba(60,120,255,0.4)');
     lineRodape.addColorStop(0.7,'rgba(60,120,255,0.4)'); lineRodape.addColorStop(1,'transparent');
-    ctx.fillStyle = lineRodape; ctx.fillRect(0, H-55, W, 1);
+    ctx.fillStyle = lineRodape; ctx.fillRect(0, LH-55, LW, 1);
 
     ctx.save(); ctx.textAlign = 'left';
     ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('Nº DE REGISTRO', 28, H-30);
+    ctx.fillText('Nº DE REGISTRO', 28, LH-30);
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(numRegistro, 28, H-13);
+    ctx.fillText(numRegistro, 28, LH-13);
 
     ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('EMISSÃO', 230, H-30);
+    ctx.fillText('EMISSÃO', 230, LH-30);
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(dataEmissao, 230, H-13);
+    ctx.fillText(dataEmissao, 230, LH-13);
 
     ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('VALIDADE', 380, H-30);
+    ctx.fillText('VALIDADE', 380, LH-30);
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(validade, 380, H-13);
+    ctx.fillText(validade, 380, LH-13);
 
     ctx.textAlign = 'right'; ctx.font = 'bold 10px sans-serif';
     ctx.fillStyle = 'rgba(80,160,255,0.5)';
-    ctx.fillText('DOCUMENTO ECLESIÁSTICO — AOGIM', W-20, H-13);
+    ctx.fillText('DOCUMENTO ECLESIÁSTICO — AOGIM', LW-20, LH-13);
     ctx.restore();
 
     // Borda externa
     ctx.save();
     ctx.strokeStyle = 'rgba(60,140,255,0.25)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(1,1,W-2,H-2,16); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(1, 1, LW-2, LH-2, 16); ctx.stroke();
     ctx.restore();
 
     resolve(canvas.toDataURL('image/png', 0.95));
