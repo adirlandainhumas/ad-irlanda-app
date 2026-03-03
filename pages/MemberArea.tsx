@@ -158,7 +158,7 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     // ── SELO PROFISSIONAL (abaixo do badge) ──────────────────────────────────
     const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 90; // bem abaixo do badge
+    const seloY = photoY + photoH + 150; // mais abaixo
     const seloR = 42;
 
     ctx.save();
@@ -269,6 +269,9 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.fillStyle = 'rgba(140,190,255,0.65)';
     ctx.textAlign = 'left';
     ctx.fillText('Assembléia de Deus — Ministério Internacional • Irlanda • Inhumas-GO • Brasil', dx, sy2 + 14);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = 'rgba(120,175,255,0.55)';
+    ctx.fillText('AOGIM — Assembly of God Ireland Ministry', dx, sy2 + 30);
     ctx.restore();
 
     // ── RODAPÉ ────────────────────────────────────────────────────────────────
