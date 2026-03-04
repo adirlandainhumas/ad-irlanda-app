@@ -6,6 +6,7 @@ const SUPABASE_URL = "https://llevczjsjurdfejwcqpo.supabase.co";
 const GALLERY_BUCKET = "galeria";
 const GALLERY_FOLDER = "ultimo-culto";
 const FUNCOES = ['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)'];
+const CONGREGACOES = ['Inhumas - GO', 'Uruana - GO', 'Belo Horizonte - MG'];
 
 type Notice = {
   id: string; title: string; body: string;
@@ -16,7 +17,7 @@ type GalleryFile = { name: string; path: string; url: string; };
 
 type Membro = {
   id: string; nome: string; email: string; telefone: string;
-  status: string; created_at: string; funcao?: string;
+  status: string; created_at: string; funcao?: string; congregacao?: string;
 };
 
 type MembroFicha = {
@@ -26,7 +27,7 @@ type MembroFicha = {
   address_sector?: string; address_city?: string; address_state?: string;
   church_function?: string; church_entry_date?: string; baptism_date?: string;
   church_role_info?: string; photo_path?: string; numero_registro?: string;
-  data_emissao?: string;
+  data_emissao?: string; congregacao?: string;
 };
 
 function formatDateBR(dateStr?: string | null) {
@@ -74,12 +75,15 @@ export default function Admin() {
   const [membrosMsg, setMembrosMsg] = useState<string | null>(null);
   const [membrosErr, setMembrosErr] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "pendente" | "aprovado" | "reprovado">("pendente");
+  const [filtroCongregacao, setFiltroCongregacao] = useState<string>("todas");
 
   // ── Ficha do membro ──────────────────────────────────────────────────────
   const [fichaModal, setFichaModal] = useState<{ membro: Membro; ficha: MembroFicha; photoUrl: string | null } | null>(null);
   const [fichaLoading, setFichaLoading] = useState(false);
   const [funcaoEditando, setFuncaoEditando] = useState('');
   const [funcaoSalvando, setFuncaoSalvando] = useState(false);
+  const [congregacaoEditando, setCongregacaoEditando] = useState('');
+  const [congregacaoSalvando, setCongregacaoSalvando] = useState(false);
 
   // ── AUTH ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -212,6 +216,8 @@ export default function Admin() {
       }
 
       setFuncaoEditando(membro.funcao || ficha?.church_function || 'Membro');
+      // Congregação: fonte primária é a tabela membros
+      setCongregacaoEditando(membro.congregacao || ficha?.congregacao || 'Inhumas - GO');
       setFichaModal({ membro, ficha: ficha ?? {}, photoUrl });
     } catch (err: any) {
       setMembrosErr("Erro ao carregar ficha: " + err.message);
@@ -224,11 +230,8 @@ export default function Admin() {
     if (!fichaModal) return;
     setFuncaoSalvando(true);
     try {
-      // Atualiza na tabela membros
       await supabase.from("membros").update({ funcao: funcaoEditando }).eq("id", fichaModal.membro.id);
-      // Atualiza na ficha se existir
       await supabase.from("member_details").update({ church_function: funcaoEditando }).eq("user_id", fichaModal.membro.id);
-
       setMembros(prev => prev.map(m => m.id === fichaModal.membro.id ? { ...m, funcao: funcaoEditando } : m));
       setFichaModal(prev => prev ? {
         ...prev,
@@ -240,6 +243,27 @@ export default function Admin() {
       setMembrosErr("Erro ao salvar função: " + err.message);
     } finally {
       setFuncaoSalvando(false);
+    }
+  }
+
+  async function salvarCongregacao() {
+    if (!fichaModal) return;
+    setCongregacaoSalvando(true);
+    try {
+      // Atualiza nas duas tabelas
+      await supabase.from("membros").update({ congregacao: congregacaoEditando }).eq("id", fichaModal.membro.id);
+      await supabase.from("member_details").update({ congregacao: congregacaoEditando }).eq("user_id", fichaModal.membro.id);
+      setMembros(prev => prev.map(m => m.id === fichaModal.membro.id ? { ...m, congregacao: congregacaoEditando } : m));
+      setFichaModal(prev => prev ? {
+        ...prev,
+        membro: { ...prev.membro, congregacao: congregacaoEditando },
+        ficha: { ...prev.ficha, congregacao: congregacaoEditando },
+      } : null);
+      setMembrosMsg(`Congregação atualizada para "${congregacaoEditando}" ✅`);
+    } catch (err: any) {
+      setMembrosErr("Erro ao salvar congregação: " + err.message);
+    } finally {
+      setCongregacaoSalvando(false);
     }
   }
 
@@ -259,9 +283,11 @@ export default function Admin() {
   }
 
   const membrosFiltrados = useMemo(() => {
-    if (filtroStatus === "todos") return membros;
-    return membros.filter(m => m.status === filtroStatus);
-  }, [membros, filtroStatus]);
+    let lista = membros;
+    if (filtroStatus !== "todos") lista = lista.filter(m => m.status === filtroStatus);
+    if (filtroCongregacao !== "todas") lista = lista.filter(m => m.congregacao === filtroCongregacao);
+    return lista;
+  }, [membros, filtroStatus, filtroCongregacao]);
 
   const pendentesCount = useMemo(() => membros.filter(m => m.status === "pendente").length, [membros]);
 
@@ -325,7 +351,6 @@ export default function Admin() {
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-5xl mx-auto px-4 pt-10 pb-24">
 
-        {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-900">Painel do Pastor</h1>
@@ -334,7 +359,6 @@ export default function Admin() {
           <button onClick={signOut} className="rounded-xl px-4 py-2 border bg-white hover:bg-slate-50 transition text-slate-700">Sair</button>
         </div>
 
-        {/* Tabs */}
         <div className="mt-6 flex gap-2 flex-wrap">
           {(["notices","photos","membros"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
@@ -354,7 +378,6 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Mensagens */}
         {(noticeMsg || photoMsg || membrosMsg) && (
           <div className="mt-6 rounded-xl bg-green-50 border border-green-100 text-green-800 px-4 py-3 flex items-center justify-between">
             <span>{noticeMsg || photoMsg || membrosMsg}</span>
@@ -439,6 +462,7 @@ export default function Admin() {
               <button onClick={loadMembros} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm">↻ Atualizar</button>
             </div>
 
+            {/* Filtro por status */}
             <div className="mt-4 flex gap-2 flex-wrap">
               {(["pendente","aprovado","reprovado","todos"] as const).map(f => (
                 <button key={f} onClick={() => setFiltroStatus(f)}
@@ -448,6 +472,22 @@ export default function Admin() {
                   {f === "aprovado"  && `✅ Aprovados (${membros.filter(m=>m.status==="aprovado").length})`}
                   {f === "reprovado" && `❌ Reprovados (${membros.filter(m=>m.status==="reprovado").length})`}
                   {f === "todos"     && `Todos (${membros.length})`}
+                </button>
+              ))}
+            </div>
+
+            {/* Filtro por congregação */}
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button onClick={() => setFiltroCongregacao("todas")}
+                className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
+              >
+                🏛 Todas as congregações
+              </button>
+              {CONGREGACOES.map(c => (
+                <button key={c} onClick={() => setFiltroCongregacao(c)}
+                  className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
+                >
+                  📍 {c} ({membros.filter(m=>m.congregacao===c).length})
                 </button>
               ))}
             </div>
@@ -463,6 +503,9 @@ export default function Admin() {
                       {m.funcao && (
                         <div className="text-xs text-blue-600 font-semibold mt-1">⛪ {m.funcao}</div>
                       )}
+                      {m.congregacao && (
+                        <div className="text-xs text-indigo-600 font-semibold mt-0.5">📍 {m.congregacao}</div>
+                      )}
                       <div className="text-xs text-slate-400 mt-1">Cadastrado em {formatDateBR(m.created_at)}</div>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full border flex-shrink-0 font-semibold ${statusColor(m.status)}`}>
@@ -470,7 +513,6 @@ export default function Admin() {
                     </span>
                   </div>
 
-                  {/* Botão Ver Ficha sempre visível */}
                   <div className="mt-4 flex gap-2 flex-wrap">
                     <button
                       onClick={() => abrirFicha(m)}
@@ -570,7 +612,6 @@ export default function Admin() {
         <div className="fixed inset-0 bg-black/50 flex items-start justify-center px-4 z-50 overflow-y-auto py-8">
           <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border">
 
-            {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">Ficha Cadastral</h3>
@@ -601,6 +642,10 @@ export default function Admin() {
                   <div className="text-sm text-slate-500">
                     {fichaModal.ficha.gender && <span className="mr-3">{fichaModal.ficha.gender}</span>}
                     {fichaModal.ficha.marital_status && <span>{fichaModal.ficha.marital_status}</span>}
+                  </div>
+                  {/* Congregação visível na ficha */}
+                  <div className="text-xs font-semibold text-indigo-600 mt-1">
+                    📍 {fichaModal.membro.congregacao || fichaModal.ficha.congregacao || 'Inhumas - GO'}
                   </div>
                   {fichaModal.ficha.numero_registro && (
                     <div className="text-xs font-mono text-blue-600 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
@@ -633,7 +678,29 @@ export default function Admin() {
                 </div>
               </div>
 
-              {/* Alterar função — exclusivo do admin */}
+              {/* Alterar congregação — admin */}
+              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
+                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">📍 Congregação</h4>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={congregacaoEditando}
+                    onChange={e => setCongregacaoEditando(e.target.value)}
+                    className="flex-1 rounded-xl border border-indigo-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                  >
+                    {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <button
+                    onClick={salvarCongregacao}
+                    disabled={congregacaoSalvando || congregacaoEditando === (fichaModal.membro.congregacao || fichaModal.ficha.congregacao)}
+                    className="rounded-xl bg-indigo-700 text-white px-5 py-2.5 font-semibold hover:bg-indigo-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                  >
+                    {congregacaoSalvando ? "Salvando…" : "Salvar"}
+                  </button>
+                </div>
+                <p className="text-xs text-indigo-400 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
+              </div>
+
+              {/* Alterar função — admin */}
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                 <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">⛪ Função na Igreja</h4>
                 <div className="flex items-center gap-3">
@@ -688,7 +755,6 @@ export default function Admin() {
   );
 }
 
-// ── Componente auxiliar ───────────────────────────────────────────────────────
 function InfoRow({ label, value, full }: { label: string; value?: string; full?: boolean }) {
   return (
     <div className={full ? "col-span-2" : ""}>

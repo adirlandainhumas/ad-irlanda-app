@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC, ty
 import type { Session } from '@supabase/supabase-js';
 import {
   AlertCircle, Calendar, Camera, CheckCircle2, CreditCard,
-  FileText, Loader2, Lock, LogOut, Mail, Phone, Save, Upload,
+  FileText, Loader2, Lock, LogOut, Mail, MapPin, Phone, Save, Upload,
   User, UserCircle, Users, X, Download, Share2,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -12,7 +12,14 @@ const PHOTO_BUCKET = 'member-photos';
 const ADMIN_WHATSAPP = '556294478817';
 const LOGO_URL = 'https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png';
 
-// ─── Gerar PDF só com a frente ───────────────────────────────────────────────
+// ─── Congregações disponíveis ─────────────────────────────────────────────────
+const CONGREGACOES = [
+  'Inhumas - GO',
+  'Uruana - GO',
+  'Belo Horizonte - MG',
+];
+
+// ─── Gerar PDF ────────────────────────────────────────────────────────────────
 async function gerarPDF(frente: string, nomeArquivo: string): Promise<void> {
   const W = 900, H = 580;
   const marginMm = 10;
@@ -35,32 +42,35 @@ async function gerarPDF(frente: string, nomeArquivo: string): Promise<void> {
   doc.save(`${nomeArquivo}.pdf`);
 }
 
-// ─── Verifica status sem disparar efeitos colaterais ─────────────────────────
+// ─── Verifica status ──────────────────────────────────────────────────────────
 async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'reprovado'|'livre'> {
   const { data } = await supabase.from('membros').select('status').eq('id', userId).maybeSingle();
   if (!data) return 'livre';
   return data.status as any;
 }
 
-// ─── Geração do Cartão CNH Digital ───────────────────────────────────────────
-async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, memberId: string, numRegistro: string, dataEmissao: string): Promise<string> {
+// ─── Geração do Cartão — congregação dinâmica ─────────────────────────────────
+async function gerarCartaoCNH(
+  details: MemberDetails,
+  photoUrl: string | null,
+  memberId: string,
+  numRegistro: string,
+  dataEmissao: string,
+  congregacao: string,
+): Promise<string> {
   return new Promise(async (resolve) => {
-    // Canvas 2x para alta resolução
-    const W = 1800, H = 1160;
-    const S = 2; // escala — divide todas as coordenadas lógicas por S
+    const W = 1800, H = 1160, S = 2;
     const canvas = document.createElement('canvas');
     canvas.width = W; canvas.height = H;
     const ctx = canvas.getContext('2d')!;
-    ctx.scale(S, S); // tudo desenhado em 900×580 lógicos, renderizado em 1800×1160
+    ctx.scale(S, S);
+    const LW = W / S, LH = H / S;
 
-    const LW = W / S, LH = H / S; // dimensões lógicas
-
-    // ── Fundo ────────────────────────────────────────────────────────────────
+    // Fundo
     const bgGrad = ctx.createLinearGradient(0, 0, LW, LH);
     bgGrad.addColorStop(0, '#08122a'); bgGrad.addColorStop(1, '#0b1c3e');
     ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, LW, LH);
 
-    // Padrão de pontos
     ctx.save(); ctx.globalAlpha = 0.04;
     for (let x = 20; x < LW; x += 28)
       for (let y = 20; y < LH; y += 28) {
@@ -69,7 +79,7 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
       }
     ctx.restore();
 
-    // ── FAIXA SUPERIOR ───────────────────────────────────────────────────────
+    // Faixa superior
     const faixaH = 110;
     const faixaGrad = ctx.createLinearGradient(0, 0, LW, faixaH);
     faixaGrad.addColorStop(0, '#1040b0'); faixaGrad.addColorStop(0.6, '#1a55d0'); faixaGrad.addColorStop(1, '#0d3a9e');
@@ -94,11 +104,12 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
       if (logo.complete && logo.naturalWidth > 0) ctx.drawImage(logo, 24, 14, 80, 80);
     } catch {}
 
+    // ── Título + congregação dinâmica no topo ────────────────────────────────
     ctx.save();
     ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.font = 'bold 23px Georgia, serif';
     ctx.fillText('ASSEMBLÉIA DE DEUS', 122, 46);
     ctx.font = '14px sans-serif'; ctx.fillStyle = 'rgba(180,210,255,0.85)';
-    ctx.fillText('MINISTÉRIO IRLANDA  •  INHUMAS - GO', 122, 68);
+    ctx.fillText(`MINISTÉRIO IRLANDA  •  ${(congregacao || 'INHUMAS - GO').toUpperCase()}`, 122, 68);
     ctx.restore();
 
     ctx.save();
@@ -111,7 +122,7 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.fillText('CARTÃO DE MEMBRO', LW - 120, 60);
     ctx.restore();
 
-    // ── FOTO ─────────────────────────────────────────────────────────────────
+    // Foto
     const photoW = 158, photoH = 198;
     const photoX = 22, photoY = faixaH + 18;
 
@@ -137,7 +148,6 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
     ctx.restore();
 
-    // Nome sob a foto
     ctx.save(); ctx.textAlign = 'center';
     let nomeDisplay = details.full_name || 'MEMBRO';
     if (nomeDisplay.split(' ').length > 2) {
@@ -146,7 +156,6 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#e8f4ff';
     ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 20);
 
-    // Badge função
     const funcao = details.church_function || 'Membro';
     ctx.font = 'bold 11px sans-serif';
     const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 24);
@@ -156,9 +165,9 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
     ctx.restore();
 
-    // ── SELO PROFISSIONAL (abaixo do badge) ──────────────────────────────────
+    // Selo
     const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 150; // mais abaixo
+    const seloY = photoY + photoH + 150;
     const seloR = 42;
 
     ctx.save();
@@ -167,13 +176,11 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     seloGrad.addColorStop(1, 'rgba(15,40,120,0.98)');
     ctx.fillStyle = seloGrad;
     ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
-
     ctx.strokeStyle = 'rgba(180,210,255,0.55)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.stroke();
     ctx.strokeStyle = 'rgba(120,170,255,0.25)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 6, 0, Math.PI*2); ctx.stroke();
 
-    // Texto circular
     const textoArc = 'MINISTÉRIO  IRLANDA  •  BRASIL  •';
     ctx.font = 'bold 7.5px sans-serif'; ctx.fillStyle = 'rgba(180,215,255,0.9)'; ctx.textAlign = 'center';
     const arcR = seloR - 8;
@@ -187,7 +194,6 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
       ctx.restore();
     }
 
-    // Cruz central
     ctx.strokeStyle = 'rgba(200,225,255,0.85)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
     const c = 11;
     ctx.beginPath();
@@ -198,7 +204,7 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.fillText(String(new Date().getFullYear()), seloX, seloY + c + 14);
     ctx.restore();
 
-    // ── DADOS ─────────────────────────────────────────────────────────────────
+    // Dados
     const dx = photoX + photoW + 26;
     const dy = faixaH + 16;
     const colW = (LW - dx - 20) / 2;
@@ -232,7 +238,6 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     let sy2 = dy + 10;
 
-    // PESSOAL
     drawSectionHeader('DADOS PESSOAIS', dx, sy2, LW - dx - 20);
     sy2 += 20;
     drawField('Nome Completo', details.full_name || '—', dx, sy2, LW - dx - 20);
@@ -247,7 +252,6 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     sepLine(sy2 - 6);
 
-    // CONTATO
     drawSectionHeader('CONTATO', dx, sy2 + 10, LW - dx - 20);
     sy2 += 28;
     drawField('Telefone', details.phone || '—', dx, sy2);
@@ -256,25 +260,24 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
 
     sepLine(sy2 - 6);
 
-    // ECLESIÁSTICO
     drawSectionHeader('DADOS ECLESIÁSTICOS', dx, sy2 + 10, LW - dx - 20);
     sy2 += 28;
     drawField('Entrada na Igreja', formatDate(details.church_entry_date), dx, sy2);
     drawField('Data de Batismo', formatDate(details.baptism_date), dx + colW, sy2);
     sy2 += 36;
 
-    // Texto ministerial internacional
+    // ── Texto ministerial com congregação dinâmica ───────────────────────────
     ctx.save();
     ctx.font = 'italic 12px Georgia, serif';
     ctx.fillStyle = 'rgba(140,190,255,0.65)';
     ctx.textAlign = 'left';
-    ctx.fillText('Assembléia de Deus — Ministério Internacional • Irlanda • Inhumas-GO • Brasil', dx, sy2 + 14);
+    ctx.fillText(`Assembléia de Deus — Ministério Internacional • Irlanda • ${congregacao || 'Inhumas-GO'} • Brasil`, dx, sy2 + 14);
     ctx.font = 'bold 11px sans-serif';
     ctx.fillStyle = 'rgba(120,175,255,0.55)';
     ctx.fillText('AOGIM — Assembly of God Ireland Ministry', dx, sy2 + 30);
     ctx.restore();
 
-    // ── RODAPÉ ────────────────────────────────────────────────────────────────
+    // Rodapé
     const ano = new Date().getFullYear();
     const validade = `${String(new Date().getMonth()+1).padStart(2,'0')}/${ano+1}`;
 
@@ -303,12 +306,14 @@ async function gerarCartaoCNH(details: MemberDetails, photoUrl: string | null, m
     ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
     ctx.fillText(validade, 380, LH-13);
 
-    ctx.textAlign = 'right'; ctx.font = 'bold 10px sans-serif';
-    ctx.fillStyle = 'rgba(80,160,255,0.5)';
-    ctx.fillText('DOCUMENTO ECLESIÁSTICO — AOGIM', LW-20, LH-13);
+    // ── Congregação no rodapé direito ────────────────────────────────────────
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+    ctx.fillText('CONGREGAÇÃO', LW-20, LH-30);
+    ctx.font = 'bold 13px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.9)';
+    ctx.fillText((congregacao || 'INHUMAS - GO').toUpperCase(), LW-20, LH-13);
     ctx.restore();
 
-    // Borda externa
     ctx.save();
     ctx.strokeStyle = 'rgba(60,140,255,0.25)'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.roundRect(1, 1, LW-2, LH-2, 16); ctx.stroke();
@@ -332,6 +337,7 @@ const MemberArea: FC = () => {
   const [telefone, setTelefone]             = useState('');
   const [password, setPassword]             = useState('');
   const [funcaoSignup, setFuncaoSignup]     = useState('Membro');
+  const [congregacaoSignup, setCongregacaoSignup] = useState('Inhumas - GO');
   const [error, setError]                   = useState<string | null>(null);
   const [successMsg, setSuccessMsg]         = useState<string | null>(null);
   const [hasFicha, setHasFicha]             = useState(false);
@@ -341,8 +347,9 @@ const MemberArea: FC = () => {
   const [photoUrl, setPhotoUrl]             = useState<string | null>(null);
   const [cartaoImg, setCartaoImg]           = useState<string | null>(null);
   const [gerandoCartao, setGerandoCartao]   = useState(false);
+  // ── Congregação do membro logado (carregada do banco, imutável pelo membro)
+  const [congregacaoMembro, setCongregacaoMembro] = useState('Inhumas - GO');
 
-  // Flag para evitar loop no onAuthStateChange
   const bloqueandoAuth = useRef(false);
 
   const limparEstado = useCallback(() => {
@@ -350,6 +357,7 @@ const MemberArea: FC = () => {
     setShowFichaForm(false); setHasFicha(false); setShowCard(false);
     setMemberDetails(emptyMemberDetails); setSelectedPhoto(null);
     setPhotoPreview(null); setPhotoUrl(null); setCartaoImg(null);
+    setCongregacaoMembro('Inhumas - GO');
   }, []);
 
   const carregarDetalhes = useCallback(async (userId: string, profileName?: string, profileEmail?: string) => {
@@ -357,17 +365,19 @@ const MemberArea: FC = () => {
     try {
       const [{ data }, { data: membroData }] = await Promise.all([
         supabase.from('member_details').select('*').eq('user_id', userId).maybeSingle(),
-        supabase.from('membros').select('funcao').eq('id', userId).maybeSingle(),
+        supabase.from('membros').select('funcao, congregacao').eq('id', userId).maybeSingle(),
       ]);
-      // Se já tem church_function salvo usa ele, senão usa a função do signup
       const funcaoDoSignup = membroData?.funcao || 'Membro';
+      // Carrega congregação — fonte primária: tabela membros
+      const congCarregada = membroData?.congregacao || (data as any)?.congregacao || 'Inhumas - GO';
+      setCongregacaoMembro(congCarregada);
+
       const merged: MemberDetails = {
         ...emptyMemberDetails,
         full_name: profileName||'',
         email: profileEmail||'',
         church_function: funcaoDoSignup,
         ...(data||{}),
-        // garante que church_function do signup prevalece se não foi salvo na ficha
         ...(data?.church_function ? {} : { church_function: funcaoDoSignup }),
       };
       setMemberDetails(merged);
@@ -388,10 +398,8 @@ const MemberArea: FC = () => {
     }
   }, []);
 
-  // Verifica status e decide se abre sessão ou bloqueia
   const processarSessao = useCallback(async (sess: Session) => {
     const status = await checarStatus(sess.user.id);
-
     if (status === 'pendente') {
       bloqueandoAuth.current = true;
       await supabase.auth.signOut();
@@ -406,29 +414,22 @@ const MemberArea: FC = () => {
       setError('⚠️ Seu cadastro contém itens a serem verificados, entre em contato com sua liderança.');
       return false;
     }
-
-    // aprovado ou livre (admin) — deixa entrar
     setSession(sess);
     await carregarDetalhes(sess.user.id, sess.user.user_metadata?.full_name, sess.user.email);
     return true;
   }, [carregarDetalhes]);
 
-  // ── Inicialização ─────────────────────────────────────────────────────────
   useEffect(() => {
     let montado = true;
-
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       if (!montado) return;
       if (s) await processarSessao(s);
       setAppLoading(false);
     });
-
-    // onAuthStateChange APENAS para logout real (usuário clicou em sair)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      if (bloqueandoAuth.current) return; // ignora signOut programático
+      if (bloqueandoAuth.current) return;
       if (!s) limparEstado();
     });
-
     return () => { montado = false; subscription.unsubscribe(); };
   }, [processarSessao, limparEstado]);
 
@@ -441,10 +442,10 @@ const MemberArea: FC = () => {
     e.preventDefault();
     setLoading(true); setError(null); setSuccessMsg(null);
     try {
-      // CADASTRO
       if (isSignUp) {
         if (!fullName.trim()) throw new Error('O nome completo é obrigatório.');
         if (!telefone.trim()) throw new Error('O telefone é obrigatório.');
+        if (!congregacaoSignup) throw new Error('Selecione sua congregação.');
         if (!funcaoSignup) throw new Error('Selecione sua função na igreja.');
 
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -456,6 +457,7 @@ const MemberArea: FC = () => {
           await supabase.from('membros').insert({
             id: signUpData.user.id, nome: fullName, email, telefone,
             status: 'pendente', funcao: funcaoSignup,
+            congregacao: congregacaoSignup,  // ← salva a congregação
           });
         }
 
@@ -463,19 +465,18 @@ const MemberArea: FC = () => {
         await supabase.auth.signOut();
         bloqueandoAuth.current = false;
 
-        const msg = `🔔 *Novo cadastro de membro!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n⛪ *Função:* ${funcaoSignup}\n\n✅ Aprovar em:\nhttps://aogimconectinhumas.site/#/admin`;
+        const msg = `🔔 *Novo cadastro de membro!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n🏛 *Congregação:* ${congregacaoSignup}\n⛪ *Função:* ${funcaoSignup}\n\n✅ Aprovar em:\nhttps://aogimconectinhumas.site/#/admin`;
         window.open(`https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, '_blank');
 
         setSuccessMsg('✅ Cadastro enviado! Aguarde a aprovação da liderança para fazer login.');
         setIsSignUp(false);
-        setFullName(''); setTelefone(''); setEmail(''); setPassword(''); setFuncaoSignup('Membro');
+        setFullName(''); setTelefone(''); setEmail(''); setPassword('');
+        setFuncaoSignup('Membro'); setCongregacaoSignup('Inhumas - GO');
         return;
       }
 
-      // LOGIN
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw new Error('E-mail ou senha incorretos.');
-
       await processarSessao(signInData.session!);
 
     } catch (err: any) {
@@ -535,7 +536,7 @@ const MemberArea: FC = () => {
     try {
       const photoPath = await uploadFoto(session.user.id);
       const { error: upsertError } = await supabase.from('member_details').upsert(
-        { user_id: session.user.id, ...payload, photo_path: photoPath },
+        { user_id: session.user.id, ...payload, photo_path: photoPath, congregacao: congregacaoMembro },
         { onConflict: 'user_id' },
       );
       if (upsertError) throw upsertError;
@@ -579,7 +580,8 @@ const MemberArea: FC = () => {
       }
 
       const dataEmissaoFormatada = formatDate(dataEmissao || new Date().toISOString().split('T')[0]);
-      setCartaoImg(await gerarCartaoCNH(memberDetails, photoUrl, session.user.id, numRegistro, dataEmissaoFormatada));
+      // ← Passa congregacaoMembro para o cartão
+      setCartaoImg(await gerarCartaoCNH(memberDetails, photoUrl, session.user.id, numRegistro, dataEmissaoFormatada, congregacaoMembro));
     } finally {
       setGerandoCartao(false);
     }
@@ -610,7 +612,6 @@ const MemberArea: FC = () => {
     } catch { handleDownloadPNG(); }
   };
 
-  // ── Loading inicial ───────────────────────────────────────────────────────
   if (appLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -633,6 +634,10 @@ const MemberArea: FC = () => {
         <div className="text-center space-y-1">
           <h2 className="text-2xl font-bold text-slate-800">Olá, {nome.split(' ')[0]}!</h2>
           <p className="text-slate-500 text-sm">{session.user.email}</p>
+          {/* Exibe congregação abaixo do email */}
+          <p className="text-blue-600 text-xs font-semibold flex items-center justify-center gap-1">
+            <MapPin className="w-3 h-3" /> Ministério Irlanda • {congregacaoMembro}
+          </p>
         </div>
 
         {fetchingDetails && (
@@ -686,16 +691,26 @@ const MemberArea: FC = () => {
             <div className="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl relative my-6">
               <button onClick={() => setShowFichaForm(false)} className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full"><X className="w-5 h-5" /></button>
               <h2 className="text-2xl font-black text-blue-900 mb-1">{hasFicha ? 'Editar Ficha Cadastral' : 'Ficha Cadastral de Membro'}</h2>
-              <p className="text-slate-500 text-sm mb-6">{hasFicha ? 'Dados pessoais e de contato podem ser atualizados. Função e datas do cartão são bloqueadas.' : 'Preencha os dados e envie sua foto.'}</p>
+              <p className="text-slate-500 text-sm mb-6">{hasFicha ? 'Dados pessoais e de contato podem ser atualizados. Função, congregação e datas do cartão são bloqueadas.' : 'Preencha os dados e envie sua foto.'}</p>
 
-              {/* Função bloqueada — sempre visível no topo */}
-              <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3">
+              {/* Função bloqueada */}
+              <div className="mb-3 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3">
                 <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
                   <p className="text-xs font-bold text-blue-500 uppercase tracking-wide">Função na Igreja</p>
                   <p className="text-base font-black text-blue-900">{memberDetails.church_function || 'Membro'}</p>
                 </div>
                 <Lock className="w-4 h-4 text-blue-300 ml-auto" />
+              </div>
+
+              {/* Congregação bloqueada */}
+              <div className="mb-5 p-4 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-indigo-500 uppercase tracking-wide">Congregação</p>
+                  <p className="text-base font-black text-indigo-900">{congregacaoMembro}</p>
+                </div>
+                <Lock className="w-4 h-4 text-indigo-300 ml-auto" />
               </div>
 
               <form onSubmit={handleSaveFicha} className="space-y-5">
@@ -749,7 +764,7 @@ const MemberArea: FC = () => {
               <div className="bg-gradient-to-br from-[#0a1628] to-[#061020] rounded-3xl p-6 shadow-2xl border border-blue-900/40 relative">
                 <button onClick={() => { setShowCard(false); setCartaoImg(null); }} className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full"><X className="w-5 h-5" /></button>
                 <h2 className="text-white font-black text-xl mb-1">Cartão de Membro</h2>
-                <p className="text-blue-300/60 text-sm mb-5">Assembléia de Deus — Ministério Irlanda</p>
+                <p className="text-blue-300/60 text-sm mb-5">Assembléia de Deus — Ministério Irlanda • {congregacaoMembro}</p>
 
                 {cartaoImg ? (
                   <div className="rounded-2xl overflow-hidden border border-blue-500/30 shadow-2xl mb-5">
@@ -759,7 +774,7 @@ const MemberArea: FC = () => {
                   <div className="rounded-2xl bg-white/5 border border-blue-500/20 p-8 mb-5 flex flex-col items-center gap-3 text-center">
                     <CreditCard className="w-12 h-12 text-blue-400/50" />
                     <p className="text-blue-200/60 text-sm">Gere seu cartão com número de registro permanente e selo de autoridade.</p>
-                    <p className="text-blue-300/40 text-xs">Número de registro gerado uma única vez e salvo permanentemente</p>
+                    <p className="text-blue-300/40 text-xs">Congregação: {congregacaoMembro} • Número de registro permanente</p>
                   </div>
                 )}
 
@@ -818,6 +833,17 @@ const MemberArea: FC = () => {
                 <div className="relative"><Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input type="tel" value={telefone} onChange={e=>setTelefone(e.target.value)} placeholder="(62) 99999-9999" className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
                 </div>
+              </div>
+              {/* ── Select de Congregação ── */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Congregação</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <select value={congregacaoSignup} onChange={e=>setCongregacaoSignup(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 appearance-none text-slate-700 font-medium" required>
+                    {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <p className="text-xs text-slate-400 ml-1">Selecione a congregação que você frequenta.</p>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Função na Igreja</label>
