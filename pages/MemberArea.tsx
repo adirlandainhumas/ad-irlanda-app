@@ -331,6 +331,7 @@ const MemberArea: FC = () => {
   const [email, setEmail]                   = useState('');
   const [telefone, setTelefone]             = useState('');
   const [password, setPassword]             = useState('');
+  const [funcaoSignup, setFuncaoSignup]     = useState('Membro');
   const [error, setError]                   = useState<string | null>(null);
   const [successMsg, setSuccessMsg]         = useState<string | null>(null);
   const [hasFicha, setHasFicha]             = useState(false);
@@ -354,8 +355,21 @@ const MemberArea: FC = () => {
   const carregarDetalhes = useCallback(async (userId: string, profileName?: string, profileEmail?: string) => {
     setFetchingDetails(true);
     try {
-      const { data } = await supabase.from('member_details').select('*').eq('user_id', userId).maybeSingle();
-      const merged: MemberDetails = { ...emptyMemberDetails, full_name: profileName||'', email: profileEmail||'', ...(data||{}) };
+      const [{ data }, { data: membroData }] = await Promise.all([
+        supabase.from('member_details').select('*').eq('user_id', userId).maybeSingle(),
+        supabase.from('membros').select('funcao').eq('id', userId).maybeSingle(),
+      ]);
+      // Se já tem church_function salvo usa ele, senão usa a função do signup
+      const funcaoDoSignup = membroData?.funcao || 'Membro';
+      const merged: MemberDetails = {
+        ...emptyMemberDetails,
+        full_name: profileName||'',
+        email: profileEmail||'',
+        church_function: funcaoDoSignup,
+        ...(data||{}),
+        // garante que church_function do signup prevalece se não foi salvo na ficha
+        ...(data?.church_function ? {} : { church_function: funcaoDoSignup }),
+      };
       setMemberDetails(merged);
       const completo = isFichaComplete(merged);
       setHasFicha(completo);
@@ -431,6 +445,7 @@ const MemberArea: FC = () => {
       if (isSignUp) {
         if (!fullName.trim()) throw new Error('O nome completo é obrigatório.');
         if (!telefone.trim()) throw new Error('O telefone é obrigatório.');
+        if (!funcaoSignup) throw new Error('Selecione sua função na igreja.');
 
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email, password, options: { data: { full_name: fullName } },
@@ -439,7 +454,8 @@ const MemberArea: FC = () => {
 
         if (signUpData.user) {
           await supabase.from('membros').insert({
-            id: signUpData.user.id, nome: fullName, email, telefone, status: 'pendente',
+            id: signUpData.user.id, nome: fullName, email, telefone,
+            status: 'pendente', funcao: funcaoSignup,
           });
         }
 
@@ -447,12 +463,12 @@ const MemberArea: FC = () => {
         await supabase.auth.signOut();
         bloqueandoAuth.current = false;
 
-        const msg = `🔔 *Novo cadastro de membro!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n\n✅ Aprovar em:\nhttps://aogimconectinhumas.site/#/admin`;
+        const msg = `🔔 *Novo cadastro de membro!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n⛪ *Função:* ${funcaoSignup}\n\n✅ Aprovar em:\nhttps://aogimconectinhumas.site/#/admin`;
         window.open(`https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, '_blank');
 
         setSuccessMsg('✅ Cadastro enviado! Aguarde a aprovação da liderança para fazer login.');
         setIsSignUp(false);
-        setFullName(''); setTelefone(''); setEmail(''); setPassword('');
+        setFullName(''); setTelefone(''); setEmail(''); setPassword(''); setFuncaoSignup('Membro');
         return;
       }
 
@@ -651,6 +667,14 @@ const MemberArea: FC = () => {
           >
             {hasFicha ? <><CreditCard className="w-6 h-6" /> Acessar Cartão de Membro</> : <><UserCircle className="w-6 h-6" /> Preencher Ficha Cadastral</>}
           </button>
+          {hasFicha && (
+            <button
+              onClick={() => setShowFichaForm(true)}
+              className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-600 font-bold py-4 rounded-2xl hover:bg-slate-100 transition-all border border-slate-200"
+            >
+              <Save className="w-5 h-5" /> Editar Ficha Cadastral
+            </button>
+          )}
           <button onClick={handleSignOut} className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-500 font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100">
             <LogOut className="w-5 h-5" /> Sair da Conta
           </button>
@@ -661,8 +685,19 @@ const MemberArea: FC = () => {
           <div className="fixed inset-0 top-16 z-50 flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
             <div className="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl relative my-6">
               <button onClick={() => setShowFichaForm(false)} className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full"><X className="w-5 h-5" /></button>
-              <h2 className="text-2xl font-black text-blue-900 mb-1">Ficha Cadastral de Membro</h2>
-              <p className="text-slate-500 text-sm mb-6">Preencha os dados e envie sua foto.</p>
+              <h2 className="text-2xl font-black text-blue-900 mb-1">{hasFicha ? 'Editar Ficha Cadastral' : 'Ficha Cadastral de Membro'}</h2>
+              <p className="text-slate-500 text-sm mb-6">{hasFicha ? 'Dados pessoais e de contato podem ser atualizados. Função e datas do cartão são bloqueadas.' : 'Preencha os dados e envie sua foto.'}</p>
+
+              {/* Função bloqueada — sempre visível no topo */}
+              <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3">
+                <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-blue-500 uppercase tracking-wide">Função na Igreja</p>
+                  <p className="text-base font-black text-blue-900">{memberDetails.church_function || 'Membro'}</p>
+                </div>
+                <Lock className="w-4 h-4 text-blue-300 ml-auto" />
+              </div>
+
               <form onSubmit={handleSaveFicha} className="space-y-5">
                 <div className="space-y-2 border border-slate-200 rounded-2xl p-4 bg-slate-50">
                   <label className="text-xs font-bold text-slate-600 uppercase tracking-wide">Foto do Membro</label>
@@ -695,8 +730,6 @@ const MemberArea: FC = () => {
                   <InputField label="Setor / Bairro" value={memberDetails.address_sector} onChange={v=>updateField('address_sector',v)} required />
                   <InputField label="Cidade" value={memberDetails.address_city} onChange={v=>updateField('address_city',v)} required />
                   <InputField label="Estado (UF)" value={memberDetails.address_state} onChange={v=>updateField('address_state',v.toUpperCase())} required />
-                  <InputField label="Informações Eclesiásticas" value={memberDetails.church_role_info} onChange={v=>updateField('church_role_info',v)} icon={<Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"/>} required />
-                  <SelectField label="Função na Igreja" value={memberDetails.church_function} onChange={v=>updateField('church_function',v)} options={['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)']} />
                   <DateField label="Data de Entrada na Igreja" value={memberDetails.church_entry_date} onChange={v=>updateField('church_entry_date',v)} />
                   <DateField label="Data de Batismo" value={memberDetails.baptism_date} onChange={v=>updateField('baptism_date',v)} />
                 </div>
@@ -785,6 +818,17 @@ const MemberArea: FC = () => {
                 <div className="relative"><Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                   <input type="tel" value={telefone} onChange={e=>setTelefone(e.target.value)} placeholder="(62) 99999-9999" className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Função na Igreja</label>
+                <div className="relative"><Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <select value={funcaoSignup} onChange={e=>setFuncaoSignup(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 appearance-none text-slate-700 font-medium" required>
+                    {['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)'].map(o => (
+                      <option key={o} value={o}>{o}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-xs text-slate-400 ml-1">Será confirmada pela liderança após aprovação.</p>
               </div>
             </>
           )}
