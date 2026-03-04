@@ -5,33 +5,32 @@ const ADMIN_EMAIL = "adirlandainhumaslinks@gmail.com";
 const SUPABASE_URL = "https://llevczjsjurdfejwcqpo.supabase.co";
 const GALLERY_BUCKET = "galeria";
 const GALLERY_FOLDER = "ultimo-culto";
+const FUNCOES = ['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)'];
 
 type Notice = {
-  id: string;
-  title: string;
-  body: string;
-  is_published?: boolean;
-  event_date?: string | null;
-  created_at?: string | null;
+  id: string; title: string; body: string;
+  is_published?: boolean; event_date?: string | null; created_at?: string | null;
 };
 
-type GalleryFile = {
-  name: string;
-  path: string;
-  url: string;
-};
+type GalleryFile = { name: string; path: string; url: string; };
 
 type Membro = {
-  id: string;
-  nome: string;
-  email: string;
-  telefone: string;
-  status: string;
-  created_at: string;
+  id: string; nome: string; email: string; telefone: string;
+  status: string; created_at: string; funcao?: string;
+};
+
+type MembroFicha = {
+  full_name?: string; gender?: string; birth_date?: string;
+  marital_status?: string; phone?: string; email?: string;
+  address_street?: string; address_block?: string; address_lot?: string;
+  address_sector?: string; address_city?: string; address_state?: string;
+  church_function?: string; church_entry_date?: string; baptism_date?: string;
+  church_role_info?: string; photo_path?: string; numero_registro?: string;
+  data_emissao?: string;
 };
 
 function formatDateBR(dateStr?: string | null) {
-  if (!dateStr) return "";
+  if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return dateStr;
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
@@ -51,11 +50,9 @@ export default function Admin() {
   const [tab, setTab] = useState<"notices" | "photos" | "membros">("notices");
   const isAdmin = sessionEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-  // login
   const [email, setEmail] = useState(ADMIN_EMAIL);
   const [password, setPassword] = useState("");
 
-  // notices
   const [notices, setNotices] = useState<Notice[]>([]);
   const [noticeBusy, setNoticeBusy] = useState(false);
   const [noticeMsg, setNoticeMsg] = useState<string | null>(null);
@@ -67,21 +64,24 @@ export default function Admin() {
   const [formPublished, setFormPublished] = useState(true);
   const [formEventDate, setFormEventDate] = useState("");
 
-  // photos
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photos, setPhotos] = useState<GalleryFile[]>([]);
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
   const [photoErr, setPhotoErr] = useState<string | null>(null);
 
-  // membros
   const [membros, setMembros] = useState<Membro[]>([]);
   const [membrosBusy, setMembrosBusy] = useState(false);
   const [membrosMsg, setMembrosMsg] = useState<string | null>(null);
   const [membrosErr, setMembrosErr] = useState<string | null>(null);
-  const [membroDetalhe, setMembroDetalhe] = useState<Membro | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "pendente" | "aprovado" | "reprovado">("pendente");
 
-  // ── AUTH ────────────────────────────────────────────────────────────────
+  // ── Ficha do membro ──────────────────────────────────────────────────────
+  const [fichaModal, setFichaModal] = useState<{ membro: Membro; ficha: MembroFicha; photoUrl: string | null } | null>(null);
+  const [fichaLoading, setFichaLoading] = useState(false);
+  const [funcaoEditando, setFuncaoEditando] = useState('');
+  const [funcaoSalvando, setFuncaoSalvando] = useState(false);
+
+  // ── AUTH ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -99,16 +99,14 @@ export default function Admin() {
   }, [loading, isAdmin]);
 
   async function signIn(e: React.FormEvent) {
-    e.preventDefault();
-    setNoticeErr(null);
+    e.preventDefault(); setNoticeErr(null);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) setNoticeErr(error.message);
     setPassword("");
   }
-
   async function signOut() { await supabase.auth.signOut(); }
 
-  // ── NOTICES ─────────────────────────────────────────────────────────────
+  // ── NOTICES ──────────────────────────────────────────────────────────────
   async function loadNotices() {
     setNoticeBusy(true); setNoticeErr(null);
     try {
@@ -132,12 +130,10 @@ export default function Admin() {
       if (!payload.title || !payload.body) { setNoticeErr("Preencha título e texto."); return; }
       if (editing?.id) {
         const { error } = await supabase.from("notices").update(payload).eq("id", editing.id);
-        if (error) throw error;
-        setNoticeMsg("Aviso atualizado!");
+        if (error) throw error; setNoticeMsg("Aviso atualizado!");
       } else {
         const { error } = await supabase.from("notices").insert(payload);
-        if (error) throw error;
-        setNoticeMsg("Aviso criado!");
+        if (error) throw error; setNoticeMsg("Aviso criado!");
       }
       setShowForm(false); await loadNotices();
     } catch (err: any) { setNoticeErr(err?.message ?? "Erro ao salvar."); }
@@ -149,21 +145,19 @@ export default function Admin() {
     setNoticeBusy(true);
     try {
       const { error } = await supabase.from("notices").delete().eq("id", id);
-      if (error) throw error;
-      setNoticeMsg("Aviso excluído!"); await loadNotices();
+      if (error) throw error; setNoticeMsg("Aviso excluído!"); await loadNotices();
     } catch (err: any) { setNoticeErr(err?.message ?? "Erro."); }
     finally { setNoticeBusy(false); }
   }
 
-  // ── PHOTOS ──────────────────────────────────────────────────────────────
+  // ── PHOTOS ───────────────────────────────────────────────────────────────
   async function loadPhotos() {
     setPhotoBusy(true); setPhotoErr(null);
     try {
       const { data, error } = await supabase.storage.from(GALLERY_BUCKET).list(GALLERY_FOLDER, { limit: 200 });
       if (error) throw error;
       setPhotos((data ?? []).filter(f => f.name && !f.name.startsWith(".")).map(f => ({
-        name: f.name,
-        path: `${GALLERY_FOLDER}/${f.name}`,
+        name: f.name, path: `${GALLERY_FOLDER}/${f.name}`,
         url: `${SUPABASE_URL}/storage/v1/object/public/${GALLERY_BUCKET}/${encodeURIComponent(GALLERY_FOLDER)}/${encodeURIComponent(f.name)}`,
       })).sort((a,b) => a.name.localeCompare(b.name)));
     } catch (err: any) { setPhotoErr(err?.message ?? "Erro ao carregar fotos."); }
@@ -188,37 +182,77 @@ export default function Admin() {
     setPhotoBusy(true);
     try {
       const { error } = await supabase.storage.from(GALLERY_BUCKET).remove([path]);
-      if (error) throw error;
-      setPhotoMsg("Foto excluída!"); await loadPhotos();
+      if (error) throw error; setPhotoMsg("Foto excluída!"); await loadPhotos();
     } catch (err: any) { setPhotoErr(err?.message ?? "Erro."); }
     finally { setPhotoBusy(false); }
   }
 
-  // ── MEMBROS ─────────────────────────────────────────────────────────────
+  // ── MEMBROS ──────────────────────────────────────────────────────────────
   async function loadMembros() {
     setMembrosBusy(true); setMembrosErr(null);
     try {
-      const { data, error } = await supabase
-        .from("membros")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("membros").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       setMembros((data as Membro[]) ?? []);
     } catch (err: any) { setMembrosErr(err?.message ?? "Erro ao carregar membros."); }
     finally { setMembrosBusy(false); }
   }
 
+  async function abrirFicha(membro: Membro) {
+    setFichaLoading(true);
+    try {
+      const { data: ficha } = await supabase
+        .from("member_details").select("*").eq("user_id", membro.id).maybeSingle();
+
+      let photoUrl: string | null = null;
+      if (ficha?.photo_path) {
+        const { data: urlData } = await supabase.storage
+          .from("member-photos").createSignedUrl(ficha.photo_path, 3600);
+        photoUrl = urlData?.signedUrl ?? null;
+      }
+
+      setFuncaoEditando(membro.funcao || ficha?.church_function || 'Membro');
+      setFichaModal({ membro, ficha: ficha ?? {}, photoUrl });
+    } catch (err: any) {
+      setMembrosErr("Erro ao carregar ficha: " + err.message);
+    } finally {
+      setFichaLoading(false);
+    }
+  }
+
+  async function salvarFuncao() {
+    if (!fichaModal) return;
+    setFuncaoSalvando(true);
+    try {
+      // Atualiza na tabela membros
+      await supabase.from("membros").update({ funcao: funcaoEditando }).eq("id", fichaModal.membro.id);
+      // Atualiza na ficha se existir
+      await supabase.from("member_details").update({ church_function: funcaoEditando }).eq("user_id", fichaModal.membro.id);
+
+      setMembros(prev => prev.map(m => m.id === fichaModal.membro.id ? { ...m, funcao: funcaoEditando } : m));
+      setFichaModal(prev => prev ? {
+        ...prev,
+        membro: { ...prev.membro, funcao: funcaoEditando },
+        ficha: { ...prev.ficha, church_function: funcaoEditando },
+      } : null);
+      setMembrosMsg(`Função atualizada para "${funcaoEditando}" ✅`);
+    } catch (err: any) {
+      setMembrosErr("Erro ao salvar função: " + err.message);
+    } finally {
+      setFuncaoSalvando(false);
+    }
+  }
+
   async function atualizarStatus(membroId: string, acao: "aprovar" | "reprovar") {
     setMembrosBusy(true); setMembrosMsg(null); setMembrosErr(null);
     try {
       const res = await fetch("/.netlify/functions/membro-aprovar", {
-        method: "POST",
-        body: JSON.stringify({ membroId, acao }),
+        method: "POST", body: JSON.stringify({ membroId, acao }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
       setMembrosMsg(acao === "aprovar" ? "Membro aprovado! ✅" : "Membro reprovado.");
-      setMembroDetalhe(null);
+      setFichaModal(null);
       await loadMembros();
     } catch (err: any) { setMembrosErr(err?.message ?? "Erro ao atualizar."); }
     finally { setMembrosBusy(false); }
@@ -248,7 +282,6 @@ export default function Admin() {
     return "Gerenciar Membros";
   }, [tab]);
 
-  // ── RENDER ───────────────────────────────────────────────────────────────
   if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-600">Carregando…</div>;
 
   if (!sessionEmail) {
@@ -261,7 +294,7 @@ export default function Admin() {
             <form className="mt-6 space-y-4" onSubmit={signIn}>
               <div>
                 <label className="text-xs font-semibold text-slate-600">E-mail</label>
-                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" />
+                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={email} onChange={e=>setEmail(e.target.value)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Senha</label>
@@ -304,9 +337,7 @@ export default function Admin() {
         {/* Tabs */}
         <div className="mt-6 flex gap-2 flex-wrap">
           {(["notices","photos","membros"] as const).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
+            <button key={t} onClick={() => setTab(t)}
               className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
             >
               {t === "notices" && "Avisos"}
@@ -315,9 +346,7 @@ export default function Admin() {
                 <span className="flex items-center gap-2">
                   Membros
                   {pendentesCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                      {pendentesCount}
-                    </span>
+                    <span className="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{pendentesCount}</span>
                   )}
                 </span>
               )}
@@ -325,7 +354,7 @@ export default function Admin() {
           ))}
         </div>
 
-        {/* Mensagens globais */}
+        {/* Mensagens */}
         {(noticeMsg || photoMsg || membrosMsg) && (
           <div className="mt-6 rounded-xl bg-green-50 border border-green-100 text-green-800 px-4 py-3 flex items-center justify-between">
             <span>{noticeMsg || photoMsg || membrosMsg}</span>
@@ -410,12 +439,9 @@ export default function Admin() {
               <button onClick={loadMembros} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm">↻ Atualizar</button>
             </div>
 
-            {/* Filtros */}
             <div className="mt-4 flex gap-2 flex-wrap">
               {(["pendente","aprovado","reprovado","todos"] as const).map(f => (
-                <button
-                  key={f}
-                  onClick={() => setFiltroStatus(f)}
+                <button key={f} onClick={() => setFiltroStatus(f)}
                   className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
                 >
                   {f === "pendente"  && `⏳ Pendentes (${membros.filter(m=>m.status==="pendente").length})`}
@@ -426,7 +452,6 @@ export default function Admin() {
               ))}
             </div>
 
-            {/* Lista */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {membrosFiltrados.map(m => (
                 <div key={m.id} className="bg-white rounded-2xl border shadow-sm p-5">
@@ -435,6 +460,9 @@ export default function Admin() {
                       <div className="font-semibold text-slate-900 truncate">{m.nome}</div>
                       <div className="text-sm text-slate-500 mt-0.5 truncate">{m.email}</div>
                       <div className="text-sm text-slate-500">{m.telefone}</div>
+                      {m.funcao && (
+                        <div className="text-xs text-blue-600 font-semibold mt-1">⛪ {m.funcao}</div>
+                      )}
                       <div className="text-xs text-slate-400 mt-1">Cadastrado em {formatDateBR(m.created_at)}</div>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full border flex-shrink-0 font-semibold ${statusColor(m.status)}`}>
@@ -442,44 +470,41 @@ export default function Admin() {
                     </span>
                   </div>
 
+                  {/* Botão Ver Ficha sempre visível */}
+                  <div className="mt-4 flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => abrirFicha(m)}
+                      disabled={fichaLoading}
+                      className="flex-1 rounded-xl border border-blue-200 text-blue-700 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 transition disabled:opacity-50"
+                    >
+                      {fichaLoading ? "Carregando…" : "📋 Ver Ficha"}
+                    </button>
+                  </div>
+
                   {m.status === "pendente" && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => atualizarStatus(m.id, "aprovar")}
-                        disabled={membrosBusy}
-                        className="flex-1 rounded-xl bg-green-600 text-white px-4 py-2.5 font-semibold hover:bg-green-700 transition disabled:opacity-50 text-sm"
-                      >
+                    <div className="mt-2 flex gap-2">
+                      <button onClick={() => atualizarStatus(m.id, "aprovar")} disabled={membrosBusy}
+                        className="flex-1 rounded-xl bg-green-600 text-white px-4 py-2.5 font-semibold hover:bg-green-700 transition disabled:opacity-50 text-sm">
                         ✅ Aprovar
                       </button>
-                      <button
-                        onClick={() => atualizarStatus(m.id, "reprovar")}
-                        disabled={membrosBusy}
-                        className="flex-1 rounded-xl border border-red-200 text-red-600 px-4 py-2.5 font-semibold hover:bg-red-50 transition disabled:opacity-50 text-sm"
-                      >
+                      <button onClick={() => atualizarStatus(m.id, "reprovar")} disabled={membrosBusy}
+                        className="flex-1 rounded-xl border border-red-200 text-red-600 px-4 py-2.5 font-semibold hover:bg-red-50 transition disabled:opacity-50 text-sm">
                         ❌ Reprovar
                       </button>
                     </div>
                   )}
-
                   {m.status === "aprovado" && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => atualizarStatus(m.id, "reprovar")}
-                        disabled={membrosBusy}
-                        className="flex-1 rounded-xl border border-red-200 text-red-600 px-4 py-2.5 text-sm hover:bg-red-50 transition disabled:opacity-50"
-                      >
+                    <div className="mt-2">
+                      <button onClick={() => atualizarStatus(m.id, "reprovar")} disabled={membrosBusy}
+                        className="w-full rounded-xl border border-red-200 text-red-600 px-4 py-2.5 text-sm hover:bg-red-50 transition disabled:opacity-50">
                         Revogar acesso
                       </button>
                     </div>
                   )}
-
                   {m.status === "reprovado" && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => atualizarStatus(m.id, "aprovar")}
-                        disabled={membrosBusy}
-                        className="flex-1 rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-semibold hover:bg-green-700 transition disabled:opacity-50"
-                      >
+                    <div className="mt-2">
+                      <button onClick={() => atualizarStatus(m.id, "aprovar")} disabled={membrosBusy}
+                        className="w-full rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-semibold hover:bg-green-700 transition disabled:opacity-50">
                         Aprovar mesmo assim
                       </button>
                     </div>
@@ -497,7 +522,7 @@ export default function Admin() {
         )}
       </div>
 
-      {/* FORM MODAL — Avisos */}
+      {/* ── MODAL AVISOS ── */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-4 z-50">
           <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border p-6">
@@ -539,6 +564,136 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* ── MODAL FICHA DO MEMBRO ── */}
+      {fichaModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center px-4 z-50 overflow-y-auto py-8">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border">
+
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Ficha Cadastral</h3>
+                <p className="text-sm text-slate-500 mt-0.5">{fichaModal.membro.nome}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs px-3 py-1 rounded-full border font-semibold ${statusColor(fichaModal.membro.status)}`}>
+                  {statusLabel(fichaModal.membro.status)}
+                </span>
+                <button onClick={() => setFichaModal(null)} className="p-2 rounded-xl border hover:bg-slate-50 transition text-slate-500">✕</button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+
+              {/* Foto + info básica */}
+              <div className="flex items-start gap-5">
+                <div className="w-24 h-28 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border">
+                  {fichaModal.photoUrl
+                    ? <img src={fichaModal.photoUrl} alt="foto" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-slate-400 text-3xl">👤</div>
+                  }
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="text-lg font-bold text-slate-900">{fichaModal.ficha.full_name || fichaModal.membro.nome}</div>
+                  <div className="text-sm text-slate-500">{fichaModal.ficha.email || fichaModal.membro.email}</div>
+                  <div className="text-sm text-slate-500">{fichaModal.ficha.phone || fichaModal.membro.telefone}</div>
+                  <div className="text-sm text-slate-500">
+                    {fichaModal.ficha.gender && <span className="mr-3">{fichaModal.ficha.gender}</span>}
+                    {fichaModal.ficha.marital_status && <span>{fichaModal.ficha.marital_status}</span>}
+                  </div>
+                  {fichaModal.ficha.numero_registro && (
+                    <div className="text-xs font-mono text-blue-600 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Dados pessoais */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dados Pessoais</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <InfoRow label="Nascimento" value={formatDateBR(fichaModal.ficha.birth_date)} />
+                  <InfoRow label="Estado Civil" value={fichaModal.ficha.marital_status} />
+                  <InfoRow label="Endereço" value={[fichaModal.ficha.address_street, fichaModal.ficha.address_lot, fichaModal.ficha.address_block].filter(Boolean).join(', ')} full />
+                  <InfoRow label="Setor / Bairro" value={fichaModal.ficha.address_sector} />
+                  <InfoRow label="Cidade" value={fichaModal.ficha.address_city} />
+                  <InfoRow label="Estado" value={fichaModal.ficha.address_state} />
+                </div>
+              </div>
+
+              {/* Dados eclesiásticos */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Dados Eclesiásticos</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <InfoRow label="Entrada na Igreja" value={formatDateBR(fichaModal.ficha.church_entry_date)} />
+                  <InfoRow label="Data de Batismo" value={formatDateBR(fichaModal.ficha.baptism_date)} />
+                  {fichaModal.ficha.data_emissao && (
+                    <InfoRow label="Emissão do Cartão" value={formatDateBR(fichaModal.ficha.data_emissao)} />
+                  )}
+                </div>
+              </div>
+
+              {/* Alterar função — exclusivo do admin */}
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">⛪ Função na Igreja</h4>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={funcaoEditando}
+                    onChange={e => setFuncaoEditando(e.target.value)}
+                    className="flex-1 rounded-xl border border-blue-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                  >
+                    {FUNCOES.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                  <button
+                    onClick={salvarFuncao}
+                    disabled={funcaoSalvando || funcaoEditando === (fichaModal.membro.funcao || fichaModal.ficha.church_function)}
+                    className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                  >
+                    {funcaoSalvando ? "Salvando…" : "Salvar Função"}
+                  </button>
+                </div>
+                <p className="text-xs text-blue-400 mt-2">Somente o administrador pode alterar a função do membro.</p>
+              </div>
+
+              {/* Ações de aprovação */}
+              {fichaModal.membro.status === "pendente" && (
+                <div className="flex gap-3">
+                  <button onClick={() => atualizarStatus(fichaModal.membro.id, "aprovar")} disabled={membrosBusy}
+                    className="flex-1 rounded-xl bg-green-600 text-white px-4 py-3 font-bold hover:bg-green-700 transition disabled:opacity-50">
+                    ✅ Aprovar Membro
+                  </button>
+                  <button onClick={() => atualizarStatus(fichaModal.membro.id, "reprovar")} disabled={membrosBusy}
+                    className="flex-1 rounded-xl border border-red-200 text-red-600 px-4 py-3 font-bold hover:bg-red-50 transition disabled:opacity-50">
+                    ❌ Reprovar
+                  </button>
+                </div>
+              )}
+              {fichaModal.membro.status === "aprovado" && (
+                <button onClick={() => atualizarStatus(fichaModal.membro.id, "reprovar")} disabled={membrosBusy}
+                  className="w-full rounded-xl border border-red-200 text-red-600 px-4 py-3 font-bold hover:bg-red-50 transition disabled:opacity-50">
+                  Revogar acesso
+                </button>
+              )}
+              {fichaModal.membro.status === "reprovado" && (
+                <button onClick={() => atualizarStatus(fichaModal.membro.id, "aprovar")} disabled={membrosBusy}
+                  className="w-full rounded-xl bg-green-600 text-white px-4 py-3 font-bold hover:bg-green-700 transition disabled:opacity-50">
+                  Aprovar mesmo assim
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente auxiliar ───────────────────────────────────────────────────────
+function InfoRow({ label, value, full }: { label: string; value?: string; full?: boolean }) {
+  return (
+    <div className={full ? "col-span-2" : ""}>
+      <div className="text-xs text-slate-400 font-semibold uppercase tracking-wide">{label}</div>
+      <div className="text-sm text-slate-800 font-medium mt-0.5">{value || "—"}</div>
     </div>
   );
 }
