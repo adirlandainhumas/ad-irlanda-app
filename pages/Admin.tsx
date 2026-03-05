@@ -27,7 +27,7 @@ type MembroFicha = {
   address_sector?: string; address_city?: string; address_state?: string;
   church_function?: string; church_entry_date?: string; baptism_date?: string;
   church_role_info?: string; photo_path?: string; numero_registro?: string;
-  data_emissao?: string; congregacao?: string;
+  data_emissao?: string;
 };
 
 function formatDateBR(dateStr?: string | null) {
@@ -43,6 +43,12 @@ function toISODate(dateInput: string) {
   const [dd, mm, yyyy] = dateInput.split("/");
   if (!dd || !mm || !yyyy) return "";
   return `${yyyy}-${mm.padStart(2,"0")}-${dd.padStart(2,"0")}`;
+}
+
+function whatsappLink(tel: string) {
+  const digits = tel.replace(/\D/g, '');
+  const number = digits.startsWith('55') ? digits : `55${digits}`;
+  return `https://wa.me/${number}`;
 }
 
 export default function Admin() {
@@ -76,6 +82,7 @@ export default function Admin() {
   const [membrosErr, setMembrosErr] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | "pendente" | "aprovado" | "reprovado">("pendente");
   const [filtroCongregacao, setFiltroCongregacao] = useState<string>("todas");
+  const [busca, setBusca] = useState("");
 
   // ── Ficha do membro ──────────────────────────────────────────────────────
   const [fichaModal, setFichaModal] = useState<{ membro: Membro; ficha: MembroFicha; photoUrl: string | null } | null>(null);
@@ -207,17 +214,14 @@ export default function Admin() {
     try {
       const { data: ficha } = await supabase
         .from("member_details").select("*").eq("user_id", membro.id).maybeSingle();
-
       let photoUrl: string | null = null;
       if (ficha?.photo_path) {
         const { data: urlData } = await supabase.storage
           .from("member-photos").createSignedUrl(ficha.photo_path, 3600);
         photoUrl = urlData?.signedUrl ?? null;
       }
-
       setFuncaoEditando(membro.funcao || ficha?.church_function || 'Membro');
-      // Congregação: fonte primária é a tabela membros
-      setCongregacaoEditando(membro.congregacao || ficha?.congregacao || 'Inhumas - GO');
+      setCongregacaoEditando(membro.congregacao || 'Inhumas - GO');
       setFichaModal({ membro, ficha: ficha ?? {}, photoUrl });
     } catch (err: any) {
       setMembrosErr("Erro ao carregar ficha: " + err.message);
@@ -250,14 +254,12 @@ export default function Admin() {
     if (!fichaModal) return;
     setCongregacaoSalvando(true);
     try {
-      // Atualiza nas duas tabelas
+      // Congregação fica apenas na tabela membros
       await supabase.from("membros").update({ congregacao: congregacaoEditando }).eq("id", fichaModal.membro.id);
-      await supabase.from("member_details").update({ congregacao: congregacaoEditando }).eq("user_id", fichaModal.membro.id);
       setMembros(prev => prev.map(m => m.id === fichaModal.membro.id ? { ...m, congregacao: congregacaoEditando } : m));
       setFichaModal(prev => prev ? {
         ...prev,
         membro: { ...prev.membro, congregacao: congregacaoEditando },
-        ficha: { ...prev.ficha, congregacao: congregacaoEditando },
       } : null);
       setMembrosMsg(`Congregação atualizada para "${congregacaoEditando}" ✅`);
     } catch (err: any) {
@@ -282,14 +284,38 @@ export default function Admin() {
     finally { setMembrosBusy(false); }
   }
 
+  // ── Filtros e contagens ───────────────────────────────────────────────────
   const membrosFiltrados = useMemo(() => {
     let lista = membros;
     if (filtroStatus !== "todos") lista = lista.filter(m => m.status === filtroStatus);
     if (filtroCongregacao !== "todas") lista = lista.filter(m => m.congregacao === filtroCongregacao);
+    if (busca.trim()) {
+      const q = busca.toLowerCase().trim();
+      lista = lista.filter(m =>
+        m.nome?.toLowerCase().includes(q) ||
+        m.email?.toLowerCase().includes(q) ||
+        m.telefone?.replace(/\D/g,'').includes(q.replace(/\D/g,''))
+      );
+    }
     return lista;
-  }, [membros, filtroStatus, filtroCongregacao]);
+  }, [membros, filtroStatus, filtroCongregacao, busca]);
+
+  // Contagem por congregação respeitando o filtro de status atual
+  const contagemCong = useMemo(() => {
+    const base = filtroStatus === "todos" ? membros : membros.filter(m => m.status === filtroStatus);
+    const result: Record<string, number> = { todas: base.length };
+    CONGREGACOES.forEach(c => { result[c] = base.filter(m => m.congregacao === c).length; });
+    return result;
+  }, [membros, filtroStatus]);
 
   const pendentesCount = useMemo(() => membros.filter(m => m.status === "pendente").length, [membros]);
+
+  const stats = useMemo(() => ({
+    total: membros.length,
+    pendentes: membros.filter(m => m.status === "pendente").length,
+    aprovados: membros.filter(m => m.status === "aprovado").length,
+    reprovados: membros.filter(m => m.status === "reprovado").length,
+  }), [membros]);
 
   const statusColor = (s: string) => {
     if (s === "aprovado")  return "bg-green-50 border-green-100 text-green-700";
@@ -459,11 +485,44 @@ export default function Admin() {
           <div className="mt-8">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <h2 className="text-lg font-semibold text-slate-900">Cadastros de Membros</h2>
-              <button onClick={loadMembros} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm">↻ Atualizar</button>
+              <button onClick={loadMembros} disabled={membrosBusy} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm disabled:opacity-50">
+                {membrosBusy ? "Atualizando…" : "↻ Atualizar"}
+              </button>
+            </div>
+
+            {/* Cards de estatísticas */}
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-white rounded-2xl border p-4 text-center shadow-sm">
+                <div className="text-2xl font-bold text-slate-800">{stats.total}</div>
+                <div className="text-xs text-slate-500 mt-1">Total</div>
+              </div>
+              <div className="bg-yellow-50 rounded-2xl border border-yellow-200 p-4 text-center shadow-sm">
+                <div className="text-2xl font-bold text-yellow-700">{stats.pendentes}</div>
+                <div className="text-xs text-yellow-600 mt-1">Pendentes</div>
+              </div>
+              <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center shadow-sm">
+                <div className="text-2xl font-bold text-green-700">{stats.aprovados}</div>
+                <div className="text-xs text-green-600 mt-1">Aprovados</div>
+              </div>
+              <div className="bg-red-50 rounded-2xl border border-red-200 p-4 text-center shadow-sm">
+                <div className="text-2xl font-bold text-red-600">{stats.reprovados}</div>
+                <div className="text-xs text-red-500 mt-1">Reprovados</div>
+              </div>
+            </div>
+
+            {/* Busca */}
+            <div className="mt-4">
+              <input
+                type="text"
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                placeholder="🔍  Buscar por nome, e-mail ou telefone…"
+                className="w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+              />
             </div>
 
             {/* Filtro por status */}
-            <div className="mt-4 flex gap-2 flex-wrap">
+            <div className="mt-3 flex gap-2 flex-wrap">
               {(["pendente","aprovado","reprovado","todos"] as const).map(f => (
                 <button key={f} onClick={() => setFiltroStatus(f)}
                   className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
@@ -476,18 +535,18 @@ export default function Admin() {
               ))}
             </div>
 
-            {/* Filtro por congregação */}
+            {/* Filtro por congregação — contagens respeitam o filtro de status */}
             <div className="mt-3 flex gap-2 flex-wrap">
               <button onClick={() => setFiltroCongregacao("todas")}
                 className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
               >
-                🏛 Todas as congregações
+                🏛 Todas ({contagemCong["todas"] ?? 0})
               </button>
               {CONGREGACOES.map(c => (
                 <button key={c} onClick={() => setFiltroCongregacao(c)}
                   className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
                 >
-                  📍 {c} ({membros.filter(m=>m.congregacao===c).length})
+                  📍 {c} ({contagemCong[c] ?? 0})
                 </button>
               ))}
             </div>
@@ -521,6 +580,15 @@ export default function Admin() {
                     >
                       {fichaLoading ? "Carregando…" : "📋 Ver Ficha"}
                     </button>
+                    {m.telefone && (
+                      <a
+                        href={whatsappLink(m.telefone)}
+                        target="_blank" rel="noreferrer"
+                        className="rounded-xl border border-green-200 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-50 transition flex items-center gap-1"
+                      >
+                        💬 WA
+                      </a>
+                    )}
                   </div>
 
                   {m.status === "pendente" && (
@@ -555,9 +623,23 @@ export default function Admin() {
               ))}
             </div>
 
-            {membrosFiltrados.length === 0 && (
-              <div className="mt-10 text-center text-slate-500">
-                {filtroStatus === "pendente" ? "Nenhum cadastro pendente. 🎉" : "Nenhum membro encontrado."}
+            {membrosFiltrados.length === 0 && !membrosBusy && (
+              <div className="mt-10 text-center text-slate-500 space-y-2">
+                <div className="text-3xl">🔍</div>
+                {busca.trim()
+                  ? <p>Nenhum membro encontrado para "<b>{busca}</b>".</p>
+                  : filtroStatus === "pendente"
+                    ? <p>Nenhum cadastro pendente. 🎉</p>
+                    : <p>Nenhum membro encontrado com os filtros selecionados.</p>
+                }
+                {(busca || filtroCongregacao !== "todas") && (
+                  <button
+                    onClick={() => { setBusca(""); setFiltroCongregacao("todas"); }}
+                    className="text-sm text-blue-600 underline"
+                  >
+                    Limpar filtros
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -627,7 +709,7 @@ export default function Admin() {
 
             <div className="p-6 space-y-6">
 
-              {/* Foto + info básica */}
+              {/* Foto + info básica + contato rápido */}
               <div className="flex items-start gap-5">
                 <div className="w-24 h-28 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 border">
                   {fichaModal.photoUrl
@@ -643,13 +725,32 @@ export default function Admin() {
                     {fichaModal.ficha.gender && <span className="mr-3">{fichaModal.ficha.gender}</span>}
                     {fichaModal.ficha.marital_status && <span>{fichaModal.ficha.marital_status}</span>}
                   </div>
-                  {/* Congregação visível na ficha */}
                   <div className="text-xs font-semibold text-indigo-600 mt-1">
-                    📍 {fichaModal.membro.congregacao || fichaModal.ficha.congregacao || 'Inhumas - GO'}
+                    📍 {fichaModal.membro.congregacao || 'Inhumas - GO'}
                   </div>
                   {fichaModal.ficha.numero_registro && (
                     <div className="text-xs font-mono text-blue-600 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
                   )}
+                  {/* Botões de contato rápido */}
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {(fichaModal.membro.telefone || fichaModal.ficha.phone) && (
+                      <a
+                        href={whatsappLink(fichaModal.membro.telefone || fichaModal.ficha.phone || '')}
+                        target="_blank" rel="noreferrer"
+                        className="rounded-lg bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 text-xs font-semibold hover:bg-green-100 transition"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    {(fichaModal.membro.email || fichaModal.ficha.email) && (
+                      <a
+                        href={`mailto:${fichaModal.membro.email || fichaModal.ficha.email}`}
+                        className="rounded-lg bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 text-xs font-semibold hover:bg-blue-100 transition"
+                      >
+                        ✉️ E-mail
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -678,7 +779,7 @@ export default function Admin() {
                 </div>
               </div>
 
-              {/* Alterar congregação — admin */}
+              {/* Alterar congregação */}
               <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
                 <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">📍 Congregação</h4>
                 <div className="flex items-center gap-3">
@@ -691,7 +792,7 @@ export default function Admin() {
                   </select>
                   <button
                     onClick={salvarCongregacao}
-                    disabled={congregacaoSalvando || congregacaoEditando === (fichaModal.membro.congregacao || fichaModal.ficha.congregacao)}
+                    disabled={congregacaoSalvando || congregacaoEditando === fichaModal.membro.congregacao}
                     className="rounded-xl bg-indigo-700 text-white px-5 py-2.5 font-semibold hover:bg-indigo-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
                   >
                     {congregacaoSalvando ? "Salvando…" : "Salvar"}
@@ -700,7 +801,7 @@ export default function Admin() {
                 <p className="text-xs text-indigo-400 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
               </div>
 
-              {/* Alterar função — admin */}
+              {/* Alterar função */}
               <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
                 <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">⛪ Função na Igreja</h4>
                 <div className="flex items-center gap-3">
