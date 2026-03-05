@@ -189,15 +189,13 @@ const Gallery: React.FC = () => {
         .gl-footer-social-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(80,180,255,.55); font-weight:700; flex:1; }
 
         .gl-social-btn {
-          display:inline-flex; align-items:center; gap:7px;
-          font-weight:700; font-size:12px; padding:8px 14px;
-          border-radius:999px; text-decoration:none; border:none;
-          transition:transform .18s, box-shadow .18s; cursor:pointer;
+          display:inline-flex; align-items:center; justify-content:center;
+          width:38px; height:38px; border-radius:50%;
+          background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
+          color:rgba(200,225,255,0.85); text-decoration:none;
+          transition:background .2s, transform .18s; flex-shrink:0;
         }
-        .gl-social-btn:hover { transform:translateY(-2px); }
-        .gl-social-ig { background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045); color:#fff; box-shadow:0 4px 14px rgba(130,50,180,.3); }
-        .gl-social-yt { background:#FF0000; color:#fff; box-shadow:0 4px 14px rgba(255,0,0,.25); }
-        .gl-social-tk { background:#010101; color:#fff; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+        .gl-social-btn:hover { transform:translateY(-2px); background:rgba(255,255,255,0.14); }
 
         /* ── Lightbox cinematográfico ── */
         @keyframes glLbIn   { from{opacity:0} to{opacity:1} }
@@ -349,23 +347,20 @@ const Gallery: React.FC = () => {
             <div className="gl-footer-divider" />
             <div className="gl-footer-social">
               <p className="gl-footer-social-label">Siga-nos</p>
-              <a href="https://www.instagram.com/aogiminhumas" target="_blank" rel="noopener noreferrer" className="gl-social-btn gl-social-ig">
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{width:14,height:14}}>
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              <a href="https://www.instagram.com/aogiminhumas" target="_blank" rel="noopener noreferrer" className="gl-social-btn" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{width:17,height:17}}>
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
                 </svg>
-                @aogiminhumas
               </a>
-              <a href="https://www.youtube.com/channel/UCZSKJY1tWNQHyEE3vO0y4wQ" target="_blank" rel="noopener noreferrer" className="gl-social-btn gl-social-yt">
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{width:14,height:14}}>
+              <a href="https://www.youtube.com/channel/UCZSKJY1tWNQHyEE3vO0y4wQ" target="_blank" rel="noopener noreferrer" className="gl-social-btn" aria-label="YouTube">
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{width:17,height:17}}>
                   <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
-                YouTube
               </a>
-              <a href="https://www.tiktok.com/@ad.irlanda.inhumas" target="_blank" rel="noopener noreferrer" className="gl-social-btn gl-social-tk">
-                <svg viewBox="0 0 24 24" fill="currentColor" style={{width:13,height:13}}>
+              <a href="https://www.tiktok.com/@ad.irlanda.inhumas" target="_blank" rel="noopener noreferrer" className="gl-social-btn" aria-label="TikTok">
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{width:16,height:16}}>
                   <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.74a4.85 4.85 0 01-1.01-.05z"/>
                 </svg>
-                TikTok
               </a>
             </div>
           </div>
