@@ -165,78 +165,28 @@ async function gerarCartaoCNH(
     ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
     ctx.restore();
 
-    // ── Selo profissional ────────────────────────────────────────────────────
+    // ── Selo: ícone da pomba/globo ────────────────────────────────────────────
     const seloX = photoX + photoW / 2;
     const seloY = photoY + photoH + 158;
     const seloR = 56;
 
-    ctx.save();
-
-    // Brilho externo
-    ctx.shadowColor = 'rgba(100,160,255,0.55)';
-    ctx.shadowBlur = 22;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR + 3, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(200,170,65,0.85)'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // Anel dourado externo
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(210,178,68,0.95)'; ctx.lineWidth = 1.8; ctx.stroke();
-
-    // Preenchimento gradiente
-    const seloFill = ctx.createRadialGradient(seloX, seloY - 18, 2, seloX, seloY, seloR);
-    seloFill.addColorStop(0, 'rgba(22,58,165,0.97)');
-    seloFill.addColorStop(1, 'rgba(6,16,62,0.99)');
-    ctx.fillStyle = seloFill;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
-
-    // Raios (sunburst)
-    for (let i = 0; i < 36; i++) {
-      const a = (i * Math.PI * 2) / 36;
-      ctx.save();
-      ctx.translate(seloX, seloY); ctx.rotate(a);
-      ctx.beginPath();
-      ctx.moveTo(0, -(seloR - 20));
-      ctx.lineTo(0, -(seloR - 13));
-      ctx.strokeStyle = i % 2 === 0 ? 'rgba(210,178,68,0.85)' : 'rgba(210,178,68,0.28)';
-      ctx.lineWidth = 1; ctx.stroke();
-      ctx.restore();
-    }
-
-    // Anel dourado interno
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 14, 0, Math.PI*2);
-    ctx.strokeStyle = 'rgba(210,178,68,0.5)'; ctx.lineWidth = 0.9; ctx.stroke();
-
-    // Cruz centralctx.save();
-    const crossH = 16, crossBH = 10;
-    ctx.strokeStyle = 'rgba(215,182,70,0.95)'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(seloX, seloY - crossH); ctx.lineTo(seloX, seloY + crossBH);
-    ctx.moveTo(seloX - crossH * 0.65, seloY - crossH * 0.28); ctx.lineTo(seloX + crossH * 0.65, seloY - crossH * 0.28);
-    ctx.stroke();
-    ctx.restore();
-
-    // Texto "AOGIM" abaixo da cruz
-    ctx.textAlign = 'center';
-    ctx.font = 'bold 7.5px Courier New, monospace';
-    ctx.fillStyle = 'rgba(215,182,70,0.92)';
-    ctx.fillText('AOGIM', seloX, seloY + crossBH + 10);
-
-    // Texto circular: "ASSEMBLÉIA DE DEUS  •  MINISTÉRIO IRLANDA  •"
-    const textoArc = 'ASSEMBLÉIA DE DEUS  •  MINISTÉRIO IRLANDA  •';
-    const arcR = seloR - 9;
-    const step = (Math.PI * 2) / textoArc.length;
-    ctx.font = 'bold 6.5px sans-serif'; ctx.fillStyle = 'rgba(215,182,70,0.92)'; ctx.textAlign = 'center';
-    for (let i = 0; i < textoArc.length; i++) {
-      ctx.save();
-      ctx.translate(seloX, seloY);
-      ctx.rotate(step * i - Math.PI / 2);
-      ctx.translate(0, -arcR); ctx.rotate(Math.PI / 2);
-      ctx.fillText(textoArc[i], 0, 0);
-      ctx.restore();
-    }
-
-    ctx.restore();
+    try {
+      const seloImg = new Image();
+      seloImg.crossOrigin = 'anonymous';
+      await new Promise<void>((res) => { seloImg.onload = () => res(); seloImg.onerror = () => res(); seloImg.src = '/selo.png'; });
+      if (seloImg.complete && seloImg.naturalWidth > 0) {
+        ctx.save();
+        // Clip em círculo para manter proporção arredondada
+        ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(seloImg, seloX - seloR, seloY - seloR, seloR * 2, seloR * 2);
+        ctx.restore();
+        // Anel externo sutil
+        ctx.save();
+        ctx.beginPath(); ctx.arc(seloX, seloY, seloR + 2, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(180,210,255,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+    } catch {}
 
     // Dados
     const dx = photoX + photoW + 26;
