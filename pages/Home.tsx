@@ -17,7 +17,7 @@ const GALLERY_BUCKET = "galeria";
 const GALLERY_PATH = "ultimo-culto";
 const PASTOR_WHATSAPP_NUMBER = "5562984468270";
 
-const INSTAGRAM_URL = "https://www.instagram.com/adirlandainhumas";
+const INSTAGRAM_URL = "https://www.instagram.com/aogiminhumas/";
 const YOUTUBE_URL = "https://www.youtube.com/@adirlandainhumas";
 
 type Notice = {
@@ -545,11 +545,6 @@ export default function Home() {
 
           {/* Conteúdo */}
           <div className="hm-hero-inner">
-            <div className="hm-hero-badge">
-              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#40c0ff", display: "inline-block", animation: "hmBounce 2s ease-in-out infinite" }} />
-              Ministério Irlanda · Inhumas
-            </div>
-
             <img src={LOGO_FULL} alt="AD Ministério Irlanda" className="hm-logo" style={{ display: "block", margin: "0 auto" }} />
 
             <p className="hm-tagline">
