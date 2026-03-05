@@ -527,8 +527,7 @@ export default function Home() {
 
         /* ── PIX / Dízimos & Ofertas ── */
         .hm-pix-card {
-          background: linear-gradient(135deg, #060f1e 0%, #091828 50%, #071422 100%);
-          border: 1px solid rgba(0,210,160,0.18);
+          background: linear-gradient(135deg, #0a1535 0%, #0e1d50 50%, #0a2060 100%);
           border-radius: 28px;
           padding: 36px 28px;
           position: relative;
@@ -537,29 +536,29 @@ export default function Home() {
         .hm-pix-card::before {
           content: '';
           position: absolute;
-          top: -80px; right: -80px;
-          width: 300px; height: 300px;
+          top: -60px; right: -60px;
+          width: 280px; height: 280px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0,210,150,0.1) 0%, transparent 65%);
+          background: radial-gradient(circle, rgba(0,140,255,0.18) 0%, transparent 70%);
           pointer-events: none;
         }
         .hm-pix-card::after {
           content: '';
           position: absolute;
-          bottom: -50px; left: -50px;
+          bottom: -40px; left: -40px;
           width: 200px; height: 200px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(0,120,255,0.1) 0%, transparent 65%);
+          background: radial-gradient(circle, rgba(30,80,200,0.15) 0%, transparent 70%);
           pointer-events: none;
         }
         .hm-pix-badge {
           display: inline-flex; align-items: center; gap: 7px;
-          background: rgba(0,210,150,0.12);
-          border: 1px solid rgba(0,210,150,0.3);
+          background: rgba(60,140,255,0.12);
+          border: 1px solid rgba(60,140,255,0.25);
           border-radius: 999px;
           padding: 5px 14px;
-          font-size: 11px; font-weight: 900; letter-spacing: 0.22em;
-          color: #00e0a8; text-transform: uppercase;
+          font-size: 11px; font-weight: 900; letter-spacing: 0.2em;
+          color: rgba(120,190,255,0.85); text-transform: uppercase;
           margin-bottom: 16px;
           position: relative; z-index: 1;
         }
@@ -571,9 +570,26 @@ export default function Home() {
         }
         .hm-pix-verse {
           font-style: italic; font-size: 13px; line-height: 1.65;
-          color: rgba(160,210,255,0.5);
-          margin: 0 0 26px;
+          color: rgba(180,210,255,0.55);
+          margin: 0 0 24px;
           position: relative; z-index: 1;
+        }
+        .hm-pix-steps {
+          display: flex; flex-direction: column; gap: 10px;
+          margin-bottom: 24px;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-step {
+          display: flex; align-items: center; gap: 12px;
+          font-size: 13px; color: rgba(200,225,255,0.78); line-height: 1.45;
+        }
+        .hm-pix-step-num {
+          display: inline-flex; align-items: center; justify-content: center;
+          width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+          background: rgba(60,140,255,0.18);
+          border: 1px solid rgba(60,140,255,0.3);
+          font-size: 11px; font-weight: 800;
+          color: rgba(120,190,255,0.9);
         }
         .hm-pix-key-box {
           background: rgba(255,255,255,0.05);
@@ -585,7 +601,7 @@ export default function Home() {
         .hm-pix-key-label {
           display: flex; align-items: center; gap: 5px;
           font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
-          color: rgba(0,210,150,0.7); font-weight: 700; margin-bottom: 8px;
+          color: rgba(80,180,255,0.65); font-weight: 700; margin-bottom: 8px;
         }
         .hm-pix-key-value {
           display: block; font-size: 15px; font-weight: 700;
@@ -594,16 +610,16 @@ export default function Home() {
         .hm-pix-copy-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%;
-          background: linear-gradient(130deg, #00b890, #00d4a8);
+          background: linear-gradient(130deg, #1a55d0, #0090ff);
           color: #fff; font-weight: 800; font-size: 14px;
           padding: 14px 24px; border-radius: 999px;
           border: none; cursor: pointer; letter-spacing: 0.02em;
-          box-shadow: 0 8px 28px rgba(0,200,150,0.25);
+          box-shadow: 0 8px 32px rgba(0,100,255,0.35);
           transition: transform 0.18s, box-shadow 0.18s, background 0.25s;
           position: relative; z-index: 1;
         }
-        .hm-pix-copy-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,200,150,0.38); }
-        .hm-pix-copy-btn.copied { background: linear-gradient(130deg, #0a9e74, #0abf8e); }
+        .hm-pix-copy-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(0,100,255,0.45); }
+        .hm-pix-copy-btn.copied { background: linear-gradient(130deg, #0e3fa8, #0070cc); }
       `}</style>
 
       <div className="hm-root">
@@ -851,6 +867,21 @@ export default function Home() {
             <p className="hm-pix-verse">
               "Cada um contribua segundo propôs no coração, não com tristeza nem por constrangimento; porque Deus ama ao que dá com alegria." — 2 Co 9:7
             </p>
+
+            <div className="hm-pix-steps">
+              <div className="hm-pix-step">
+                <span className="hm-pix-step-num">1</span>
+                Copie a chave PIX abaixo
+              </div>
+              <div className="hm-pix-step">
+                <span className="hm-pix-step-num">2</span>
+                Abra o aplicativo do seu banco e acesse a área PIX
+              </div>
+              <div className="hm-pix-step">
+                <span className="hm-pix-step-num">3</span>
+                Escolha "Pagar", cole a chave e confirme o valor desejado
+              </div>
+            </div>
 
             <div className="hm-pix-key-box">
               <span className="hm-pix-key-label">
