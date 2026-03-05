@@ -73,6 +73,7 @@ export default function Home() {
   const [galleryPreview, setGalleryPreview] = useState<string[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
   const [mousePos, setMousePos] = useState({ x: 50, y: 35 });
+  const [copied, setCopied] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -522,6 +523,86 @@ export default function Home() {
           padding: 32px 24px; text-align: center;
           color: #7888aa; font-size: 14px;
         }
+
+        /* ── PIX / Dízimos & Ofertas ── */
+        .hm-pix-card {
+          background: linear-gradient(135deg, #060f1e 0%, #091828 50%, #071422 100%);
+          border: 1px solid rgba(0,210,160,0.18);
+          border-radius: 28px;
+          padding: 36px 28px;
+          position: relative;
+          overflow: hidden;
+        }
+        .hm-pix-card::before {
+          content: '';
+          position: absolute;
+          top: -80px; right: -80px;
+          width: 300px; height: 300px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(0,210,150,0.1) 0%, transparent 65%);
+          pointer-events: none;
+        }
+        .hm-pix-card::after {
+          content: '';
+          position: absolute;
+          bottom: -50px; left: -50px;
+          width: 200px; height: 200px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(0,120,255,0.1) 0%, transparent 65%);
+          pointer-events: none;
+        }
+        .hm-pix-badge {
+          display: inline-flex; align-items: center; gap: 7px;
+          background: rgba(0,210,150,0.12);
+          border: 1px solid rgba(0,210,150,0.3);
+          border-radius: 999px;
+          padding: 5px 14px;
+          font-size: 11px; font-weight: 900; letter-spacing: 0.22em;
+          color: #00e0a8; text-transform: uppercase;
+          margin-bottom: 16px;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-title {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-size: clamp(22px, 5vw, 28px); font-weight: 700;
+          color: #fff; margin: 0 0 10px;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-verse {
+          font-style: italic; font-size: 13px; line-height: 1.65;
+          color: rgba(160,210,255,0.5);
+          margin: 0 0 26px;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-key-box {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 18px; padding: 18px 22px;
+          margin-bottom: 16px;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-key-label {
+          display: flex; align-items: center; gap: 5px;
+          font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+          color: rgba(0,210,150,0.7); font-weight: 700; margin-bottom: 8px;
+        }
+        .hm-pix-key-value {
+          display: block; font-size: 15px; font-weight: 700;
+          color: #fff; word-break: break-all; letter-spacing: 0.01em;
+        }
+        .hm-pix-copy-btn {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%;
+          background: linear-gradient(130deg, #00b890, #00d4a8);
+          color: #fff; font-weight: 800; font-size: 14px;
+          padding: 14px 24px; border-radius: 999px;
+          border: none; cursor: pointer; letter-spacing: 0.02em;
+          box-shadow: 0 8px 28px rgba(0,200,150,0.25);
+          transition: transform 0.18s, box-shadow 0.18s, background 0.25s;
+          position: relative; z-index: 1;
+        }
+        .hm-pix-copy-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,200,150,0.38); }
+        .hm-pix-copy-btn.copied { background: linear-gradient(130deg, #0a9e74, #0abf8e); }
       `}</style>
 
       <div className="hm-root">
@@ -742,6 +823,64 @@ export default function Home() {
                 Falar com o Pastor
               </a>
             </div>
+          </div>
+
+          <div className="hm-divider" />
+
+          {/* ── Dízimos & Ofertas ── */}
+          <div className="hm-pix-card">
+            <div className="hm-pix-badge">
+              {/* Ícone PIX (losango) */}
+              <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 13, height: 13 }}>
+                <polygon points="10,1 14,5 10,9 6,5"/>
+                <polygon points="14,5 19,10 14,15 10,11"/>
+                <polygon points="10,11 14,15 10,19 6,15"/>
+                <polygon points="1,10 6,5 10,9 6,15"/>
+              </svg>
+              PIX
+            </div>
+
+            <h3 className="hm-pix-title">Dízimos &amp; Ofertas</h3>
+            <p className="hm-pix-verse">
+              "Cada um contribua segundo propôs no coração, não com tristeza nem por constrangimento; porque Deus ama ao que dá com alegria." — 2 Co 9:7
+            </p>
+
+            <div className="hm-pix-key-box">
+              <span className="hm-pix-key-label">
+                <svg viewBox="0 0 16 16" fill="currentColor" style={{ width: 11, height: 11 }}>
+                  <path d="M2.5 3A1.5 1.5 0 001 4.5v.793c.026.009.051.02.076.032L7.674 8.51c.206.1.446.1.652 0l6.598-3.185A.755.755 0 0115 5.293V4.5A1.5 1.5 0 0013.5 3h-11z"/>
+                  <path d="M15 6.954L8.978 9.86a2.25 2.25 0 01-1.956 0L1 6.954V11.5A1.5 1.5 0 002.5 13h11a1.5 1.5 0 001.5-1.5V6.954z"/>
+                </svg>
+                Chave PIX — E-mail
+              </span>
+              <span className="hm-pix-key-value">aogiminhumas@gmail.com</span>
+            </div>
+
+            <button
+              className={`hm-pix-copy-btn${copied ? ' copied' : ''}`}
+              onClick={() => {
+                navigator.clipboard.writeText('aogiminhumas@gmail.com');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2500);
+              }}
+            >
+              {copied ? (
+                <>
+                  <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 17, height: 17 }}>
+                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd"/>
+                  </svg>
+                  Chave copiada!
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 17, height: 17 }}>
+                    <path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.12A1.5 1.5 0 0117 6.622V12.5a1.5 1.5 0 01-1.5 1.5h-1v-3.379a3 3 0 00-.879-2.121L10.5 5.379A3 3 0 008.379 4.5H7v-1z"/>
+                    <path d="M4.5 6A1.5 1.5 0 003 7.5v9A1.5 1.5 0 004.5 18h7a1.5 1.5 0 001.5-1.5v-5.879a1.5 1.5 0 00-.44-1.06L9.44 6.439A1.5 1.5 0 008.378 6H4.5z"/>
+                  </svg>
+                  Copiar chave PIX
+                </>
+              )}
+            </button>
           </div>
 
         </div>
