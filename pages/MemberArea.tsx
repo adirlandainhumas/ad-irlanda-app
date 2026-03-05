@@ -536,7 +536,7 @@ const MemberArea: FC = () => {
     try {
       const photoPath = await uploadFoto(session.user.id);
       const { error: upsertError } = await supabase.from('member_details').upsert(
-        { user_id: session.user.id, ...payload, photo_path: photoPath, congregacao: congregacaoMembro },
+        { user_id: session.user.id, ...payload, photo_path: photoPath },
         { onConflict: 'user_id' },
       );
       if (upsertError) throw upsertError;
