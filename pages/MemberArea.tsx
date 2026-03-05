@@ -167,7 +167,7 @@ async function gerarCartaoCNH(
 
     // ── Selo: ícone da pomba/globo ────────────────────────────────────────────
     const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 158;
+    const seloY = photoY + photoH + 120;
     const seloR = 56;
 
     try {
@@ -730,7 +730,7 @@ const MemberArea: FC = () => {
                   <InputField label="Cidade" value={memberDetails.address_city} onChange={v=>updateField('address_city',v)} required />
                   <InputField label="Estado (UF)" value={memberDetails.address_state} onChange={v=>updateField('address_state',v.toUpperCase())} required />
                   <DateField label="Data de Entrada na Igreja" value={memberDetails.church_entry_date} onChange={v=>updateField('church_entry_date',v)} />
-                  <DateField label="Data de Batismo" value={memberDetails.baptism_date} onChange={v=>updateField('baptism_date',v)} />
+                  <DateField label="Data de Batismo" value={memberDetails.baptism_date} onChange={v=>updateField('baptism_date',v)} required={false} />
                 </div>
                 {error && <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100"><AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}</div>}
                 <button type="submit" disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
@@ -895,12 +895,12 @@ const SelectField = ({ label, value, onChange, options }: {
   </div>
 );
 
-const DateField = ({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) => (
+const DateField = ({ label, value, onChange, required = true }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) => (
   <div className="space-y-1">
-    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">{label}</label>
+    <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">{label}{!required && <span className="text-slate-400 font-normal normal-case ml-1">(opcional)</span>}</label>
     <div className="relative">
       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-      <input type="date" value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
+      <input type="date" value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required={required} />
     </div>
   </div>
 );
