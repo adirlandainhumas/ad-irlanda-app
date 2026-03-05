@@ -75,7 +75,6 @@ export const MEMBER_REQUIRED_FIELDS: (keyof MemberDetails)[] = [
   'address_state',
   'phone',
   'email',
-  'church_role_info',
   'church_entry_date',
   'baptism_date',
   'church_function',
