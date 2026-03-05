@@ -215,17 +215,37 @@ export default function Home() {
         }
         .hm-btn-ghost:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
 
-        /* ── Mobile: botões empilhados ── */
+        /* ── Mobile: hero e botões ── */
         @media (max-width: 480px) {
+          .hm-hero {
+            min-height: 100svh;
+            align-items: flex-start;
+            padding-top: 7vh;
+            border-radius: 0 0 2rem 2rem;
+          }
+          .hm-hero-inner {
+            padding-bottom: 60px;
+          }
+          .hm-logo {
+            width: clamp(120px, 45vw, 200px);
+          }
+          .hm-tagline {
+            margin-top: 16px;
+            font-size: 15px;
+          }
           .hm-hero-btns {
             flex-direction: column;
             align-items: stretch;
             gap: 10px;
             padding: 0 8px;
+            margin-top: 24px;
           }
           .hm-btn-primary, .hm-btn-ghost {
             justify-content: center;
             width: 100%;
+          }
+          .hm-social-icons {
+            margin-top: 18px;
           }
         }
 
