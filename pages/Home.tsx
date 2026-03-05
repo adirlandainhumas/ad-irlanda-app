@@ -17,6 +17,9 @@ const GALLERY_BUCKET = "galeria";
 const GALLERY_PATH = "ultimo-culto";
 const PASTOR_WHATSAPP_NUMBER = "5562984468270";
 
+const INSTAGRAM_URL = "https://www.instagram.com/adirlandainhumas";
+const YOUTUBE_URL = "https://www.youtube.com/@adirlandainhumas";
+
 type Notice = {
   id: string;
   title: string;
@@ -211,6 +214,47 @@ export default function Home() {
           text-decoration: none; transition: background 0.18s, transform 0.18s;
         }
         .hm-btn-ghost:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+
+        /* ── Mobile: botões empilhados ── */
+        @media (max-width: 480px) {
+          .hm-hero-btns {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            padding: 0 8px;
+          }
+          .hm-btn-primary, .hm-btn-ghost {
+            justify-content: center;
+            width: 100%;
+          }
+        }
+
+        /* ── Ícones sociais ── */
+        .hm-social-icons {
+          display: flex;
+          gap: 14px;
+          justify-content: center;
+          margin-top: 22px;
+        }
+        .hm-social-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.16);
+          color: rgba(200,225,255,0.85);
+          text-decoration: none;
+          transition: background 0.2s, transform 0.18s, border-color 0.2s;
+          flex-shrink: 0;
+        }
+        .hm-social-icon:hover {
+          background: rgba(255,255,255,0.16);
+          border-color: rgba(255,255,255,0.3);
+          transform: translateY(-2px);
+        }
 
         /* ── Scroll indicator ── */
         @keyframes hmBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
@@ -527,6 +571,24 @@ export default function Home() {
               <Link to="/galeria" className="hm-btn-ghost">
                 🖼 Galeria
               </Link>
+            </div>
+
+            {/* Ícones das redes sociais */}
+            <div className="hm-social-icons">
+              {/* Instagram */}
+              <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hm-social-icon" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/>
+                </svg>
+              </a>
+              {/* YouTube */}
+              <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer" className="hm-social-icon" aria-label="YouTube">
+                <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 20, height: 20 }}>
+                  <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
             </div>
           </div>
 
