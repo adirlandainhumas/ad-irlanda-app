@@ -3,8 +3,8 @@ DEST="$HOME/Desktop/ROBSON BRITTO/AOGIM/ad-irlanda-app"
 
 cd "$DEST"
 
-# Verifica se há mudanças
-if git diff --quiet && git diff --cached --quiet; then
+# Verifica se há mudanças (incluindo arquivos novos não rastreados)
+if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
   echo "Nenhuma mudança para enviar."
   exit 0
 fi
