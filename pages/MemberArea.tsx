@@ -500,7 +500,7 @@ const MemberArea: FC = () => {
         bloqueandoAuth.current = false;
 
         const msg = `🔔 *Novo cadastro de membro!*\n\n👤 *Nome:* ${fullName}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n🏛 *Congregação:* ${congregacaoSignup}\n⛪ *Função:* ${funcaoSignup}\n\n✅ Aprovar em:\nhttps://aogimconectinhumas.site/#/admin`;
-        window.open(`https://web.whatsapp.com/send?phone=${ADMIN_WHATSAPP}&text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
 
         setSuccessMsg('✅ Cadastro enviado! Aguarde a aprovação da liderança para fazer login.');
         setIsSignUp(false);
