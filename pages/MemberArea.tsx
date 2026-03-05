@@ -165,26 +165,68 @@ async function gerarCartaoCNH(
     ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
     ctx.restore();
 
-    // Selo
+    // ── Selo profissional ────────────────────────────────────────────────────
     const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 150;
-    const seloR = 42;
+    const seloY = photoY + photoH + 158;
+    const seloR = 56;
 
     ctx.save();
-    const seloGrad = ctx.createRadialGradient(seloX, seloY, 0, seloX, seloY, seloR);
-    seloGrad.addColorStop(0, 'rgba(40,80,180,0.95)');
-    seloGrad.addColorStop(1, 'rgba(15,40,120,0.98)');
-    ctx.fillStyle = seloGrad;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = 'rgba(180,210,255,0.55)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.stroke();
-    ctx.strokeStyle = 'rgba(120,170,255,0.25)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 6, 0, Math.PI*2); ctx.stroke();
 
-    const textoArc = 'MINISTÉRIO  IRLANDA  •  BRASIL  •';
-    ctx.font = 'bold 7.5px sans-serif'; ctx.fillStyle = 'rgba(180,215,255,0.9)'; ctx.textAlign = 'center';
-    const arcR = seloR - 8;
+    // Brilho externo
+    ctx.shadowColor = 'rgba(100,160,255,0.55)';
+    ctx.shadowBlur = 22;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR + 3, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(200,170,65,0.85)'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Anel dourado externo
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(210,178,68,0.95)'; ctx.lineWidth = 1.8; ctx.stroke();
+
+    // Preenchimento gradiente
+    const seloFill = ctx.createRadialGradient(seloX, seloY - 18, 2, seloX, seloY, seloR);
+    seloFill.addColorStop(0, 'rgba(22,58,165,0.97)');
+    seloFill.addColorStop(1, 'rgba(6,16,62,0.99)');
+    ctx.fillStyle = seloFill;
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI*2); ctx.fill();
+
+    // Raios (sunburst)
+    for (let i = 0; i < 36; i++) {
+      const a = (i * Math.PI * 2) / 36;
+      ctx.save();
+      ctx.translate(seloX, seloY); ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(0, -(seloR - 20));
+      ctx.lineTo(0, -(seloR - 13));
+      ctx.strokeStyle = i % 2 === 0 ? 'rgba(210,178,68,0.85)' : 'rgba(210,178,68,0.28)';
+      ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+    }
+
+    // Anel dourado interno
+    ctx.beginPath(); ctx.arc(seloX, seloY, seloR - 14, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(210,178,68,0.5)'; ctx.lineWidth = 0.9; ctx.stroke();
+
+    // Cruz centralctx.save();
+    const crossH = 16, crossBH = 10;
+    ctx.strokeStyle = 'rgba(215,182,70,0.95)'; ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(seloX, seloY - crossH); ctx.lineTo(seloX, seloY + crossBH);
+    ctx.moveTo(seloX - crossH * 0.65, seloY - crossH * 0.28); ctx.lineTo(seloX + crossH * 0.65, seloY - crossH * 0.28);
+    ctx.stroke();
+    ctx.restore();
+
+    // Texto "AOGIM" abaixo da cruz
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 7.5px Courier New, monospace';
+    ctx.fillStyle = 'rgba(215,182,70,0.92)';
+    ctx.fillText('AOGIM', seloX, seloY + crossBH + 10);
+
+    // Texto circular: "ASSEMBLÉIA DE DEUS  •  MINISTÉRIO IRLANDA  •"
+    const textoArc = 'ASSEMBLÉIA DE DEUS  •  MINISTÉRIO IRLANDA  •';
+    const arcR = seloR - 9;
     const step = (Math.PI * 2) / textoArc.length;
+    ctx.font = 'bold 6.5px sans-serif'; ctx.fillStyle = 'rgba(215,182,70,0.92)'; ctx.textAlign = 'center';
     for (let i = 0; i < textoArc.length; i++) {
       ctx.save();
       ctx.translate(seloX, seloY);
@@ -194,14 +236,6 @@ async function gerarCartaoCNH(
       ctx.restore();
     }
 
-    ctx.strokeStyle = 'rgba(200,225,255,0.85)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
-    const c = 11;
-    ctx.beginPath();
-    ctx.moveTo(seloX, seloY - c); ctx.lineTo(seloX, seloY + c);
-    ctx.moveTo(seloX - c*0.65, seloY - c*0.2); ctx.lineTo(seloX + c*0.65, seloY - c*0.2);
-    ctx.stroke();
-    ctx.font = 'bold 9px Courier New,monospace'; ctx.fillStyle = 'rgba(160,200,255,0.75)';
-    ctx.fillText(String(new Date().getFullYear()), seloX, seloY + c + 14);
     ctx.restore();
 
     // Dados
@@ -571,10 +605,10 @@ const MemberArea: FC = () => {
       let dataEmissao = detData?.data_emissao;
 
       if (!numRegistro) {
-        const { data: countData } = await supabase
-          .from('member_details').select('id', { count: 'exact' }).not('numero_registro', 'is', null);
-        const seq = ((countData as any)?.length ?? 0) + 1;
-        numRegistro = `ADI-${new Date().getFullYear()}-${String(seq).padStart(4, '0')}`;
+        // Gera número único e permanente derivado do UUID do usuário
+        const hex = session.user.id.replace(/-/g, '').slice(0, 9);
+        const seq = (parseInt(hex, 16) % 900000) + 100000;
+        numRegistro = `ADI-${new Date().getFullYear()}-${seq}`;
         dataEmissao = new Date().toISOString().split('T')[0];
         await supabase.from('member_details').update({ numero_registro: numRegistro, data_emissao: dataEmissao }).eq('user_id', session.user.id);
       }
