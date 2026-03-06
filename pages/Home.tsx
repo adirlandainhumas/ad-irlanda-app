@@ -223,34 +223,41 @@ export default function Home() {
         /* ── Mobile: hero e botões ── */
         @media (max-width: 480px) {
           .hm-hero {
+            /* Permite crescer além de 100svh se o conteúdo precisar de mais espaço */
             min-height: 100svh;
+            height: auto;
             align-items: flex-start;
-            padding-top: 7vh;
+            padding-top: 4vh;
             border-radius: 0 0 2rem 2rem;
           }
           .hm-hero-inner {
-            padding-bottom: 60px;
+            padding-top: 8px;
+            padding-bottom: 80px; /* espaço para a barra de navegação */
           }
           .hm-logo {
-            width: clamp(120px, 45vw, 200px);
+            /* Menor para caber com folga no mobile */
+            width: clamp(100px, 38vw, 160px);
+            max-width: 100%;
           }
           .hm-tagline {
-            margin-top: 16px;
-            font-size: 15px;
+            margin-top: 12px;
+            font-size: 14px;
           }
           .hm-hero-btns {
             flex-direction: column;
             align-items: stretch;
-            gap: 10px;
+            gap: 8px;
             padding: 0 8px;
-            margin-top: 24px;
+            margin-top: 18px;
           }
           .hm-btn-primary, .hm-btn-ghost {
             justify-content: center;
             width: 100%;
+            padding: 11px 20px;
+            font-size: 13px;
           }
           .hm-social-icons {
-            margin-top: 18px;
+            margin-top: 14px;
           }
         }
 
