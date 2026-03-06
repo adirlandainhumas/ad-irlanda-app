@@ -13,6 +13,9 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         VitePWA({
+          strategies: 'injectManifest',
+          srcDir: 'src',
+          filename: 'sw.ts',
           registerType: 'autoUpdate',
           manifest: {
             name: 'AOGIM Conect',
@@ -27,9 +30,8 @@ export default defineConfig(({ mode }) => {
               { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
             ],
           },
-          workbox: {
+          injectManifest: {
             globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-            navigateFallback: '/index.html',
           },
         }),
       ],

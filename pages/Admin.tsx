@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { sendPushNotification } from "../lib/pushSubscription";
 
 const ADMIN_EMAIL = "adirlandainhumaslinks@gmail.com";
 const SUPABASE_URL = "https://llevczjsjurdfejwcqpo.supabase.co";
@@ -62,6 +63,11 @@ export default function Admin() {
   const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([]);
   const [prayerLoading, setPrayerLoading] = useState(false);
   const [prayerMsg, setPrayerMsg] = useState<string | null>(null);
+  const [pushTitle, setPushTitle] = useState("");
+  const [pushBody, setPushBody] = useState("");
+  const [pushUrl, setPushUrl] = useState("/avisos");
+  const [pushSending, setPushSending] = useState(false);
+  const [pushMsg, setPushMsg] = useState<string | null>(null);
   const isAdmin = sessionEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const [email, setEmail] = useState(ADMIN_EMAIL);
@@ -152,6 +158,14 @@ export default function Admin() {
       } else {
         const { error } = await supabase.from("notices").insert(payload);
         if (error) throw error; setNoticeMsg("Aviso criado!");
+        // Dispara push automaticamente ao publicar novo aviso
+        if (formPublished) {
+          sendPushNotification(
+            `📢 ${formTitle.trim()}`,
+            formBody.trim().slice(0, 120),
+            '/avisos'
+          );
+        }
       }
       setShowForm(false); await loadNotices();
     } catch (err: any) { setNoticeErr(err?.message ?? "Erro ao salvar."); }
@@ -478,6 +492,50 @@ export default function Admin() {
               ))}
             </div>
             {notices.length === 0 && <div className="mt-10 text-center text-slate-500">Nenhum aviso encontrado.</div>}
+
+            {/* ── Painel de Notificações Push ── */}
+            <div className="mt-10 bg-blue-50 border border-blue-200 rounded-2xl p-5">
+              <h3 className="text-base font-semibold text-blue-900 flex items-center gap-2">
+                🔔 Enviar Notificação Push
+              </h3>
+              <p className="text-sm text-blue-700 mt-1 mb-3">Envie uma notificação para todos os membros que aceitaram receber alertas.</p>
+              <div className="flex gap-2 mb-4">
+                <button onClick={() => { setPushTitle("📖 Devocional de hoje"); setPushBody("A palavra do dia está te esperando. Venha conferir!"); setPushUrl("/devocional"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Devocional</button>
+                <button onClick={() => { setPushTitle("⛪ Lembrete de Culto"); setPushBody("O culto começa em breve. Te esperamos!"); setPushUrl("/avisos"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Culto</button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Título</label>
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Culto especial hoje!" value={pushTitle} onChange={e => setPushTitle(e.target.value)} maxLength={80} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Mensagem</label>
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Não perca, às 19h na sede." value={pushBody} onChange={e => setPushBody(e.target.value)} maxLength={120} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600">Destino ao tocar</label>
+                  <select className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" value={pushUrl} onChange={e => setPushUrl(e.target.value)}>
+                    <option value="/avisos">Página de Avisos</option>
+                    <option value="/devocional">Devocional</option>
+                    <option value="/">Página Inicial</option>
+                  </select>
+                </div>
+                {pushMsg && <div className="rounded-xl bg-green-50 border border-green-200 text-green-800 px-3 py-2 text-sm">{pushMsg}</div>}
+                <button
+                  disabled={pushSending || !pushTitle.trim() || !pushBody.trim()}
+                  onClick={async () => {
+                    setPushSending(true); setPushMsg(null);
+                    await sendPushNotification(pushTitle.trim(), pushBody.trim(), pushUrl);
+                    setPushSending(false); setPushMsg("✅ Notificação enviada!");
+                    setPushTitle(""); setPushBody("");
+                    setTimeout(() => setPushMsg(null), 4000);
+                  }}
+                  className="w-full rounded-xl bg-blue-700 text-white py-3 font-semibold hover:bg-blue-800 transition disabled:opacity-50"
+                >
+                  {pushSending ? "Enviando…" : "🔔 Notificar todos os membros"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

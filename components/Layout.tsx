@@ -1,9 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
+import { subscribeUserToPush } from '../lib/pushSubscription';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [logoError, setLogoError] = useState(false);
+
+  // Solicita permissão de notificação push após 10s (somente se ainda não decidiu)
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'default') return;
+    const timer = setTimeout(() => subscribeUserToPush(), 10_000);
+    return () => clearTimeout(timer);
+  }, []);
   const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
 
   return (
