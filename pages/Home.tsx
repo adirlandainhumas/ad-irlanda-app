@@ -33,7 +33,9 @@ type Notice = {
 
 function formatDateBR(dateStr?: string | null) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
+  // Parseia YYYY-MM-DD como data local (evita offset UTC que adianta 1 dia no Brasil)
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
