@@ -10,6 +10,7 @@ import Admin from './pages/Admin';
 import Cadastro from './pages/Cadastro';
 import Login from './pages/Login';
 import Ficha from './pages/Ficha';
+import Prayer from './pages/Prayer';
 import { trackPageView } from './lib/analytics';
 
 // Nomes amigáveis para cada rota
@@ -23,6 +24,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/cadastro':   'Cadastro • AOGIM Conect',
   '/login':      'Login • AOGIM Conect',
   '/ficha':      'Ficha • AOGIM Conect',
+  '/oracao':     'Pedido de Oração • AOGIM Conect',
 };
 
 /** Componente interno que escuta mudanças de rota e envia page_view ao GA4 */
@@ -50,6 +52,7 @@ const App: React.FC = () => {
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/login" element={<Login />} />
           <Route path="/ficha" element={<Ficha />} />
+          <Route path="/oracao" element={<Prayer />} />
         </Routes>
       </Layout>
     </Router>

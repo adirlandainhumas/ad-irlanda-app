@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, Bell, BookOpen, Image, User } from 'lucide-react';
+import { Home, Bell, BookOpen, Image, User, HeartHandshake } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar: React.FC = () => {
@@ -11,6 +11,7 @@ const Navbar: React.FC = () => {
     { label: 'Avisos', path: '/avisos', icon: Bell },
     { label: 'Devocional', path: '/devocional', icon: BookOpen },
     { label: 'Galeria', path: '/galeria', icon: Image },
+    { label: 'Oração', path: '/oracao', icon: HeartHandshake },
     { label: 'Membro', path: '/membro', icon: User },
   ];
 

@@ -20,6 +20,10 @@ type Membro = {
   status: string; created_at: string; funcao?: string; congregacao?: string;
 };
 
+type PrayerRequest = {
+  id: string; nome: string; contato?: string | null; pedido: string; created_at: string;
+};
+
 type MembroFicha = {
   full_name?: string; gender?: string; birth_date?: string;
   marital_status?: string; phone?: string; email?: string;
@@ -54,7 +58,10 @@ function whatsappLink(tel: string) {
 export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [tab, setTab] = useState<"notices" | "photos" | "membros">("notices");
+  const [tab, setTab] = useState<"notices" | "photos" | "membros" | "oracao">("notices");
+  const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([]);
+  const [prayerLoading, setPrayerLoading] = useState(false);
+  const [prayerMsg, setPrayerMsg] = useState<string | null>(null);
   const isAdmin = sessionEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const [email, setEmail] = useState(ADMIN_EMAIL);
@@ -106,7 +113,7 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
-    if (!loading && isAdmin) { loadNotices(); loadPhotos(); loadMembros(); }
+    if (!loading && isAdmin) { loadNotices(); loadPhotos(); loadMembros(); loadPrayerRequests(); }
   }, [loading, isAdmin]);
 
   async function signIn(e: React.FormEvent) {
@@ -207,6 +214,22 @@ export default function Admin() {
       setMembros((data as Membro[]) ?? []);
     } catch (err: any) { setMembrosErr(err?.message ?? "Erro ao carregar membros."); }
     finally { setMembrosBusy(false); }
+  }
+
+  async function loadPrayerRequests() {
+    setPrayerLoading(true);
+    try {
+      const { data, error } = await supabase.from("prayer_requests").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      setPrayerRequests((data as PrayerRequest[]) ?? []);
+    } catch (err: any) { setPrayerMsg("Erro ao carregar: " + (err?.message ?? "")); }
+    finally { setPrayerLoading(false); }
+  }
+
+  async function deletePrayerRequest(id: string) {
+    if (!confirm("Excluir este pedido?")) return;
+    const { error } = await supabase.from("prayer_requests").delete().eq("id", id);
+    if (!error) setPrayerRequests(prev => prev.filter(p => p.id !== id));
   }
 
   async function abrirFicha(membro: Membro) {
@@ -331,6 +354,7 @@ export default function Admin() {
   const pageTitle = useMemo(() => {
     if (tab === "notices") return "Gerenciar Avisos";
     if (tab === "photos")  return "Gerenciar Fotos";
+    if (tab === "oracao")  return "Pedidos de Oração";
     return "Gerenciar Membros";
   }, [tab]);
 
@@ -386,7 +410,7 @@ export default function Admin() {
         </div>
 
         <div className="mt-6 flex gap-2 flex-wrap">
-          {(["notices","photos","membros"] as const).map(t => (
+          {(["notices","photos","membros","oracao"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
             >
@@ -397,6 +421,14 @@ export default function Admin() {
                   Membros
                   {pendentesCount > 0 && (
                     <span className="bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{pendentesCount}</span>
+                  )}
+                </span>
+              )}
+              {t === "oracao" && (
+                <span className="flex items-center gap-2">
+                  Orações
+                  {prayerRequests.length > 0 && (
+                    <span className="bg-purple-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">{prayerRequests.length}</span>
                   )}
                 </span>
               )}
@@ -477,6 +509,54 @@ export default function Admin() {
               ))}
             </div>
             {photos.length === 0 && <div className="mt-10 text-center text-slate-500">Nenhuma foto na pasta <b>{GALLERY_FOLDER}</b>.</div>}
+          </div>
+        )}
+
+        {/* ── TAB ORAÇÕES ── */}
+        {tab === "oracao" && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="text-lg font-semibold text-slate-900">Pedidos de Oração</h2>
+              <button onClick={loadPrayerRequests} disabled={prayerLoading} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm disabled:opacity-50">
+                {prayerLoading ? "Atualizando…" : "↻ Atualizar"}
+              </button>
+            </div>
+            {prayerMsg && (
+              <div className="mt-4 rounded-xl bg-red-50 border border-red-100 text-red-700 px-4 py-3 text-sm">{prayerMsg}</div>
+            )}
+            {prayerLoading && <div className="mt-6 text-slate-500 text-sm">Carregando pedidos…</div>}
+            {!prayerLoading && prayerRequests.length === 0 && (
+              <div className="mt-6 text-slate-500 text-sm text-center py-12 bg-white rounded-2xl border">
+                Nenhum pedido de oração recebido ainda.
+              </div>
+            )}
+            <div className="mt-4 space-y-4">
+              {prayerRequests.map(pr => (
+                <div key={pr.id} className="bg-white rounded-2xl border p-5 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="font-semibold text-slate-900">{pr.nome}</span>
+                        {pr.contato && (
+                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{pr.contato}</span>
+                        )}
+                        <span className="text-xs text-slate-400">{formatDateBR(pr.created_at)}</span>
+                      </div>
+                      <p className="mt-3 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{pr.pedido}</p>
+                    </div>
+                    <button
+                      onClick={() => deletePrayerRequest(pr.id)}
+                      className="text-slate-400 hover:text-red-500 transition flex-shrink-0 p-1"
+                      title="Excluir pedido"
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
