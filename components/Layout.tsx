@@ -15,7 +15,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return () => clearTimeout(timer);
   }, []);
   // Logo com escrita escura — usada no cabeçalho (fundo claro)
-  const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo-dark.png";
+  const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo-dark.png.png";
 
   return (
     <div className="min-h-screen flex flex-col pb-24 md:pb-28 bg-slate-50">
