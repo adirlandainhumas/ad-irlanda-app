@@ -751,36 +751,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Banner Pedido de Oração */}
-          <Link
-            to="/oracao"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 16, padding: "20px 24px",
-              textDecoration: "none", marginBottom: 48,
-              transition: "background 0.2s, transform 0.18s",
-            }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.08)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.04)"; }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(150,190,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </div>
-              <div>
-                <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.07em", color: "rgba(160,200,255,0.6)", textTransform: "uppercase", margin: "0 0 3px" }}>✦ &nbsp;Precisa de oração?</p>
-                <p style={{ fontSize: 16, fontWeight: 700, color: "#fff", margin: 0 }}>Envie seu pedido de oração</p>
-              </div>
-            </div>
-            <svg viewBox="0 0 20 20" fill="rgba(150,190,255,0.5)" style={{ width: 18, height: 18, flexShrink: 0 }}>
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </Link>
-
           {/* ── Avisos ── */}
           <div className="hm-section-header">
             <div>
