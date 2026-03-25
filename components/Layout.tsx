@@ -7,44 +7,92 @@ import { subscribeUserToPush } from '../lib/pushSubscription';
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [logoError, setLogoError] = useState(false);
 
-  // Solicita permissão de notificação push após 10s (somente se ainda não decidiu)
   useEffect(() => {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'default') return;
     const timer = setTimeout(() => subscribeUserToPush(), 10_000);
     return () => clearTimeout(timer);
   }, []);
-  // Logo com escrita escura — usada no cabeçalho (fundo claro)
+
   const logoUrl = "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo-dark.png.png";
 
   return (
-    <div className="min-h-screen flex flex-col pb-24 md:pb-28 bg-slate-50">
-      <header className="fixed top-0 left-0 right-0 h-16 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3 max-w-7xl mx-auto w-full">
-          {/* Logo + título clicável → volta para o início */}
-          <Link to="/" className="flex items-center gap-3 no-underline group" aria-label="Ir para o início">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: 72, background: '#FAFAF8' }}>
+      <header
+        style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0,
+          height: 56,
+          zIndex: 30,
+          background: '#fff',
+          borderBottom: '1px solid #E8E5E0',
+          padding: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', maxWidth: 900, margin: '0 auto', width: '100%' }}>
+          <Link
+            to="/"
+            style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}
+            aria-label="Ir para o início"
+          >
             {!logoError ? (
               <img
                 src={logoUrl}
                 alt="Logo AD Irlanda"
-                className="h-8 md:h-10 w-auto object-contain transition-opacity group-hover:opacity-80"
+                style={{ height: 32, width: 'auto', objectFit: 'contain' }}
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <div className="w-9 h-9 bg-blue-700 rounded-lg flex items-center justify-center flex-shrink-0 transition-opacity group-hover:opacity-80">
-                <span className="text-white font-bold text-base tracking-tighter">AD</span>
+              <div
+                style={{
+                  width: 32, height: 32,
+                  background: '#166534',
+                  borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 13, letterSpacing: '-0.02em' }}>AD</span>
               </div>
             )}
-            <div className="flex flex-col justify-center">
-              <h1 className="text-blue-900 font-black text-xs md:text-sm leading-none uppercase tracking-widest transition-colors group-hover:text-blue-600">Ministério Irlanda</h1>
-              <p className="text-slate-400 text-[9px] md:text-[10px] uppercase font-bold tracking-tighter mt-0.5">Inhumas - GO</p>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <span
+                style={{
+                  color: '#1C1917',
+                  fontWeight: 900,
+                  fontSize: 11,
+                  lineHeight: 1,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.12em',
+                  fontFamily: "'Lato', sans-serif",
+                }}
+              >
+                Ministério Irlanda
+              </span>
+              <span
+                style={{
+                  color: '#A8A29E',
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  marginTop: 2,
+                  fontFamily: "'Lato', sans-serif",
+                }}
+              >
+                Inhumas — GO
+              </span>
             </div>
           </Link>
         </div>
       </header>
-      <main className="flex-1 w-full max-w-5xl mx-auto overflow-x-hidden pt-16">
+
+      <main style={{ flex: 1, width: '100%', maxWidth: 900, margin: '0 auto', overflowX: 'hidden', paddingTop: 56 }}>
         {children}
       </main>
+
       <Navbar />
     </div>
   );

@@ -7,29 +7,59 @@ const Navbar: React.FC = () => {
   const location = useLocation();
 
   const navItems = [
-    { label: 'Início', path: '/', icon: Home },
-    { label: 'Avisos', path: '/avisos', icon: Bell },
-    { label: 'Devocional', path: '/devocional', icon: BookOpen },
-    { label: 'Galeria', path: '/galeria', icon: Image },
-    { label: 'Oração', path: '/oracao', icon: HeartHandshake },
-    { label: 'Membro', path: '/membro', icon: User },
+    { label: 'Início',      path: '/',          icon: Home },
+    { label: 'Avisos',      path: '/avisos',     icon: Bell },
+    { label: 'Devocional',  path: '/devocional', icon: BookOpen },
+    { label: 'Galeria',     path: '/galeria',    icon: Image },
+    { label: 'Oração',      path: '/oracao',     icon: HeartHandshake },
+    { label: 'Membro',      path: '/membro',     icon: User },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center p-0 md:p-6 pointer-events-none">
-      <nav className="w-full md:max-w-2xl bg-white/90 backdrop-blur-xl border-t md:border border-slate-200 px-2 md:px-6 py-1 md:py-3 md:rounded-3xl flex justify-around items-center shadow-lg pointer-events-auto transition-all duration-500">
+    <div className="fixed bottom-0 left-0 right-0 z-40">
+      <nav
+        style={{
+          background: '#fff',
+          borderTop: '1px solid #E8E5E0',
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          padding: '4px 8px',
+        }}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center py-2 px-3 md:px-6 rounded-2xl transition-all duration-300 ${
-                isActive ? 'text-blue-600 bg-blue-50/50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                color: isActive ? '#166534' : '#A8A29E',
+                transition: 'color 0.15s',
+                minWidth: 44,
+              }}
             >
-              <item.icon className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? 'fill-blue-600/10' : ''}`} />
-              <span className="text-[10px] md:text-xs mt-1 font-bold">{item.label}</span>
+              <item.icon
+                style={{ width: 20, height: 20 }}
+                strokeWidth={isActive ? 2.5 : 1.5}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  marginTop: 3,
+                  fontWeight: isActive ? 700 : 500,
+                  fontFamily: "'Lato', sans-serif",
+                  letterSpacing: '0.01em',
+                }}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
