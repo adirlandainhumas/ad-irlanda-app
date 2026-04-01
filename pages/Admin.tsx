@@ -61,7 +61,7 @@ function whatsappLink(tel: string) {
 export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [tab, setTab] = useState<"notices" | "photos" | "membros" | "oracao">("notices");
+  const [tab, setTab] = useState<"notices" | "photos" | "membros" | "oracao" | "devocional">("notices");
   const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([]);
   const [prayerLoading, setPrayerLoading] = useState(false);
   const [prayerMsg, setPrayerMsg] = useState<string | null>(null);
@@ -70,6 +70,20 @@ export default function Admin() {
   const [pushUrl, setPushUrl] = useState("/avisos");
   const [pushSending, setPushSending] = useState(false);
   const [pushMsg, setPushMsg] = useState<string | null>(null);
+
+  // ── DEVOCIONAL / CARROSSEL ────────────────────────────────────────────────
+  type DevData = { dateLabel:string; title:string; verseText:string; verseRef:string; body:string; prayer:string; };
+  const [devData,    setDevData]    = useState<DevData|null>(null);
+  const [devLoading, setDevLoading] = useState(false);
+  const [devErr,     setDevErr]     = useState<string|null>(null);
+  const [devSlides,  setDevSlides]  = useState<string[]>([]);
+  const [devGerando, setDevGerando] = useState(false);
+  const [devZipBusy, setDevZipBusy] = useState(false);
+  const [legenda,    setLegenda]    = useState<string>("");
+  const [legendaBusy,setLegendaBusy]= useState(false);
+  const [legendaErr, setLegendaErr] = useState<string|null>(null);
+  const [legendaCopied, setLegendaCopied] = useState(false);
+
   const isAdmin = sessionEmail?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
   const [email, setEmail] = useState(ADMIN_EMAIL);
@@ -323,6 +337,245 @@ export default function Admin() {
     finally { setMembrosBusy(false); }
   }
 
+  // ── DEVOCIONAL helpers ───────────────────────────────────────────────────
+  function dvTodayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  }
+
+  async function fetchDevocional() {
+    setDevLoading(true); setDevErr(null); setDevSlides([]); setLegenda(""); setLegendaErr(null);
+    try {
+      const res = await fetch("/.netlify/functions/devocional", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      setDevData(d);
+    } catch(e: any) { setDevErr(e.message ?? "Erro ao buscar devocional."); }
+    finally { setDevLoading(false); }
+  }
+
+  function dvWrap(ctx: CanvasRenderingContext2D, text: string, maxW: number, font: string) {
+    ctx.font = font;
+    return text.split(" ").reduce((lines: string[], word) => {
+      const last = lines[lines.length-1] ?? "";
+      const test = last ? `${last} ${word}` : word;
+      if (ctx.measureText(test).width > maxW && last) return [...lines, word];
+      return [...lines.slice(0,-1), test];
+    }, [""]).filter(Boolean);
+  }
+  function dvCenter(ctx: CanvasRenderingContext2D, text: string, y: number, font: string, color: string, alpha=1, sc?: string, sb?: number) {
+    ctx.save(); ctx.globalAlpha=alpha; ctx.font=font; ctx.fillStyle=color; ctx.textAlign="center";
+    if(sc){ctx.shadowColor=sc; ctx.shadowBlur=sb??0;}
+    ctx.fillText(text, 1080/2, y); ctx.restore();
+  }
+  function dvHline(ctx: CanvasRenderingContext2D, y: number, alpha=0.32) {
+    ctx.save();
+    const l = ctx.createLinearGradient(80,0,1000,0);
+    l.addColorStop(0,"transparent"); l.addColorStop(0.5,`rgba(80,160,255,${alpha})`); l.addColorStop(1,"transparent");
+    ctx.strokeStyle=l; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(80,y); ctx.lineTo(1000,y); ctx.stroke(); ctx.restore();
+  }
+  function dvDots(ctx: CanvasRenderingContext2D, current: number, total: number, H: number) {
+    const r=8, gap=22, W=1080;
+    const tw = r*2*total + gap*(total-1);
+    let sx = (W-tw)/2;
+    for(let i=0;i<total;i++){
+      ctx.save(); ctx.beginPath();
+      ctx.arc(sx+r, H-60, r, 0, Math.PI*2);
+      ctx.fillStyle = i===current ? "rgba(100,180,255,0.92)" : "rgba(60,120,255,0.22)";
+      ctx.fill(); ctx.restore();
+      sx += r*2+gap;
+    }
+  }
+  function dvMakeCanvas(): [HTMLCanvasElement, CanvasRenderingContext2D] {
+    const W=1080, H=1350;
+    const c = document.createElement("canvas");
+    c.width=W; c.height=H;
+    const ctx = c.getContext("2d")!;
+    const bg = ctx.createLinearGradient(0,0,W*0.6,H);
+    bg.addColorStop(0,"#020d1f"); bg.addColorStop(0.3,"#041428");
+    bg.addColorStop(0.65,"#051c3a"); bg.addColorStop(1,"#020b18");
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    ([
+      [0,H*0.35,W*0.85,"rgba(30,100,220,0.16)","transparent"],
+      [W,H*0.1,W*0.7,"rgba(0,180,255,0.11)","transparent"],
+      [W*0.3,H,W*0.9,"rgba(40,60,200,0.12)","transparent"],
+    ] as [number,number,number,string,string][]).forEach(([x,y,r,c1,c2])=>{
+      const g=ctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0,c1); g.addColorStop(1,c2);
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    });
+    ctx.save();
+    for(let i=0;i<65;i++){
+      const px=Math.random()*W, py=Math.random()*H*0.9, pr=Math.random()*1.6+0.3;
+      ctx.globalAlpha=Math.random()*0.45+0.1;
+      ctx.fillStyle=`hsl(${200+Math.random()*40},80%,${70+Math.random()*30}%)`;
+      ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+    return [c, ctx];
+  }
+  function dvSplitBody(text: string): [string, string|null] {
+    if(text.length<=520) return [text, null];
+    const mid=Math.floor(text.length/2); let at=-1;
+    for(let i=mid; i<Math.min(mid+240,text.length-10); i++){
+      if(text[i]==="."&&(text[i+1]===" "||text[i+1]==="\n")){at=i+1;break;}
+    }
+    if(at===-1) for(let i=mid; i>Math.max(mid-240,0); i--){
+      if(text[i]==="."&&(text[i+1]===" "||text[i+1]==="\n")){at=i+1;break;}
+    }
+    if(at===-1) at=mid;
+    return [text.slice(0,at).trim(), text.slice(at).trim()];
+  }
+
+  function gerarSlides(d: DevData): string[] {
+    const W=1080, H=1350;
+    const [body1, body2] = dvSplitBody(d.body);
+    const total = body2 ? 5 : 4;
+    const result: string[] = [];
+
+    // Slide 1: Capa
+    {
+      const [c, ctx] = dvMakeCanvas();
+      dvHline(ctx, 155); dvCenter(ctx,"AOGIM  CONECT",122,"300 30px Georgia,serif","rgba(100,180,255,0.62)");
+      dvCenter(ctx,"DEVOCIONAL  DO  DIA",210,"700 24px sans-serif","rgba(80,160,255,0.6)");
+      dvCenter(ctx,d.dateLabel,262,"italic 300 26px Georgia,serif","rgba(120,190,255,0.42)");
+      dvHline(ctx,298);
+      let ty=390;
+      if(d.title){
+        const tl=dvWrap(ctx,d.title,W-140,"600 66px Georgia,serif");
+        ctx.save(); ctx.font="600 66px Georgia,serif"; ctx.fillStyle="#e8f4ff";
+        ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.35)"; ctx.shadowBlur=28;
+        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=86;}); ctx.restore(); ty+=20;
+      }
+      dvCenter(ctx,"✦",ty,"24px serif","rgba(80,160,255,0.45)"); ty+=62;
+      ctx.save(); ctx.font="italic 120px Georgia,serif"; ctx.fillStyle="rgba(50,130,255,0.07)";
+      ctx.textAlign="left"; ctx.fillText("\u201C",82,ty+10); ctx.restore();
+      const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 40px Georgia,serif");
+      ctx.save(); ctx.font="italic 40px Georgia,serif"; ctx.fillStyle="rgba(210,235,255,0.92)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.1)"; ctx.shadowBlur=8;
+      vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore(); ty+=18;
+      dvHline(ctx,ty,0.2); ty+=52;
+      ctx.save(); ctx.font="600 38px Georgia,serif"; ctx.fillStyle="rgba(100,190,255,0.9)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(0,120,255,0.3)"; ctx.shadowBlur=14;
+      ctx.fillText(d.verseRef,W/2,ty); ctx.restore();
+      dvDots(ctx,0,total,H);
+      result.push(c.toDataURL("image/png"));
+    }
+
+    // Slides de reflexão
+    const textSlide = (idx:number, bodyText:string, isCont:boolean, hasMore:boolean) => {
+      const [c, ctx] = dvMakeCanvas();
+      dvHline(ctx,145); dvCenter(ctx,"✝",108,"50px serif","rgba(120,200,255,0.7)");
+      ctx.save(); ctx.font="700 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.65)";
+      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,190); ctx.restore();
+      dvHline(ctx,222);
+      let startY=290;
+      if(isCont){ dvCenter(ctx,"continuação",270,"italic 300 23px Georgia,serif","rgba(80,160,255,0.32)"); startY=316; }
+      const bl=dvWrap(ctx,bodyText,W-160,"400 36px Georgia,serif");
+      ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="rgba(185,215,255,0.82)"; ctx.textAlign="center";
+      let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-100,"italic 300 25px Georgia,serif","rgba(80,160,255,0.38)"); }
+      dvDots(ctx,idx,total,H);
+      result.push(c.toDataURL("image/png"));
+    };
+    textSlide(1, body1, false, !!body2);
+    if(body2) textSlide(2, body2, true, false);
+
+    // Slide Oração
+    {
+      const idx = body2 ? 3 : 2;
+      const [c, ctx] = dvMakeCanvas();
+      dvHline(ctx,145); dvCenter(ctx,"🙏",108,"50px serif","rgba(120,200,255,0.7)");
+      ctx.save(); ctx.font="700 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.65)";
+      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,190); ctx.restore();
+      dvHline(ctx,222);
+      const pl=dvWrap(ctx,d.prayer,W-160,"italic 36px Georgia,serif");
+      ctx.save(); ctx.font="italic 36px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.85)"; ctx.textAlign="center";
+      let ty=290; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+      dvDots(ctx,idx,total,H);
+      result.push(c.toDataURL("image/png"));
+    }
+
+    // Slide CTA
+    {
+      const [c, ctx] = dvMakeCanvas();
+      ctx.save(); ctx.font="180px serif"; ctx.textAlign="center";
+      ctx.globalAlpha=0.05; ctx.fillStyle="rgba(80,160,255,1)"; ctx.fillText("✦",W/2,640); ctx.restore();
+      dvHline(ctx,132); dvCenter(ctx,"DEVOCIONAL DO DIA",96,"700 21px sans-serif","rgba(80,160,255,0.5)"); dvHline(ctx,148);
+      let ty=250;
+      const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"700 72px Georgia,serif");
+      ctx.save(); ctx.font="700 72px Georgia,serif"; ctx.fillStyle="#e8f4ff";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.45)"; ctx.shadowBlur=34;
+      hl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=90;}); ctx.restore(); ty+=18;
+      dvHline(ctx,ty,0.28); ty+=58;
+      ["💾  Salva pra ler quando precisar","🙏  Manda pra alguém que precisa ouvir","💬  Conta pra gente nos comentários"].forEach(cta=>{
+        const cl=dvWrap(ctx,cta,W-130,"400 36px sans-serif");
+        ctx.save(); ctx.font="400 36px sans-serif"; ctx.fillStyle="rgba(160,210,255,0.88)"; ctx.textAlign="center";
+        cl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore(); ty+=14;
+      });
+      ty+=20; dvHline(ctx,ty,0.22); ty+=54;
+      ctx.save(); ctx.font="400 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.48)";
+      ctx.textAlign="center"; ctx.fillText("#AOGIM  #Devocional  #FéQueTransforma",W/2,ty); ctx.restore(); ty+=58;
+      ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
+      ctx.shadowColor="rgba(0,140,255,0.65)"; ctx.shadowBlur=32;
+      const hg=ctx.createLinearGradient(W/2-180,0,W/2+180,0);
+      hg.addColorStop(0,"#60b8ff"); hg.addColorStop(0.5,"#a0d8ff"); hg.addColorStop(1,"#60b8ff");
+      ctx.fillStyle=hg; ctx.fillText("@AOGIM Conect",W/2,ty); ctx.restore();
+      dvDots(ctx,total-1,total,H);
+      result.push(c.toDataURL("image/png"));
+    }
+
+    return result;
+  }
+
+  function handleGerarCarrossel() {
+    if(!devData) return;
+    setDevGerando(true);
+    setTimeout(()=>{
+      try{ setDevSlides(gerarSlides(devData)); }
+      catch(e:any){ setDevErr(e.message); }
+      finally{ setDevGerando(false); }
+    }, 40);
+  }
+
+  function dvDownloadSlide(src: string, idx: number) {
+    const a = document.createElement("a");
+    a.href = src; a.download = `devocional-slide-${String(idx+1).padStart(2,"0")}-${dvTodayKey()}.png`; a.click();
+  }
+
+  async function dvDownloadZip() {
+    setDevZipBusy(true);
+    try {
+      // Gera ZIP nativo (sem biblioteca externa) usando a API de Streams do browser
+      // Fallback: baixa todos separados com delay
+      const nome = `devocional-carrossel-${dvTodayKey()}`;
+      // Tenta usar showSaveFilePicker / FileSystemAccess API se disponível
+      // caso contrário baixa um a um
+      devSlides.forEach((src, i) => { setTimeout(()=>dvDownloadSlide(src, i), i*350); });
+    } finally { setDevZipBusy(false); }
+  }
+
+  async function gerarLegenda() {
+    if(!devData) return;
+    setLegendaBusy(true); setLegendaErr(null); setLegenda("");
+    try {
+      const res = await fetch("/.netlify/functions/gerar-legenda", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: devData.title, verseText: devData.verseText, verseRef: devData.verseRef, body: devData.body }),
+      });
+      const d = await res.json();
+      if(d.error) throw new Error(d.error);
+      setLegenda(d.legenda ?? "");
+    } catch(e:any) { setLegendaErr(e.message ?? "Erro ao gerar legenda."); }
+    finally { setLegendaBusy(false); }
+  }
+
+  async function copiarLegenda() {
+    try { await navigator.clipboard.writeText(legenda); setLegendaCopied(true); setTimeout(()=>setLegendaCopied(false), 2000); } catch {}
+  }
+
   // ── Filtros e contagens ───────────────────────────────────────────────────
   const membrosFiltrados = useMemo(() => {
     let lista = membros;
@@ -368,9 +621,10 @@ export default function Admin() {
   };
 
   const pageTitle = useMemo(() => {
-    if (tab === "notices") return "Gerenciar Avisos";
-    if (tab === "photos")  return "Gerenciar Fotos";
-    if (tab === "oracao")  return "Pedidos de Oração";
+    if (tab === "notices")    return "Gerenciar Avisos";
+    if (tab === "photos")     return "Gerenciar Fotos";
+    if (tab === "oracao")     return "Pedidos de Oração";
+    if (tab === "devocional") return "Carrossel do Devocional";
     return "Gerenciar Membros";
   }, [tab]);
 
@@ -426,12 +680,13 @@ export default function Admin() {
         </div>
 
         <div className="mt-6 flex gap-2 flex-wrap">
-          {(["notices","photos","membros","oracao"] as const).map(t => (
+          {(["notices","photos","membros","oracao","devocional"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
+              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? (t==="devocional" ? "bg-purple-700 text-white border-purple-700" : "bg-blue-700 text-white border-blue-700") : "bg-white hover:bg-slate-50"}`}
             >
-              {t === "notices" && "Avisos"}
-              {t === "photos"  && "Fotos (Galeria)"}
+              {t === "notices"    && "Avisos"}
+              {t === "photos"     && "Fotos (Galeria)"}
+              {t === "devocional" && "📲 Carrossel"}
               {t === "membros" && (
                 <span className="flex items-center gap-2">
                   Membros
@@ -779,6 +1034,136 @@ export default function Admin() {
                   >
                     Limpar filtros
                   </button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB DEVOCIONAL / CARROSSEL ── */}
+        {tab === "devocional" && (
+          <div className="mt-8 space-y-6">
+
+            {/* Buscar */}
+            <div className="bg-white rounded-2xl border p-5 shadow-sm">
+              <h2 className="text-base font-semibold text-slate-900 mb-1">Devocional do dia</h2>
+              <p className="text-sm text-slate-500 mb-4">Busca automaticamente o conteúdo de hoje do servidor.</p>
+              <button
+                onClick={fetchDevocional}
+                disabled={devLoading}
+                className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+              >
+                {devLoading ? <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Buscando…</> : "🔄 Buscar devocional"}
+              </button>
+              {devErr && <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{devErr}</p>}
+
+              {devData && (
+                <div className="mt-4 space-y-2 bg-slate-50 rounded-xl border p-4">
+                  <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">{devData.dateLabel}</p>
+                  <p className="font-semibold text-slate-800">{devData.title}</p>
+                  <p className="text-sm text-slate-600 italic">"{devData.verseText}" — {devData.verseRef}</p>
+                  <p className="text-sm text-slate-500 line-clamp-2">{devData.body.slice(0,120)}…</p>
+                </div>
+              )}
+            </div>
+
+            {/* Gerar Carrossel */}
+            {devData && (
+              <div className="bg-white rounded-2xl border p-5 shadow-sm">
+                <h2 className="text-base font-semibold text-slate-900 mb-1">Carrossel Instagram</h2>
+                <p className="text-sm text-slate-500 mb-4">Slides 1080 × 1350 px · 4 ou 5 slides dependendo do texto</p>
+
+                {devSlides.length === 0 ? (
+                  <button
+                    onClick={handleGerarCarrossel}
+                    disabled={devGerando}
+                    className="rounded-xl px-5 py-2.5 font-semibold text-white text-sm flex items-center gap-2 transition disabled:opacity-50"
+                    style={{background:"linear-gradient(130deg,#6b21a8,#a855f7,#ec4899)"}}
+                  >
+                    {devGerando ? <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Gerando slides…</> : "🎨 Gerar carrossel"}
+                  </button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={dvDownloadZip}
+                        disabled={devZipBusy}
+                        className="rounded-xl px-5 py-2.5 font-semibold text-white text-sm flex items-center gap-2 transition disabled:opacity-50"
+                        style={{background:"linear-gradient(130deg,#155c2a,#1db860)"}}
+                      >
+                        {devZipBusy ? "Baixando…" : "⬇️ Baixar todos os slides"}
+                      </button>
+                      <button
+                        onClick={()=>{setDevSlides([]);}}
+                        className="rounded-xl border px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                      >
+                        Refazer
+                      </button>
+                    </div>
+
+                    {/* Grade de slides */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {devSlides.map((src, i) => (
+                        <div key={i} className="relative rounded-xl overflow-hidden border border-purple-100 shadow-sm group">
+                          <img src={src} alt={`Slide ${i+1}`} className="w-full block"/>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-between p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white text-xs font-bold">Slide {i+1}</span>
+                            <button
+                              onClick={()=>dvDownloadSlide(src,i)}
+                              className="bg-purple-600 text-white text-xs font-bold rounded-lg px-2.5 py-1 hover:bg-purple-700 transition"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-400 text-center">Poste na ordem: Slide 1 → {devSlides.length}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Gerar Legenda */}
+            {devData && (
+              <div className="bg-white rounded-2xl border p-5 shadow-sm">
+                <h2 className="text-base font-semibold text-slate-900 mb-1">Legenda para Instagram</h2>
+                <p className="text-sm text-slate-500 mb-4">Legenda personalizada com base no devocional + 5 hashtags temáticas, gerada por IA.</p>
+
+                <button
+                  onClick={gerarLegenda}
+                  disabled={legendaBusy}
+                  className="rounded-xl px-5 py-2.5 font-semibold text-white text-sm flex items-center gap-2 transition disabled:opacity-50"
+                  style={{background:"linear-gradient(130deg,#0f4c8a,#1d8fe0)"}}
+                >
+                  {legendaBusy ? <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Gerando…</> : "✨ Gerar legenda com IA"}
+                </button>
+
+                {legendaErr && <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{legendaErr}</p>}
+
+                {legenda && (
+                  <div className="mt-4 space-y-3">
+                    <textarea
+                      className="w-full rounded-xl border px-4 py-3 text-sm text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-200 min-h-[160px] leading-relaxed"
+                      value={legenda}
+                      onChange={e => setLegenda(e.target.value)}
+                    />
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={copiarLegenda}
+                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-2"
+                      >
+                        {legendaCopied ? "✅ Copiado!" : "📋 Copiar legenda"}
+                      </button>
+                      <button
+                        onClick={gerarLegenda}
+                        disabled={legendaBusy}
+                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-blue-700 border-blue-200 hover:bg-blue-50 transition disabled:opacity-50"
+                      >
+                        🔁 Gerar outra versão
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}

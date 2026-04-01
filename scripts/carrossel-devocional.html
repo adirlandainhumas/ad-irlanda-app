@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Gerador de Carrossel · AOGIM Conect</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',sans-serif;background:#0a0f1e;color:#c8d8f0;min-height:100vh;padding:32px 16px;}
+  h1{text-align:center;font-size:22px;font-weight:700;color:#a0c8ff;margin-bottom:6px;letter-spacing:.04em;}
+  .sub{text-align:center;font-size:13px;color:rgba(120,170,255,0.5);margin-bottom:32px;}
+
+  .card{background:rgba(255,255,255,0.04);border:1px solid rgba(80,140,255,0.15);border-radius:16px;padding:24px;max-width:760px;margin:0 auto 24px;}
+  .card h2{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(80,160,255,0.6);margin-bottom:14px;}
+
+  label{display:block;font-size:12px;color:rgba(120,170,255,0.6);margin-bottom:5px;margin-top:14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+  input,textarea{width:100%;background:rgba(20,50,120,0.25);border:1px solid rgba(60,120,255,0.2);border-radius:10px;padding:11px 14px;color:#d0e4ff;font-size:14px;font-family:'Segoe UI',sans-serif;outline:none;resize:vertical;}
+  input:focus,textarea:focus{border-color:rgba(80,160,255,0.5);background:rgba(20,50,120,0.35);}
+  textarea{min-height:90px;line-height:1.6;}
+
+  .btn-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+  button{border:none;border-radius:12px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;color:#fff;transition:transform .15s,opacity .15s;display:flex;align-items:center;gap:8px;}
+  button:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
+  button:hover:not(:disabled){transform:translateY(-2px);}
+  #btnFetch{background:linear-gradient(130deg,#1040b0,#0080e0);}
+  #btnGerar{background:linear-gradient(130deg,#6b21a8,#a855f7,#ec4899);}
+  #btnBaixarTodos{background:linear-gradient(130deg,#155c2a,#1db860);}
+
+  .status{text-align:center;font-size:13px;color:rgba(100,180,255,0.6);margin-top:16px;min-height:20px;font-style:italic;}
+  .status.erro{color:rgba(255,120,120,0.8);}
+  .status.ok{color:rgba(100,220,160,0.8);}
+
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-top:22px;}
+  .slide-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid rgba(168,85,247,0.25);box-shadow:0 4px 20px rgba(80,20,180,0.2);}
+  .slide-wrap img{width:100%;display:block;}
+  .slide-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 55%);display:flex;align-items:flex-end;justify-content:space-between;padding:9px 11px;}
+  .slide-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.75);}
+  .btn-dl{background:rgba(168,85,247,0.8);border:none;border-radius:7px;padding:5px 11px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);}
+  .btn-dl:hover{background:rgba(168,85,247,1);}
+
+  .hint{text-align:center;font-size:11px;color:rgba(168,85,247,0.38);margin-top:10px;font-style:italic;}
+
+  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #areaResultado{display:none;}
+</style>
+</head>
+<body>
+
+<h1>✦ Gerador de Carrossel · AOGIM Conect</h1>
+<p class="sub">Slides 1080 × 1350 px prontos para o Instagram</p>
+
+<!-- Passo 1 -->
+<div class="card">
+  <h2>1 · Buscar conteúdo do devocional</h2>
+  <p style="font-size:13px;color:rgba(120,170,255,0.5);line-height:1.6;">
+    Clique em <strong style="color:#a0c8ff">Buscar Devocional</strong> para carregar automaticamente o conteúdo de hoje
+    direto do servidor. Ou preencha os campos manualmente abaixo.
+  </p>
+  <div class="btn-row">
+    <button id="btnFetch">
+      <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+      Buscar Devocional
+    </button>
+  </div>
+  <div id="statusFetch" class="status"></div>
+
+  <label>Data</label>
+  <input id="fData" placeholder="ex: Terça-feira, 01 de Abril de 2025"/>
+
+  <label>Título</label>
+  <input id="fTitulo" placeholder="Título do devocional"/>
+
+  <label>Texto do versículo</label>
+  <textarea id="fVerso" rows="3" placeholder="Texto do versículo…"></textarea>
+
+  <label>Referência (ex: João 3:16)</label>
+  <input id="fRef" placeholder="Livro capítulo:versículo"/>
+
+  <label>Reflexão</label>
+  <textarea id="fCorpo" rows="6" placeholder="Corpo da reflexão…"></textarea>
+
+  <label>Oração</label>
+  <textarea id="fOracao" rows="4" placeholder="Texto da oração…"></textarea>
+</div>
+
+<!-- Passo 2 -->
+<div class="card">
+  <h2>2 · Gerar slides</h2>
+  <div class="btn-row">
+    <button id="btnGerar" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px"><rect x="2" y="6" width="7" height="12" rx="1.5"/><rect x="8.5" y="3" width="7" height="18" rx="1.5"/><rect x="15" y="6" width="7" height="12" rx="1.5"/></svg>
+      Gerar Carrossel
+    </button>
+  </div>
+  <div id="statusGerar" class="status"></div>
+</div>
+
+<!-- Resultado -->
+<div class="card" id="areaResultado">
+  <h2>3 · Baixar slides</h2>
+  <div class="btn-row">
+    <button id="btnBaixarZip">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M12 3v12m0 0l-4-4m4 4l4-4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Baixar ZIP (todos os slides)
+    </button>
+    <button id="btnBaixarTodos" style="background:rgba(60,80,160,0.4);border:1px solid rgba(80,120,255,0.2);font-size:13px;">
+      Baixar separados
+    </button>
+    <button onclick="document.getElementById('areaResultado').style.display='none';document.getElementById('grid').innerHTML='';document.getElementById('btnGerar').disabled=false;" style="background:rgba(60,80,160,0.4);border:1px solid rgba(80,120,255,0.2);">
+      Refazer
+    </button>
+  </div>
+  <div id="grid"></div>
+  <p class="hint">Poste na ordem: Slide 1 → último &nbsp;·&nbsp; Dimensão: 1080 × 1350 px</p>
+</div>
+
+<canvas id="cvs" style="display:none"></canvas>
+
+<script>
+const API = 'https://aogimconectinhumas.site/.netlify/functions/devocional';
+const W = 1080, H = 1350;
+let slides = [];
+
+// ── Helpers canvas ────────────────────────────────────────────────────────────
+function makeCanvas() {
+  const c = document.getElementById('cvs');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+
+  const bg = ctx.createLinearGradient(0, 0, W * 0.6, H);
+  bg.addColorStop(0, '#020d1f'); bg.addColorStop(0.3, '#041428');
+  bg.addColorStop(0.65, '#051c3a'); bg.addColorStop(1, '#020b18');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+
+  [
+    [0,       H * 0.35, W * 0.85, 'rgba(30,100,220,0.16)', 'transparent'],
+    [W,       H * 0.1,  W * 0.7,  'rgba(0,180,255,0.11)',  'transparent'],
+    [W * 0.3, H,        W * 0.9,  'rgba(40,60,200,0.12)',  'transparent'],
+  ].forEach(([x, y, r, c1, c2]) => {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, c1); g.addColorStop(1, c2);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  });
+
+  ctx.save();
+  for (let i = 0; i < 65; i++) {
+    const px = Math.random() * W, py = Math.random() * H * 0.9, pr = Math.random() * 1.6 + 0.3;
+    ctx.globalAlpha = Math.random() * 0.45 + 0.1;
+    ctx.fillStyle = `hsl(${200 + Math.random() * 40},80%,${70 + Math.random() * 30}%)`;
+    ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  return ctx;
+}
+
+function snap(ctx) {
+  const c = document.getElementById('cvs');
+  return c.toDataURL('image/png');
+}
+
+function wrap(ctx, text, maxW, font) {
+  ctx.font = font;
+  return text.split(' ').reduce((lines, word) => {
+    const last = lines[lines.length - 1] ?? '';
+    const test = last ? `${last} ${word}` : word;
+    if (ctx.measureText(test).width > maxW && last) return [...lines, word];
+    return [...lines.slice(0, -1), test];
+  }, ['']).filter(Boolean);
+}
+
+function center(ctx, text, y, font, color, alpha = 1, shadowC, shadowB) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.font = font;
+  ctx.fillStyle = color; ctx.textAlign = 'center';
+  if (shadowC) { ctx.shadowColor = shadowC; ctx.shadowBlur = shadowB || 0; }
+  ctx.fillText(text, W / 2, y); ctx.restore();
+}
+
+function hline(ctx, y, alpha = 0.32) {
+  ctx.save();
+  const l = ctx.createLinearGradient(80, 0, W - 80, 0);
+  l.addColorStop(0, 'transparent');
+  l.addColorStop(0.5, `rgba(80,160,255,${alpha})`);
+  l.addColorStop(1, 'transparent');
+  ctx.strokeStyle = l; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(80, y); ctx.lineTo(W - 80, y); ctx.stroke();
+  ctx.restore();
+}
+
+function dots(ctx, current, total) {
+  const r = 8, gap = 22;
+  const tw = r * 2 * total + gap * (total - 1);
+  let sx = (W - tw) / 2;
+  for (let i = 0; i < total; i++) {
+    ctx.save(); ctx.beginPath();
+    ctx.arc(sx + r, H - 60, r, 0, Math.PI * 2);
+    ctx.fillStyle = i === current ? 'rgba(100,180,255,0.92)' : 'rgba(60,120,255,0.22)';
+    ctx.fill(); ctx.restore();
+    sx += r * 2 + gap;
+  }
+}
+
+function splitBody(text) {
+  if (text.length <= 520) return [text, null];
+  const mid = Math.floor(text.length / 2);
+  let at = -1;
+  for (let i = mid; i < Math.min(mid + 240, text.length - 10); i++) {
+    if (text[i] === '.' && (text[i+1] === ' ' || text[i+1] === '\n')) { at = i + 1; break; }
+  }
+  if (at === -1) {
+    for (let i = mid; i > Math.max(mid - 240, 0); i--) {
+      if (text[i] === '.' && (text[i+1] === ' ' || text[i+1] === '\n')) { at = i + 1; break; }
+    }
+  }
+  if (at === -1) at = mid;
+  return [text.slice(0, at).trim(), text.slice(at).trim()];
+}
+
+// ── Slides ────────────────────────────────────────────────────────────────────
+function slide1_capa(data, total) {
+  const ctx = makeCanvas();
+  hline(ctx, 155);
+  center(ctx, 'AOGIM  CONECT', 122, '300 30px Georgia,serif', 'rgba(100,180,255,0.62)');
+  center(ctx, 'DEVOCIONAL  DO  DIA', 210, '700 24px sans-serif', 'rgba(80,160,255,0.6)');
+  center(ctx, data.dateLabel, 262, 'italic 300 26px Georgia,serif', 'rgba(120,190,255,0.42)');
+  hline(ctx, 298);
+
+  let ty = 390;
+  if (data.title) {
+    const tl = wrap(ctx, data.title, W - 140, '600 66px Georgia,serif');
+    ctx.save(); ctx.font = '600 66px Georgia,serif'; ctx.fillStyle = '#e8f4ff';
+    ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,100,255,0.35)'; ctx.shadowBlur = 28;
+    tl.forEach(l => { ctx.fillText(l, W/2, ty); ty += 86; }); ctx.restore(); ty += 20;
+  }
+
+  center(ctx, '✦', ty, '24px serif', 'rgba(80,160,255,0.45)'); ty += 62;
+
+  ctx.save(); ctx.font = 'italic 120px Georgia,serif'; ctx.fillStyle = 'rgba(50,130,255,0.07)';
+  ctx.textAlign = 'left'; ctx.fillText('\u201C', 82, ty + 10); ctx.restore();
+
+  const vl = wrap(ctx, `"${data.verseText}"`, W - 200, 'italic 40px Georgia,serif');
+  ctx.save(); ctx.font = 'italic 40px Georgia,serif'; ctx.fillStyle = 'rgba(210,235,255,0.92)';
+  ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,100,255,0.1)'; ctx.shadowBlur = 8;
+  vl.forEach(l => { ctx.fillText(l, W/2, ty); ty += 62; }); ctx.restore(); ty += 18;
+
+  hline(ctx, ty, 0.2); ty += 52;
+  ctx.save(); ctx.font = '600 38px Georgia,serif'; ctx.fillStyle = 'rgba(100,190,255,0.9)';
+  ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,120,255,0.3)'; ctx.shadowBlur = 14;
+  ctx.fillText(data.verseRef, W/2, ty); ctx.restore();
+
+  dots(ctx, 0, total);
+  return snap(ctx);
+}
+
+function slideTexto(idx, total, labelStr, icon, bodyText, isCont, hasMore) {
+  const ctx = makeCanvas();
+  hline(ctx, 145);
+  center(ctx, icon, 108, '50px serif', 'rgba(120,200,255,0.7)');
+  ctx.save(); ctx.font = '700 26px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+  ctx.textAlign = 'center'; ctx.fillText(labelStr, W/2, 190); ctx.restore();
+  hline(ctx, 222);
+
+  let startY = 290;
+  if (isCont) {
+    ctx.save(); ctx.font = 'italic 300 23px Georgia,serif'; ctx.fillStyle = 'rgba(80,160,255,0.32)';
+    ctx.textAlign = 'center'; ctx.fillText('continuação', W/2, 270); ctx.restore();
+    startY = 316;
+  }
+
+  const bl = wrap(ctx, bodyText, W - 160, '400 36px Georgia,serif');
+  ctx.save(); ctx.font = '400 36px Georgia,serif'; ctx.fillStyle = 'rgba(185,215,255,0.82)';
+  ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,80,200,0.06)'; ctx.shadowBlur = 4;
+  let ty = startY;
+  bl.slice(0, 14).forEach(l => { ctx.fillText(l, W/2, ty); ty += 60; }); ctx.restore();
+
+  if (hasMore) {
+    ctx.save(); ctx.font = 'italic 300 25px Georgia,serif'; ctx.fillStyle = 'rgba(80,160,255,0.38)';
+    ctx.textAlign = 'center'; ctx.fillText('→ continua no próximo slide', W/2, H - 100); ctx.restore();
+  }
+
+  dots(ctx, idx, total);
+  return snap(ctx);
+}
+
+function slideOracao(idx, total, prayer) {
+  const ctx = makeCanvas();
+  hline(ctx, 145);
+  center(ctx, '🙏', 108, '50px serif', 'rgba(120,200,255,0.7)');
+  ctx.save(); ctx.font = '700 26px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
+  ctx.textAlign = 'center'; ctx.fillText('O  R  A  Ç  Ã  O', W/2, 190); ctx.restore();
+  hline(ctx, 222);
+
+  const pl = wrap(ctx, prayer, W - 160, 'italic 36px Georgia,serif');
+  ctx.save(); ctx.font = 'italic 36px Georgia,serif'; ctx.fillStyle = 'rgba(200,225,255,0.85)';
+  ctx.textAlign = 'center';
+  let ty = 290;
+  pl.slice(0, 14).forEach(l => { ctx.fillText(l, W/2, ty); ty += 60; }); ctx.restore();
+
+  dots(ctx, idx, total);
+  return snap(ctx);
+}
+
+function slideCTA(idx, total) {
+  const ctx = makeCanvas();
+
+  // Decoração
+  ctx.save(); ctx.font = '180px serif'; ctx.textAlign = 'center';
+  ctx.globalAlpha = 0.05; ctx.fillStyle = 'rgba(80,160,255,1)';
+  ctx.fillText('✦', W/2, 640); ctx.restore();
+
+  hline(ctx, 132);
+  center(ctx, 'DEVOCIONAL DO DIA', 96, '700 21px sans-serif', 'rgba(80,160,255,0.5)');
+  hline(ctx, 148);
+
+  // Hook
+  let ty = 250;
+  const hl = wrap(ctx, 'Esse devocional tocou seu coração?', W - 120, '700 72px Georgia,serif');
+  ctx.save(); ctx.font = '700 72px Georgia,serif'; ctx.fillStyle = '#e8f4ff';
+  ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,100,255,0.45)'; ctx.shadowBlur = 34;
+  hl.forEach(l => { ctx.fillText(l, W/2, ty); ty += 90; }); ctx.restore(); ty += 18;
+
+  hline(ctx, ty, 0.28); ty += 58;
+
+  // CTAs
+  const ctas = [
+    '💾  Salva pra ler quando precisar',
+    '🙏  Manda pra alguém que precisa ouvir',
+    '💬  Conta pra gente nos comentários',
+  ];
+  ctas.forEach(cta => {
+    const cl = wrap(ctx, cta, W - 130, '400 36px sans-serif');
+    ctx.save(); ctx.font = '400 36px sans-serif'; ctx.fillStyle = 'rgba(160,210,255,0.88)';
+    ctx.textAlign = 'center';
+    cl.forEach(l => { ctx.fillText(l, W/2, ty); ty += 52; }); ctx.restore(); ty += 14;
+  });
+
+  ty += 20;
+  hline(ctx, ty, 0.22); ty += 54;
+
+  // Hashtags
+  ctx.save(); ctx.font = '400 26px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.48)';
+  ctx.textAlign = 'center'; ctx.fillText('#AOGIM  #Devocional  #FéQueTransforma', W/2, ty); ctx.restore(); ty += 58;
+
+  // Brand
+  ctx.save(); ctx.font = '700 52px Georgia,serif'; ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,140,255,0.65)'; ctx.shadowBlur = 32;
+  const hg = ctx.createLinearGradient(W/2 - 180, 0, W/2 + 180, 0);
+  hg.addColorStop(0, '#60b8ff'); hg.addColorStop(0.5, '#a0d8ff'); hg.addColorStop(1, '#60b8ff');
+  ctx.fillStyle = hg; ctx.fillText('@AOGIM Conect', W/2, ty); ctx.restore();
+
+  dots(ctx, idx, total);
+  return snap(ctx);
+}
+
+// ── Gerar todos ───────────────────────────────────────────────────────────────
+function gerarTodos(data) {
+  const [body1, body2] = splitBody(data.body);
+  const total = body2 ? 5 : 4;
+  const result = [];
+
+  result.push(slide1_capa(data, total));
+  result.push(slideTexto(1, total, 'R  E  F  L  E  X  Ã  O', '✝', body1, false, !!body2));
+  if (body2) result.push(slideTexto(2, total, 'R  E  F  L  E  X  Ã  O', '✝', body2, true, false));
+  result.push(slideOracao(body2 ? 3 : 2, total, data.prayer));
+  result.push(slideCTA(total - 1, total));
+
+  return result;
+}
+
+// ── Download ──────────────────────────────────────────────────────────────────
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function downloadSlide(src, idx) {
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = `devocional-slide-${String(idx+1).padStart(2,'0')}-${todayKey()}.png`;
+  a.click();
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+const setStatus = (id, msg, type='') => {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status' + (type ? ' ' + type : '');
+};
+
+document.getElementById('btnFetch').addEventListener('click', async () => {
+  const btn = document.getElementById('btnFetch');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Buscando…';
+  setStatus('statusFetch', 'Conectando ao servidor…');
+
+  try {
+    const res = await fetch(API, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const d = await res.json();
+
+    document.getElementById('fData').value    = d.dateLabel  || '';
+    document.getElementById('fTitulo').value  = d.title      || '';
+    document.getElementById('fVerso').value   = d.verseText  || '';
+    document.getElementById('fRef').value     = d.verseRef   || '';
+    document.getElementById('fCorpo').value   = d.body       || '';
+    document.getElementById('fOracao').value  = d.prayer     || '';
+
+    setStatus('statusFetch', '✓ Conteúdo carregado com sucesso!', 'ok');
+    document.getElementById('btnGerar').disabled = false;
+  } catch (e) {
+    setStatus('statusFetch', `Erro ao buscar: ${e.message}. Preencha manualmente.`, 'erro');
+    document.getElementById('btnGerar').disabled = false;
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg> Buscar Devocional';
+});
+
+// Habilitar botão gerar se campos preenchidos manualmente
+['fTitulo','fVerso','fCorpo'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const ok = document.getElementById('fTitulo').value.trim() &&
+               document.getElementById('fVerso').value.trim() &&
+               document.getElementById('fCorpo').value.trim();
+    document.getElementById('btnGerar').disabled = !ok;
+  });
+});
+
+document.getElementById('btnGerar').addEventListener('click', () => {
+  const btn = document.getElementById('btnGerar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Gerando slides…';
+  setStatus('statusGerar', 'Desenhando slides…');
+
+  // Usa setTimeout para não travar a UI
+  setTimeout(() => {
+    try {
+      const data = {
+        dateLabel : document.getElementById('fData').value.trim()   || '',
+        title     : document.getElementById('fTitulo').value.trim() || '',
+        verseText : document.getElementById('fVerso').value.trim()  || '',
+        verseRef  : document.getElementById('fRef').value.trim()    || '',
+        body      : document.getElementById('fCorpo').value.trim()  || '',
+        prayer    : document.getElementById('fOracao').value.trim() || '',
+      };
+
+      slides = gerarTodos(data);
+
+      // Exibir grade
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      slides.forEach((src, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'slide-wrap';
+        wrap.innerHTML = `
+          <img src="${src}" alt="Slide ${i+1}"/>
+          <div class="slide-overlay">
+            <span class="slide-label">Slide ${i+1}</span>
+            <button class="btn-dl" onclick="downloadSlide(slides[${i}],${i})">↓ Baixar</button>
+          </div>`;
+        grid.appendChild(wrap);
+      });
+
+      document.getElementById('areaResultado').style.display = 'block';
+      document.getElementById('areaResultado').scrollIntoView({ behavior: 'smooth' });
+      setStatus('statusGerar', `✓ ${slides.length} slides gerados!`, 'ok');
+    } catch (e) {
+      setStatus('statusGerar', `Erro: ${e.message}`, 'erro');
+      btn.disabled = false;
+    }
+
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:17px;height:17px"><rect x="2" y="6" width="7" height="12" rx="1.5"/><rect x="8.5" y="3" width="7" height="18" rx="1.5"/><rect x="15" y="6" width="7" height="12" rx="1.5"/></svg> Gerar Carrossel';
+  }, 50);
+});
+
+document.getElementById('btnBaixarZip').addEventListener('click', async () => {
+  const btn = document.getElementById('btnBaixarZip');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Compactando…';
+
+  try {
+    const zip = new JSZip();
+    const pasta = `devocional-carrossel-${todayKey()}`;
+    slides.forEach((src, i) => {
+      const base64 = src.split(',')[1];
+      zip.file(`${pasta}/slide-${String(i+1).padStart(2,'0')}.png`, base64, { base64: true });
+    });
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${pasta}.zip`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (e) {
+    alert('Erro ao gerar ZIP: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><path d="M12 3v12m0 0l-4-4m4 4l4-4M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg> Baixar ZIP (todos os slides)';
+});
+
+document.getElementById('btnBaixarTodos').addEventListener('click', () => {
+  slides.forEach((src, i) => {
+    setTimeout(() => downloadSlide(src, i), i * 350);
+  });
+});
+</script>
+</body>
+</html>
