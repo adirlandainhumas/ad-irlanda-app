@@ -1,33 +1,33 @@
 /* ── Design System — AOGIM Conect ──────────────────────────────────────────── */
-/* Direção: "Luz da Manhã" — quente, unificado, inspirado em uma igreja        */
-/* evangélica brasileira ao amanhecer.                                          */
+/* Direção: "Firmamento" — azul profundo, vitral, autoridade e fé               */
+/* Assinatura âmbar: luz divina / bordas douradas de Bíblia                     */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap');
 
 /* ── Tokens ─────────────────────────────────────────────────────────────────── */
 :root {
   /* Texto */
-  --ink:           #1C1917;
-  --ink-2:         #57534E;
-  --ink-3:         #A8A29E;
-  --ink-4:         #D6D3D1;
+  --ink:           #0F172A;
+  --ink-2:         #475569;
+  --ink-3:         #94A3B8;
+  --ink-4:         #CBD5E1;
 
   /* Superfícies */
-  --bg:            #FAFAF8;
+  --bg:            #F6F8FF;
   --surface:       #FFFFFF;
-  --surface-2:     #F5F2EE;
+  --surface-2:     #EEF2FF;
 
   /* Bordas */
-  --border:        #E8E5E0;
-  --border-soft:   rgba(28, 25, 23, 0.07);
+  --border:        #DDE3F0;
+  --border-soft:   rgba(30, 64, 175, 0.07);
 
-  /* Marca — verde-floresta */
-  --green:         #166534;
-  --green-hover:   #15803D;
-  --green-light:   #F0FDF4;
-  --green-border:  #BBF7D0;
+  /* Marca — azul real */
+  --green:         #1E40AF;
+  --green-hover:   #1D4ED8;
+  --green-light:   #EFF6FF;
+  --green-border:  #BFDBFE;
 
-  /* Assinatura — âmbar dourado (margem de Bíblia) */
+  /* Assinatura — âmbar dourado (margem de Bíblia / vitral) */
   --amber:         #B45309;
   --amber-accent:  #D97706;
   --amber-light:   #FFFBEB;
@@ -87,7 +87,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 20px;
   padding: var(--s8) var(--s6);
-  box-shadow: 0 1px 4px rgba(28,25,23,0.06);
+  box-shadow: 0 1px 4px rgba(30,64,175,0.06);
 }
 
 /* Logo centrada */

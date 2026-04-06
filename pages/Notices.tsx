@@ -156,7 +156,7 @@ export default function Notices() {
         .nt-root { font-family:'Lato',sans-serif; min-height:100vh; background:#FAFAF8; }
 
         /* Hero */
-        .nt-hero { background:#166534; padding:40px 20px 48px; position:relative; overflow:hidden; border-radius:0 0 2rem 2rem; }
+        .nt-hero { background:#1E40AF; padding:40px 20px 48px; position:relative; overflow:hidden; border-radius:0 0 2rem 2rem; }
         .nt-hero::before { content:''; position:absolute; top:-60px; right:-60px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 70%); pointer-events:none; }
         .nt-hero-inner { position:relative; z-index:1; max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
         .nt-hero-kicker { font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.6); font-weight:700; display:flex; align-items:center; gap:8px; }
@@ -177,12 +177,12 @@ export default function Notices() {
         .nt-nav-btn:hover { background:#E8E5E0; color:#1C1917; }
         .nt-week-center { display:flex; flex-direction:column; align-items:center; gap:5px; }
         .nt-week-label { font-family:'Playfair Display',Georgia,serif; font-size:clamp(13px,3.5vw,15px); font-weight:700; color:#1C1917; }
-        .nt-today-btn { font-size:10px; font-weight:700; color:#166534; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:999px; padding:3px 11px; cursor:pointer; transition:background .15s; font-family:'Lato',sans-serif; }
+        .nt-today-btn { font-size:10px; font-weight:700; color:#1E40AF; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:999px; padding:3px 11px; cursor:pointer; transition:background .15s; font-family:'Lato',sans-serif; }
         .nt-today-btn:hover { background:#dcfce7; }
 
         /* Cascata */
         .nt-cascade { display:flex; flex-direction:column; position:relative; }
-        .nt-cascade::before { content:''; position:absolute; left:38px; top:0; bottom:0; width:2px; background:linear-gradient(180deg,rgba(22,101,52,.18) 0%,rgba(22,101,52,.04) 100%); border-radius:2px; }
+        .nt-cascade::before { content:''; position:absolute; left:38px; top:0; bottom:0; width:2px; background:linear-gradient(180deg,rgba(30,64,175,.18) 0%,rgba(30,64,175,.04) 100%); border-radius:2px; }
 
         /* Linha de dia */
         .nt-day-row { display:flex; position:relative; padding-bottom:2px; }
@@ -192,14 +192,14 @@ export default function Notices() {
 
         .nt-day-circle { width:32px; height:32px; border-radius:50%; display:grid; place-items:center; font-size:13px; font-weight:700; transition:all .2s; flex-shrink:0; }
         .nt-day-circle-empty { background:#F5F2EE; border:1.5px dashed #D6D3D1; color:#D6D3D1; }
-        .nt-day-circle-event { background:#fff; border:2px solid #166534; color:#166534; box-shadow:0 2px 8px rgba(22,101,52,.18); }
+        .nt-day-circle-event { background:#fff; border:2px solid #1E40AF; color:#1E40AF; box-shadow:0 2px 8px rgba(30,64,175,.18); }
         .nt-day-circle-done { background:#F5F2EE; border:2px solid #D6D3D1; color:#A8A29E; }
-        .nt-day-circle-today { background:#166534 !important; border:none !important; color:#fff !important; box-shadow:0 4px 14px rgba(22,101,52,.35) !important; }
+        .nt-day-circle-today { background:#1E40AF !important; border:none !important; color:#fff !important; box-shadow:0 4px 14px rgba(30,64,175,.35) !important; }
 
         .nt-day-name-label { font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin-top:5px; text-align:center; }
         .nt-day-name-empty  { color:#D6D3D1; }
-        .nt-day-name-event  { color:#166534; }
-        .nt-day-name-today  { color:#166534; }
+        .nt-day-name-event  { color:#1E40AF; }
+        .nt-day-name-today  { color:#1E40AF; }
 
         /* Conteúdo à direita */
         .nt-day-content { flex:1; padding:10px 0 10px 12px; display:flex; flex-direction:column; gap:8px; min-height:60px; justify-content:center; }
@@ -219,16 +219,16 @@ export default function Notices() {
         .nt-event-card-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(14px,3.8vw,16px); font-weight:700; color:#1C1917; line-height:1.3; margin:0 0 5px; }
         .nt-event-card-preview { font-size:12px; color:#57534E; line-height:1.6; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .nt-event-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:10px; padding-top:8px; border-top:1px solid #E8E5E0; }
-        .nt-event-card-cta { font-size:11px; font-weight:700; color:#166534; display:flex; align-items:center; gap:3px; }
+        .nt-event-card-cta { font-size:11px; font-weight:700; color:#1E40AF; display:flex; align-items:center; gap:3px; }
         .nt-event-card-share { display:inline-flex; align-items:center; gap:5px; background:#25D366; border:none; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:700; color:#fff; cursor:pointer; transition:background .15s; font-family:'Lato',sans-serif; }
         .nt-event-card-share:hover { background:#1ebe5d; }
 
         /* Badges */
         .nt-badge { font-size:10px; font-weight:700; letter-spacing:.06em; border-radius:999px; padding:2px 8px; }
         .nt-badge-done  { background:#F5F2EE; color:#A8A29E; }
-        .nt-badge-today { background:#F0FDF4; color:#166534; animation:ntPulse 2s ease-in-out infinite; }
+        .nt-badge-today { background:#EFF6FF; color:#1E40AF; animation:ntPulse 2s ease-in-out infinite; }
         .nt-badge-soon  { background:#FFFBEB; color:#B45309; }
-        .nt-badge-week  { background:#F0FDF4; color:#166534; }
+        .nt-badge-week  { background:#EFF6FF; color:#1E40AF; }
 
         /* Semana vazia */
         .nt-empty-week { text-align:center; padding:32px 20px; background:#fff; border-radius:16px; border:1px solid #E8E5E0; }
@@ -237,7 +237,7 @@ export default function Notices() {
 
         /* Loading / erro */
         .nt-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 0; gap:14px; }
-        .nt-spinner { width:28px; height:28px; border:2px solid #E8E5E0; border-top-color:#166534; border-radius:50%; animation:ntSpin .85s linear infinite; }
+        .nt-spinner { width:28px; height:28px; border:2px solid #E8E5E0; border-top-color:#1E40AF; border-radius:50%; animation:ntSpin .85s linear infinite; }
         .nt-loading-text { font-family:'Playfair Display',Georgia,serif; font-size:14px; font-style:italic; color:#A8A29E; }
         .nt-error { background:#FEF2F2; border:1px solid #FECACA; border-radius:14px; padding:14px 18px; color:#991B1B; font-size:14px; margin-bottom:16px; }
 
@@ -246,7 +246,7 @@ export default function Notices() {
         @media(min-width:560px){ .nt-backdrop { align-items:center; padding:24px; } }
         .nt-modal { width:100%; max-width:540px; background:#fff; border-radius:24px 24px 0 0; overflow:hidden; box-shadow:0 -4px 40px rgba(28,25,23,.18); max-height:90vh; display:flex; flex-direction:column; }
         @media(min-width:560px){ .nt-modal { border-radius:24px; max-height:85vh; box-shadow:0 20px 60px rgba(28,25,23,.2); } }
-        .nt-modal-header { background:#166534; padding:22px 22px 18px; flex-shrink:0; }
+        .nt-modal-header { background:#1E40AF; padding:22px 22px 18px; flex-shrink:0; }
         .nt-modal-header-top { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
         .nt-modal-date { font-size:11px; letter-spacing:.08em; text-transform:capitalize; color:rgba(255,255,255,.65); font-weight:600; }
         .nt-modal-close { width:32px; height:32px; border-radius:50%; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1); color:rgba(255,255,255,.8); display:grid; place-items:center; cursor:pointer; flex-shrink:0; font-size:14px; transition:background .18s; font-family:'Lato',sans-serif; }
@@ -254,11 +254,11 @@ export default function Notices() {
         .nt-modal-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(17px,5vw,22px); font-weight:700; color:#fff; margin:0; line-height:1.25; }
         .nt-modal-body { padding:22px; overflow-y:auto; flex:1; }
         .nt-modal-text { font-size:15px; color:#57534E; line-height:1.8; white-space:pre-line; margin:0; font-family:'Playfair Display',Georgia,serif; }
-        .nt-modal-address { margin-top:18px; padding:12px 14px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:12px; font-size:13px; color:#57534E; }
-        .nt-modal-address strong { color:#166534; }
+        .nt-modal-address { margin-top:18px; padding:12px 14px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; font-size:13px; color:#57534E; }
+        .nt-modal-address strong { color:#1E40AF; }
         .nt-modal-footer { padding:14px 22px 18px; border-top:1px solid #E8E5E0; flex-shrink:0; }
-        .nt-modal-share-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:#166534; color:#fff; font-weight:800; font-size:15px; padding:14px 0; border-radius:14px; border:none; cursor:pointer; font-family:'Lato',sans-serif; transition:background .18s; }
-        .nt-modal-share-btn:hover { background:#15803D; }
+        .nt-modal-share-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:#1E40AF; color:#fff; font-weight:800; font-size:15px; padding:14px 0; border-radius:14px; border:none; cursor:pointer; font-family:'Lato',sans-serif; transition:background .18s; }
+        .nt-modal-share-btn:hover { background:#1D4ED8; }
       `}</style>
 
       <div className="nt-root">
@@ -385,7 +385,7 @@ export default function Notices() {
           {/* ── Rodapé informativo ── */}
           <div style={{
             marginTop: 40,
-            background: "#166534",
+            background: "#1E40AF",
             borderRadius: 20,
             padding: "24px 22px",
             display: "flex",

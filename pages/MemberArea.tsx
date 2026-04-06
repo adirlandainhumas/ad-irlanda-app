@@ -599,7 +599,7 @@ const MemberArea: FC = () => {
   if (appLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-green-700 animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-700 animate-spin" />
       </div>
     );
   }
@@ -611,7 +611,7 @@ const MemberArea: FC = () => {
 
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-8">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center text-green-700 shadow-inner border border-green-100 overflow-hidden bg-green-50">
+        <div className="w-24 h-24 rounded-full flex items-center justify-center text-blue-700 shadow-inner border border-blue-100 overflow-hidden bg-blue-50">
           {fotoRender ? <img src={fotoRender} alt="Foto" className="w-full h-full object-cover" /> : <User className="w-12 h-12" />}
         </div>
 
@@ -619,18 +619,18 @@ const MemberArea: FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">Olá, {nome.split(' ')[0]}!</h2>
           <p className="text-slate-500 text-sm">{session.user.email}</p>
           {/* Exibe congregação abaixo do email */}
-          <p className="text-green-700 text-xs font-semibold flex items-center justify-center gap-1">
+          <p className="text-blue-700 text-xs font-semibold flex items-center justify-center gap-1">
             <MapPin className="w-3 h-3" /> Ministério Irlanda • {congregacaoMembro}
           </p>
         </div>
 
         {fetchingDetails && (
-          <div className="w-full max-w-xl bg-green-50 text-green-700 p-4 rounded-2xl text-sm font-semibold border border-green-100 flex items-center gap-2">
+          <div className="w-full max-w-xl bg-blue-50 text-blue-700 p-4 rounded-2xl text-sm font-semibold border border-blue-100 flex items-center gap-2">
             <Loader2 className="w-5 h-5 animate-spin" /> Carregando seus dados...
           </div>
         )}
         {successMsg && (
-          <div className="w-full max-w-xl bg-green-50 text-green-700 p-4 rounded-2xl text-sm font-semibold border border-green-100 flex items-center gap-2">
+          <div className="w-full max-w-xl bg-blue-50 text-blue-700 p-4 rounded-2xl text-sm font-semibold border border-blue-100 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5" /> {successMsg}
           </div>
         )}
@@ -652,7 +652,7 @@ const MemberArea: FC = () => {
           )}
           <button
             onClick={() => hasFicha ? setShowCard(true) : setShowFichaForm(true)}
-            className={`w-full text-white font-bold py-5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${hasFicha ? 'bg-green-700 hover:bg-green-800' : 'bg-amber-500 hover:bg-amber-600'}`}
+            className={`w-full text-white font-bold py-5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${hasFicha ? 'bg-blue-700 hover:bg-blue-800' : 'bg-amber-500 hover:bg-amber-600'}`}
           >
             {hasFicha ? <><CreditCard className="w-6 h-6" /> Acessar Cartão de Membro</> : <><UserCircle className="w-6 h-6" /> Preencher Ficha Cadastral</>}
           </button>
@@ -678,23 +678,23 @@ const MemberArea: FC = () => {
               <p className="text-slate-500 text-sm mb-6">{hasFicha ? 'Dados pessoais e de contato podem ser atualizados. Função, congregação e datas do cartão são bloqueadas.' : 'Preencha os dados e envie sua foto.'}</p>
 
               {/* Função bloqueada */}
-              <div className="mb-3 p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
-                <Users className="w-5 h-5 text-green-700 flex-shrink-0" />
+              <div className="mb-3 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3">
+                <Users className="w-5 h-5 text-blue-700 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Função na Igreja</p>
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">Função na Igreja</p>
                   <p className="text-base font-black text-slate-800">{memberDetails.church_function || 'Membro'}</p>
                 </div>
-                <Lock className="w-4 h-4 text-green-400 ml-auto" />
+                <Lock className="w-4 h-4 text-blue-400 ml-auto" />
               </div>
 
               {/* Congregação bloqueada */}
-              <div className="mb-5 p-4 bg-green-50 border border-green-200 rounded-2xl flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-green-700 flex-shrink-0" />
+              <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-blue-700 flex-shrink-0" />
                 <div>
-                  <p className="text-xs font-bold text-green-600 uppercase tracking-wide">Congregação</p>
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wide">Congregação</p>
                   <p className="text-base font-black text-slate-800">{congregacaoMembro}</p>
                 </div>
-                <Lock className="w-4 h-4 text-green-400 ml-auto" />
+                <Lock className="w-4 h-4 text-blue-400 ml-auto" />
               </div>
 
               <form onSubmit={handleSaveFicha} className="space-y-5">
@@ -733,7 +733,7 @@ const MemberArea: FC = () => {
                   <DateField label="Data de Batismo" value={memberDetails.baptism_date} onChange={v=>updateField('baptism_date',v)} required={false} />
                 </div>
                 {error && <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100"><AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}</div>}
-                <button type="submit" disabled={loading} className="w-full bg-green-700 hover:bg-green-800 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
+                <button type="submit" disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
                   {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Save className="w-5 h-5" /> Salvar Ficha Cadastral</>}
                 </button>
               </form>
@@ -745,7 +745,7 @@ const MemberArea: FC = () => {
         {showCard && (
           <div className="fixed inset-0 top-16 z-50 flex items-start justify-center p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
             <div className="w-full max-w-2xl my-6">
-              <div className="bg-gradient-to-br from-[#0d2416] to-[#071510] rounded-3xl p-6 shadow-2xl border border-green-900/30 relative">
+              <div className="bg-gradient-to-br from-[#0d1a3a] to-[#071020] rounded-3xl p-6 shadow-2xl border border-blue-900/30 relative">
                 <button onClick={() => { setShowCard(false); setCartaoImg(null); }} className="absolute top-5 right-5 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full"><X className="w-5 h-5" /></button>
                 <h2 className="text-white font-black text-xl mb-1">Cartão de Membro</h2>
                 <p className="text-white/50 text-sm mb-5">Assembléia de Deus — Ministério Irlanda • {congregacaoMembro}</p>
@@ -764,12 +764,12 @@ const MemberArea: FC = () => {
 
                 <div className="flex gap-3 flex-wrap">
                   {!cartaoImg ? (
-                    <button onClick={handleGerarCartao} disabled={gerandoCartao} className="flex-1 bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60">
+                    <button onClick={handleGerarCartao} disabled={gerandoCartao} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-60">
                       {gerandoCartao ? <><Loader2 className="w-5 h-5 animate-spin" /> Gerando…</> : <><CreditCard className="w-5 h-5" /> Gerar Cartão</>}
                     </button>
                   ) : (
                     <>
-                      <button onClick={handleDownloadPDF} className="flex-1 bg-green-700 hover:bg-green-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2">
+                      <button onClick={handleDownloadPDF} className="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2">
                         <FileText className="w-5 h-5" /> Salvar PDF
                       </button>
                       <button onClick={handleDownloadPNG} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-2 border border-white/10">
@@ -855,12 +855,12 @@ const MemberArea: FC = () => {
             </div>
           </div>
           {error && <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100"><AlertCircle className="w-5 h-5 flex-shrink-0" /> <span>{error}</span></div>}
-          {successMsg && <div className="flex items-center gap-2 p-3 bg-green-50 text-green-700 rounded-xl text-sm border border-green-100"><CheckCircle2 className="w-5 h-5 flex-shrink-0" /> <span>{successMsg}</span></div>}
-          <button type="submit" disabled={loading} className="w-full bg-green-700 hover:bg-green-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
+          {successMsg && <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl text-sm border border-blue-100"><CheckCircle2 className="w-5 h-5 flex-shrink-0" /> <span>{successMsg}</span></div>}
+          <button type="submit" disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Solicitar Cadastro' : 'Entrar'}
           </button>
         </form>
-        <button type="button" onClick={() => { setIsSignUp(p=>!p); setError(null); setSuccessMsg(null); }} className="w-full mt-4 text-sm font-semibold text-green-700 hover:text-green-900">
+        <button type="button" onClick={() => { setIsSignUp(p=>!p); setError(null); setSuccessMsg(null); }} className="w-full mt-4 text-sm font-semibold text-blue-700 hover:text-blue-900">
           {isSignUp ? 'Já tem conta? Entre aqui' : 'Não tem conta? Solicitar cadastro'}
         </button>
       </div>

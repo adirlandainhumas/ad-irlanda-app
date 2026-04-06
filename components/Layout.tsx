@@ -48,7 +48,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <div
                 style={{
                   width: 32, height: 32,
-                  background: '#166534',
+                  background: '#1E40AF',
                   borderRadius: 8,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,

@@ -87,13 +87,13 @@ export default function Cadastro() {
             <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
               <div
                 className="cad-wait-icon"
-                style={{ width: 64, height: 64, borderRadius: "50%", background: "#F0FDF4", border: "1px solid #BBF7D0", display: "grid", placeItems: "center" }}
+                style={{ width: 64, height: 64, borderRadius: "50%", background: "#EFF6FF", border: "1px solid #BFDBFE", display: "grid", placeItems: "center" }}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" style={{ width: 28, height: 28 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1E40AF" strokeWidth="2" style={{ width: 28, height: 28 }}>
                   <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 999, padding: "5px 16px", fontSize: 12, fontWeight: 700, color: "#166534", letterSpacing: ".06em" }}>
+              <span style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 999, padding: "5px 16px", fontSize: 12, fontWeight: 700, color: "#1E40AF", letterSpacing: ".06em" }}>
                 Aguardando aprovação
               </span>
               <h2 style={{ fontFamily: "var(--font-serif, 'Playfair Display', serif)", fontSize: 20, fontWeight: 700, color: "var(--ink, #1C1917)", margin: 0 }}>

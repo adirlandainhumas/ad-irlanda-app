@@ -57,7 +57,7 @@ const CSS = `
     --bg:            #FAFAF8;
     --surface:       #FFFFFF;
     --border:        #E8E5E0;
-    --green:         #166534;
+    --green:         #1E40AF;
     --green-hover:   #15803d;
     --green-light:   #f0fdf4;
     --green-border:  #bbf7d0;

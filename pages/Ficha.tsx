@@ -101,15 +101,15 @@ export default function Ficha() {
         .fi-sub { font-size:13px; color:#A8A29E; text-align:center; font-style:italic; margin:0 0 24px; font-family:'Playfair Display',Georgia,serif; }
         .fi-steps { display:flex; justify-content:center; gap:8px; margin-bottom:28px; }
         .fi-step { width:32px; height:4px; border-radius:999px; background:#E8E5E0; transition:background .3s; }
-        .fi-step-active { background:#166534; }
-        .fi-step-done { background:#BBF7D0; }
+        .fi-step-active { background:#1E40AF; }
+        .fi-step-done { background:#BFDBFE; }
         .fi-card { background:#FFFFFF; border:1px solid #E8E5E0; border-radius:16px; padding:24px; margin-bottom:16px; box-shadow:0 1px 4px rgba(28,25,23,0.05); }
         .fi-section { font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:#A8A29E; margin:0 0 18px; display:flex; align-items:center; gap:8px; }
         .fi-section::after { content:''; flex:1; height:1px; background:#E8E5E0; }
         .fi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         .fi-erro { background:#FEF2F2; border:1px solid #FECACA; border-radius:10px; padding:10px 14px; font-size:13px; color:#991B1B; margin-bottom:16px; }
-        .fi-btn { width:100%; padding:14px; border:none; border-radius:12px; background:#166534; color:#fff; font-size:15px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; transition:background .18s; }
-        .fi-btn:hover { background:#15803D; }
+        .fi-btn { width:100%; padding:14px; border:none; border-radius:12px; background:#1E40AF; color:#fff; font-size:15px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; transition:background .18s; }
+        .fi-btn:hover { background:#1D4ED8; }
         .fi-btn:disabled { opacity:.5; cursor:not-allowed; }
         .fi-btn-sec { width:100%; padding:13px; border:1px solid #E8E5E0; border-radius:12px; background:transparent; color:#57534E; font-size:14px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; margin-bottom:10px; transition:border-color .18s, color .18s; }
         .fi-btn-sec:hover { border-color:#A8A29E; color:#1C1917; }
@@ -118,7 +118,7 @@ export default function Ficha() {
         .fi-foto-area { display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:16px; }
         .fi-foto-preview { width:100px; height:100px; border-radius:50%; overflow:hidden; border:2px solid #E8E5E0; background:#F5F2EE; display:grid; place-items:center; }
         .fi-foto-preview img { width:100%; height:100%; object-fit:cover; }
-        .fi-foto-btn { display:inline-flex; align-items:center; gap:7px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:999px; padding:8px 18px; font-size:13px; font-weight:700; color:#166534; cursor:pointer; font-family:'Lato',sans-serif; transition:background .15s; }
+        .fi-foto-btn { display:inline-flex; align-items:center; gap:7px; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:999px; padding:8px 18px; font-size:13px; font-weight:700; color:#1E40AF; cursor:pointer; font-family:'Lato',sans-serif; transition:background .15s; }
         .fi-foto-btn:hover { background:#dcfce7; }
       `}</style>
 

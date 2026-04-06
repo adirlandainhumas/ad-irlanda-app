@@ -368,12 +368,19 @@ export default function Admin() {
     if(sc){ctx.shadowColor=sc; ctx.shadowBlur=sb??0;}
     ctx.fillText(text, 1080/2, y); ctx.restore();
   }
-  function dvHline(ctx: CanvasRenderingContext2D, y: number, alpha=0.32) {
+  function dvHline(ctx: CanvasRenderingContext2D, y: number, alpha=0.28) {
     ctx.save();
     const l = ctx.createLinearGradient(80,0,1000,0);
-    l.addColorStop(0,"transparent"); l.addColorStop(0.5,`rgba(80,160,255,${alpha})`); l.addColorStop(1,"transparent");
-    ctx.strokeStyle=l; ctx.lineWidth=1.5;
+    l.addColorStop(0,"transparent"); l.addColorStop(0.5,`rgba(120,170,255,${alpha})`); l.addColorStop(1,"transparent");
+    ctx.strokeStyle=l; ctx.lineWidth=1.2;
     ctx.beginPath(); ctx.moveTo(80,y); ctx.lineTo(1000,y); ctx.stroke(); ctx.restore();
+  }
+  function dvAmberLine(ctx: CanvasRenderingContext2D, y: number, w=100) {
+    ctx.save();
+    const l = ctx.createLinearGradient(1080/2-w,0,1080/2+w,0);
+    l.addColorStop(0,"transparent"); l.addColorStop(0.5,"rgba(251,191,36,0.55)"); l.addColorStop(1,"transparent");
+    ctx.strokeStyle=l; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(1080/2-w,y); ctx.lineTo(1080/2+w,y); ctx.stroke(); ctx.restore();
   }
   function dvDots(ctx: CanvasRenderingContext2D, current: number, total: number, H: number) {
     const r=8, gap=22, W=1080;
@@ -382,7 +389,7 @@ export default function Admin() {
     for(let i=0;i<total;i++){
       ctx.save(); ctx.beginPath();
       ctx.arc(sx+r, H-60, r, 0, Math.PI*2);
-      ctx.fillStyle = i===current ? "rgba(100,180,255,0.92)" : "rgba(60,120,255,0.22)";
+      ctx.fillStyle = i===current ? "rgba(96,165,250,0.92)" : "rgba(59,130,246,0.22)";
       ctx.fill(); ctx.restore();
       sx += r*2+gap;
     }
@@ -392,27 +399,38 @@ export default function Admin() {
     const c = document.createElement("canvas");
     c.width=W; c.height=H;
     const ctx = c.getContext("2d")!;
-    const bg = ctx.createLinearGradient(0,0,W*0.6,H);
-    bg.addColorStop(0,"#020d1f"); bg.addColorStop(0.3,"#041428");
-    bg.addColorStop(0.65,"#051c3a"); bg.addColorStop(1,"#020b18");
+    // Fundo azul noturno
+    const bg = ctx.createLinearGradient(0,0,W*0.5,H);
+    bg.addColorStop(0,"#030f2b"); bg.addColorStop(0.35,"#041428");
+    bg.addColorStop(0.7,"#061d3e"); bg.addColorStop(1,"#020c1f");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-    ([
-      [0,H*0.35,W*0.85,"rgba(30,100,220,0.16)","transparent"],
-      [W,H*0.1,W*0.7,"rgba(0,180,255,0.11)","transparent"],
-      [W*0.3,H,W*0.9,"rgba(40,60,200,0.12)","transparent"],
-    ] as [number,number,number,string,string][]).forEach(([x,y,r,c1,c2])=>{
-      const g=ctx.createRadialGradient(x,y,0,x,y,r);
-      g.addColorStop(0,c1); g.addColorStop(1,c2);
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    });
+    // Glow âmbar (canto superior)
+    const ag=ctx.createRadialGradient(0,0,0,0,0,W*0.65);
+    ag.addColorStop(0,"rgba(212,120,14,0.12)"); ag.addColorStop(0.5,"rgba(212,120,14,0.04)"); ag.addColorStop(1,"transparent");
+    ctx.fillStyle=ag; ctx.fillRect(0,0,W,H);
+    // Glow azul (canto inferior direito)
+    const bg2=ctx.createRadialGradient(W,H*0.65,0,W,H*0.65,W*0.75);
+    bg2.addColorStop(0,"rgba(30,64,175,0.16)"); bg2.addColorStop(1,"transparent");
+    ctx.fillStyle=bg2; ctx.fillRect(0,0,W,H);
+    // Grade geométrica sutil
+    ctx.save(); ctx.globalAlpha=0.035; ctx.strokeStyle="rgba(147,197,253,1)"; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    ctx.restore();
+    // Estrelas
     ctx.save();
     for(let i=0;i<65;i++){
       const px=Math.random()*W, py=Math.random()*H*0.9, pr=Math.random()*1.6+0.3;
       ctx.globalAlpha=Math.random()*0.45+0.1;
-      ctx.fillStyle=`hsl(${200+Math.random()*40},80%,${70+Math.random()*30}%)`;
+      ctx.fillStyle=i<7?`hsl(40,90%,${76+Math.random()*18}%)`:
+                        `hsl(${210+Math.random()*30},82%,${72+Math.random()*24}%)`;
       ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
+    // Barra âmbar no topo
+    const tb=ctx.createLinearGradient(0,0,W,0);
+    tb.addColorStop(0,"rgba(217,119,6,0.5)"); tb.addColorStop(0.5,"rgba(251,191,36,0.88)"); tb.addColorStop(1,"rgba(217,119,6,0.5)");
+    ctx.fillStyle=tb; ctx.fillRect(0,0,W,5);
     return [c, ctx];
   }
   function dvSplitBody(text: string): [string, string|null] {
@@ -437,27 +455,28 @@ export default function Admin() {
     // Slide 1: Capa
     {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx, 155); dvCenter(ctx,"AOGIM  CONECT",122,"300 30px Georgia,serif","rgba(100,180,255,0.62)");
-      dvCenter(ctx,"DEVOCIONAL  DO  DIA",210,"700 24px sans-serif","rgba(80,160,255,0.6)");
-      dvCenter(ctx,d.dateLabel,262,"italic 300 26px Georgia,serif","rgba(120,190,255,0.42)");
-      dvHline(ctx,298);
-      let ty=390;
+      dvHline(ctx,162); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",126,"300 26px Georgia,serif","rgba(147,197,253,0.55)");
+      dvAmberLine(ctx,144);
+      dvCenter(ctx,"DEVOCIONAL  DO  DIA",210,"700 23px sans-serif","rgba(96,165,250,0.72)");
+      dvCenter(ctx,d.dateLabel,260,"italic 300 25px Georgia,serif","rgba(147,197,253,0.40)");
+      dvHline(ctx,295);
+      let ty=385;
       if(d.title){
-        const tl=dvWrap(ctx,d.title,W-140,"600 66px Georgia,serif");
-        ctx.save(); ctx.font="600 66px Georgia,serif"; ctx.fillStyle="#e8f4ff";
-        ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.35)"; ctx.shadowBlur=28;
-        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=86;}); ctx.restore(); ty+=20;
+        const tl=dvWrap(ctx,d.title,W-140,"600 64px Georgia,serif");
+        ctx.save(); ctx.font="600 64px Georgia,serif"; ctx.fillStyle="#dce8ff";
+        ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=26;
+        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=84;}); ctx.restore(); ty+=20;
       }
-      dvCenter(ctx,"✦",ty,"24px serif","rgba(80,160,255,0.45)"); ty+=62;
-      ctx.save(); ctx.font="italic 120px Georgia,serif"; ctx.fillStyle="rgba(50,130,255,0.07)";
+      dvCenter(ctx,"✦",ty,"22px serif","rgba(251,191,36,0.78)"); ty+=58;
+      ctx.save(); ctx.font="italic 120px Georgia,serif"; ctx.fillStyle="rgba(212,120,14,0.07)";
       ctx.textAlign="left"; ctx.fillText("\u201C",82,ty+10); ctx.restore();
       const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 40px Georgia,serif");
-      ctx.save(); ctx.font="italic 40px Georgia,serif"; ctx.fillStyle="rgba(210,235,255,0.92)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.1)"; ctx.shadowBlur=8;
+      ctx.save(); ctx.font="italic 40px Georgia,serif"; ctx.fillStyle="rgba(214,231,255,0.93)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.14)"; ctx.shadowBlur=8;
       vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore(); ty+=18;
-      dvHline(ctx,ty,0.2); ty+=52;
-      ctx.save(); ctx.font="600 38px Georgia,serif"; ctx.fillStyle="rgba(100,190,255,0.9)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(0,120,255,0.3)"; ctx.shadowBlur=14;
+      dvHline(ctx,ty,0.18); ty+=52;
+      ctx.save(); ctx.font="600 36px Georgia,serif"; ctx.fillStyle="rgba(147,197,253,0.96)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(59,130,246,0.35)"; ctx.shadowBlur=14;
       ctx.fillText(d.verseRef,W/2,ty); ctx.restore();
       dvDots(ctx,0,total,H);
       result.push(c.toDataURL("image/png"));
@@ -466,16 +485,16 @@ export default function Admin() {
     // Slides de reflexão
     const textSlide = (idx:number, bodyText:string, isCont:boolean, hasMore:boolean) => {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,145); dvCenter(ctx,"✝",108,"50px serif","rgba(120,200,255,0.7)");
-      ctx.save(); ctx.font="700 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.65)";
-      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,190); ctx.restore();
-      dvHline(ctx,222);
-      let startY=290;
-      if(isCont){ dvCenter(ctx,"continuação",270,"italic 300 23px Georgia,serif","rgba(80,160,255,0.32)"); startY=316; }
+      dvHline(ctx,148); dvCenter(ctx,"✝",110,"48px serif","rgba(147,197,253,0.72)");
+      ctx.save(); ctx.font="700 25px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,192); ctx.restore();
+      dvAmberLine(ctx,212);
+      let startY=292;
+      if(isCont){ dvCenter(ctx,"continuação",272,"italic 300 23px Georgia,serif","rgba(147,197,253,0.32)"); startY=318; }
       const bl=dvWrap(ctx,bodyText,W-160,"400 36px Georgia,serif");
-      ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="rgba(185,215,255,0.82)"; ctx.textAlign="center";
+      ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="rgba(186,214,255,0.82)"; ctx.textAlign="center";
       let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
-      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-100,"italic 300 25px Georgia,serif","rgba(80,160,255,0.38)"); }
+      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-100,"italic 300 25px Georgia,serif","rgba(147,197,253,0.38)"); }
       dvDots(ctx,idx,total,H);
       result.push(c.toDataURL("image/png"));
     };
@@ -486,13 +505,13 @@ export default function Admin() {
     {
       const idx = body2 ? 3 : 2;
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,145); dvCenter(ctx,"🙏",108,"50px serif","rgba(120,200,255,0.7)");
-      ctx.save(); ctx.font="700 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.65)";
-      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,190); ctx.restore();
-      dvHline(ctx,222);
+      dvHline(ctx,148); dvCenter(ctx,"🙏",110,"48px serif","rgba(147,197,253,0.72)");
+      ctx.save(); ctx.font="700 25px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,192); ctx.restore();
+      dvAmberLine(ctx,212);
       const pl=dvWrap(ctx,d.prayer,W-160,"italic 36px Georgia,serif");
-      ctx.save(); ctx.font="italic 36px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.85)"; ctx.textAlign="center";
-      let ty=290; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+      ctx.save(); ctx.font="italic 36px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.86)"; ctx.textAlign="center";
+      let ty=292; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
       dvDots(ctx,idx,total,H);
       result.push(c.toDataURL("image/png"));
     }
@@ -501,26 +520,26 @@ export default function Admin() {
     {
       const [c, ctx] = dvMakeCanvas();
       ctx.save(); ctx.font="180px serif"; ctx.textAlign="center";
-      ctx.globalAlpha=0.05; ctx.fillStyle="rgba(80,160,255,1)"; ctx.fillText("✦",W/2,640); ctx.restore();
-      dvHline(ctx,132); dvCenter(ctx,"DEVOCIONAL DO DIA",96,"700 21px sans-serif","rgba(80,160,255,0.5)"); dvHline(ctx,148);
-      let ty=250;
-      const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"700 72px Georgia,serif");
-      ctx.save(); ctx.font="700 72px Georgia,serif"; ctx.fillStyle="#e8f4ff";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(0,100,255,0.45)"; ctx.shadowBlur=34;
-      hl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=90;}); ctx.restore(); ty+=18;
-      dvHline(ctx,ty,0.28); ty+=58;
+      ctx.globalAlpha=0.05; ctx.fillStyle="rgba(251,191,36,1)"; ctx.fillText("✦",W/2,640); ctx.restore();
+      dvHline(ctx,132); dvCenter(ctx,"DEVOCIONAL DO DIA",96,"700 21px sans-serif","rgba(96,165,250,0.55)"); dvHline(ctx,148);
+      let ty=252;
+      const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"700 70px Georgia,serif");
+      ctx.save(); ctx.font="700 70px Georgia,serif"; ctx.fillStyle="#dce8ff";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=32;
+      hl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=88;}); ctx.restore(); ty+=18;
+      dvHline(ctx,ty,0.22); ty+=58;
       ["💾  Salva pra ler quando precisar","🙏  Manda pra alguém que precisa ouvir","💬  Conta pra gente nos comentários"].forEach(cta=>{
         const cl=dvWrap(ctx,cta,W-130,"400 36px sans-serif");
-        ctx.save(); ctx.font="400 36px sans-serif"; ctx.fillStyle="rgba(160,210,255,0.88)"; ctx.textAlign="center";
+        ctx.save(); ctx.font="400 36px sans-serif"; ctx.fillStyle="rgba(186,214,255,0.88)"; ctx.textAlign="center";
         cl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore(); ty+=14;
       });
-      ty+=20; dvHline(ctx,ty,0.22); ty+=54;
-      ctx.save(); ctx.font="400 26px sans-serif"; ctx.fillStyle="rgba(80,160,255,0.48)";
+      ty+=20; dvHline(ctx,ty,0.2); ty+=54;
+      ctx.save(); ctx.font="400 26px sans-serif"; ctx.fillStyle="rgba(147,197,253,0.48)";
       ctx.textAlign="center"; ctx.fillText("#AOGIM  #Devocional  #FéQueTransforma",W/2,ty); ctx.restore(); ty+=58;
       ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
-      ctx.shadowColor="rgba(0,140,255,0.65)"; ctx.shadowBlur=32;
+      ctx.shadowColor="rgba(59,130,246,0.6)"; ctx.shadowBlur=30;
       const hg=ctx.createLinearGradient(W/2-180,0,W/2+180,0);
-      hg.addColorStop(0,"#60b8ff"); hg.addColorStop(0.5,"#a0d8ff"); hg.addColorStop(1,"#60b8ff");
+      hg.addColorStop(0,"#60a5fa"); hg.addColorStop(0.5,"#93c5fd"); hg.addColorStop(1,"#60a5fa");
       ctx.fillStyle=hg; ctx.fillText("@AOGIM Conect",W/2,ty); ctx.restore();
       dvDots(ctx,total-1,total,H);
       result.push(c.toDataURL("image/png"));
@@ -610,7 +629,7 @@ export default function Admin() {
   }), [membros]);
 
   const statusColor = (s: string) => {
-    if (s === "aprovado")  return "bg-green-50 border-green-100 text-green-700";
+    if (s === "aprovado")  return "bg-blue-50 border-blue-100 text-blue-700";
     if (s === "reprovado") return "bg-red-50 border-red-100 text-red-700";
     return "bg-yellow-50 border-yellow-100 text-yellow-700";
   };
@@ -640,14 +659,14 @@ export default function Admin() {
             <form className="mt-6 space-y-4" onSubmit={signIn}>
               <div>
                 <label className="text-xs font-semibold text-slate-600">E-mail</label>
-                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={email} onChange={e=>setEmail(e.target.value)} />
+                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={email} onChange={e=>setEmail(e.target.value)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Senha</label>
-                <input type="password" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
+                <input type="password" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
               </div>
               {noticeErr && <div className="rounded-xl bg-red-50 border border-red-100 text-red-700 px-3 py-2 text-sm">{noticeErr}</div>}
-              <button type="submit" className="w-full rounded-xl bg-green-700 text-white py-3 font-semibold shadow-sm hover:bg-green-800 transition">Entrar</button>
+              <button type="submit" className="w-full rounded-xl bg-blue-700 text-white py-3 font-semibold shadow-sm hover:bg-blue-800 transition">Entrar</button>
             </form>
           </div>
         </div>
@@ -682,7 +701,7 @@ export default function Admin() {
         <div className="mt-6 flex gap-2 flex-wrap">
           {(["notices","photos","membros","oracao","devocional"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? (t==="devocional" ? "bg-purple-700 text-white border-purple-700" : "bg-green-700 text-white border-green-700") : "bg-white hover:bg-slate-50"}`}
+              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? (t==="devocional" ? "bg-purple-700 text-white border-purple-700" : "bg-blue-700 text-white border-blue-700") : "bg-white hover:bg-slate-50"}`}
             >
               {t === "notices"    && "Avisos"}
               {t === "photos"     && "Fotos (Galeria)"}
@@ -708,7 +727,7 @@ export default function Admin() {
         </div>
 
         {(noticeMsg || photoMsg || membrosMsg) && (
-          <div className="mt-6 rounded-xl bg-green-50 border border-green-100 text-green-800 px-4 py-3 flex items-center justify-between">
+          <div className="mt-6 rounded-xl bg-blue-50 border border-blue-100 text-blue-800 px-4 py-3 flex items-center justify-between">
             <span>{noticeMsg || photoMsg || membrosMsg}</span>
             <button onClick={() => { setNoticeMsg(null); setPhotoMsg(null); setMembrosMsg(null); }}>✕</button>
           </div>
@@ -737,7 +756,7 @@ export default function Admin() {
                       <div className="mt-1 text-base font-semibold text-slate-900">{n.title}</div>
                       <div className="mt-2 text-sm text-slate-600 line-clamp-3">{n.body}</div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full border flex-shrink-0 ${n.is_published ? "bg-green-50 border-green-100 text-green-700" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full border flex-shrink-0 ${n.is_published ? "bg-blue-50 border-blue-100 text-blue-700" : "bg-slate-50 border-slate-200 text-slate-600"}`}>
                       {n.is_published ? "PUBLICADO" : "RASCUNHO"}
                     </span>
                   </div>
@@ -751,33 +770,33 @@ export default function Admin() {
             {notices.length === 0 && <div className="mt-10 text-center text-slate-500">Nenhum aviso encontrado.</div>}
 
             {/* ── Painel de Notificações Push ── */}
-            <div className="mt-10 bg-green-50 border border-green-200 rounded-2xl p-5">
-              <h3 className="text-base font-semibold text-green-900 flex items-center gap-2">
+            <div className="mt-10 bg-blue-50 border border-blue-200 rounded-2xl p-5">
+              <h3 className="text-base font-semibold text-blue-900 flex items-center gap-2">
                 🔔 Enviar Notificação Push
               </h3>
-              <p className="text-sm text-green-700 mt-1 mb-3">Envie uma notificação para todos os membros que aceitaram receber alertas.</p>
+              <p className="text-sm text-blue-700 mt-1 mb-3">Envie uma notificação para todos os membros que aceitaram receber alertas.</p>
               <div className="flex gap-2 mb-4">
-                <button onClick={() => { setPushTitle("📖 Devocional de hoje"); setPushBody("A palavra do dia está te esperando. Venha conferir!"); setPushUrl("/devocional"); }} className="text-xs rounded-xl border border-green-300 bg-white px-3 py-1.5 text-green-800 hover:bg-green-50 transition">+ Devocional</button>
-                <button onClick={() => { setPushTitle("⛪ Lembrete de Culto"); setPushBody("O culto começa em breve. Te esperamos!"); setPushUrl("/avisos"); }} className="text-xs rounded-xl border border-green-300 bg-white px-3 py-1.5 text-green-800 hover:bg-green-50 transition">+ Culto</button>
+                <button onClick={() => { setPushTitle("📖 Devocional de hoje"); setPushBody("A palavra do dia está te esperando. Venha conferir!"); setPushUrl("/devocional"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Devocional</button>
+                <button onClick={() => { setPushTitle("⛪ Lembrete de Culto"); setPushBody("O culto começa em breve. Te esperamos!"); setPushUrl("/avisos"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Culto</button>
               </div>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Título</label>
-                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" placeholder="Ex: Culto especial hoje!" value={pushTitle} onChange={e => setPushTitle(e.target.value)} maxLength={80} />
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Culto especial hoje!" value={pushTitle} onChange={e => setPushTitle(e.target.value)} maxLength={80} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Mensagem</label>
-                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" placeholder="Ex: Não perca, às 19h na sede." value={pushBody} onChange={e => setPushBody(e.target.value)} maxLength={120} />
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Não perca, às 19h na sede." value={pushBody} onChange={e => setPushBody(e.target.value)} maxLength={120} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Destino ao tocar</label>
-                  <select className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" value={pushUrl} onChange={e => setPushUrl(e.target.value)}>
+                  <select className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" value={pushUrl} onChange={e => setPushUrl(e.target.value)}>
                     <option value="/avisos">Página de Avisos</option>
                     <option value="/devocional">Devocional</option>
                     <option value="/">Página Inicial</option>
                   </select>
                 </div>
-                {pushMsg && <div className="rounded-xl bg-green-50 border border-green-200 text-green-800 px-3 py-2 text-sm">{pushMsg}</div>}
+                {pushMsg && <div className="rounded-xl bg-blue-50 border border-blue-200 text-blue-800 px-3 py-2 text-sm">{pushMsg}</div>}
                 <button
                   disabled={pushSending || !pushTitle.trim() || !pushBody.trim()}
                   onClick={async () => {
@@ -787,7 +806,7 @@ export default function Admin() {
                     setPushTitle(""); setPushBody("");
                     setTimeout(() => setPushMsg(null), 4000);
                   }}
-                  className="w-full rounded-xl bg-green-700 text-white py-3 font-semibold hover:bg-green-800 transition disabled:opacity-50"
+                  className="w-full rounded-xl bg-blue-700 text-white py-3 font-semibold hover:bg-blue-800 transition disabled:opacity-50"
                 >
                   {pushSending ? "Enviando…" : "🔔 Notificar todos os membros"}
                 </button>
@@ -895,9 +914,9 @@ export default function Admin() {
                 <div className="text-2xl font-bold text-yellow-700">{stats.pendentes}</div>
                 <div className="text-xs text-yellow-600 mt-1">Pendentes</div>
               </div>
-              <div className="bg-green-50 rounded-2xl border border-green-200 p-4 text-center shadow-sm">
-                <div className="text-2xl font-bold text-green-700">{stats.aprovados}</div>
-                <div className="text-xs text-green-600 mt-1">Aprovados</div>
+              <div className="bg-blue-50 rounded-2xl border border-blue-200 p-4 text-center shadow-sm">
+                <div className="text-2xl font-bold text-blue-700">{stats.aprovados}</div>
+                <div className="text-xs text-blue-600 mt-1">Aprovados</div>
               </div>
               <div className="bg-red-50 rounded-2xl border border-red-200 p-4 text-center shadow-sm">
                 <div className="text-2xl font-bold text-red-600">{stats.reprovados}</div>
@@ -912,7 +931,7 @@ export default function Admin() {
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="🔍  Buscar por nome, e-mail ou telefone…"
-                className="w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-200"
+                className="w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
               />
             </div>
 
@@ -920,7 +939,7 @@ export default function Admin() {
             <div className="mt-3 flex gap-2 flex-wrap">
               {(["pendente","aprovado","reprovado","todos"] as const).map(f => (
                 <button key={f} onClick={() => setFiltroStatus(f)}
-                  className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
+                  className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
                 >
                   {f === "pendente"  && `⏳ Pendentes (${membros.filter(m=>m.status==="pendente").length})`}
                   {f === "aprovado"  && `✅ Aprovados (${membros.filter(m=>m.status==="aprovado").length})`}
@@ -933,13 +952,13 @@ export default function Admin() {
             {/* Filtro por congregação — contagens respeitam o filtro de status */}
             <div className="mt-3 flex gap-2 flex-wrap">
               <button onClick={() => setFiltroCongregacao("todas")}
-                className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
+                className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
               >
                 🏛 Todas ({contagemCong["todas"] ?? 0})
               </button>
               {CONGREGACOES.map(c => (
                 <button key={c} onClick={() => setFiltroCongregacao(c)}
-                  className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
+                  className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
                 >
                   📍 {c} ({contagemCong[c] ?? 0})
                 </button>
@@ -955,10 +974,10 @@ export default function Admin() {
                       <div className="text-sm text-slate-500 mt-0.5 truncate">{m.email}</div>
                       <div className="text-sm text-slate-500">{m.telefone}</div>
                       {m.funcao && (
-                        <div className="text-xs text-green-700 font-semibold mt-1">⛪ {m.funcao}</div>
+                        <div className="text-xs text-blue-700 font-semibold mt-1">⛪ {m.funcao}</div>
                       )}
                       {m.congregacao && (
-                        <div className="text-xs text-green-700 font-semibold mt-0.5">📍 {m.congregacao}</div>
+                        <div className="text-xs text-blue-700 font-semibold mt-0.5">📍 {m.congregacao}</div>
                       )}
                       <div className="text-xs text-slate-400 mt-1">Cadastrado em {formatDateBR(m.created_at)}</div>
                     </div>
@@ -971,7 +990,7 @@ export default function Admin() {
                     <button
                       onClick={() => abrirFicha(m)}
                       disabled={fichaLoading}
-                      className="flex-1 rounded-xl border border-green-200 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-50 transition disabled:opacity-50"
+                      className="flex-1 rounded-xl border border-blue-200 text-blue-700 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 transition disabled:opacity-50"
                     >
                       {fichaLoading ? "Carregando…" : "📋 Ver Ficha"}
                     </button>
@@ -979,7 +998,7 @@ export default function Admin() {
                       <a
                         href={whatsappLink(m.telefone)}
                         target="_blank" rel="noreferrer"
-                        className="rounded-xl border border-green-200 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-50 transition flex items-center gap-1"
+                        className="rounded-xl border border-blue-200 text-blue-700 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 transition flex items-center gap-1"
                       >
                         💬 WA
                       </a>
@@ -1030,7 +1049,7 @@ export default function Admin() {
                 {(busca || filtroCongregacao !== "todas") && (
                   <button
                     onClick={() => { setBusca(""); setFiltroCongregacao("todas"); }}
-                    className="text-sm text-green-700 underline"
+                    className="text-sm text-blue-700 underline"
                   >
                     Limpar filtros
                   </button>
@@ -1051,7 +1070,7 @@ export default function Admin() {
               <button
                 onClick={fetchDevocional}
                 disabled={devLoading}
-                className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+                className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 flex items-center gap-2 text-sm"
               >
                 {devLoading ? <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Buscando…</> : "🔄 Buscar devocional"}
               </button>
@@ -1144,7 +1163,7 @@ export default function Admin() {
                 {legenda && (
                   <div className="mt-4 space-y-3">
                     <textarea
-                      className="w-full rounded-xl border px-4 py-3 text-sm text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-green-200 min-h-[160px] leading-relaxed resize-none"
+                      className="w-full rounded-xl border px-4 py-3 text-sm text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-200 min-h-[160px] leading-relaxed resize-none"
                       value={legenda}
                       onChange={e => setLegenda(e.target.value)}
                     />
@@ -1158,7 +1177,7 @@ export default function Admin() {
                       <button
                         onClick={gerarLegenda}
                         disabled={legendaBusy}
-                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-green-700 border-green-200 hover:bg-green-50 transition disabled:opacity-50"
+                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-blue-700 border-blue-200 hover:bg-blue-50 transition disabled:opacity-50"
                       >
                         🔁 Gerar outra versão
                       </button>
@@ -1185,16 +1204,16 @@ export default function Admin() {
             <div className="mt-4 space-y-3">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Título</label>
-                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={formTitle} onChange={e=>setFormTitle(e.target.value)} placeholder="Ex.: 20/02 CULTO DA MEIA NOITE" />
+                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={formTitle} onChange={e=>setFormTitle(e.target.value)} placeholder="Ex.: 20/02 CULTO DA MEIA NOITE" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Texto do Aviso</label>
-                <textarea className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200 min-h-[120px]" value={formBody} onChange={e=>setFormBody(e.target.value)} placeholder="Escreva o aviso completo…" />
+                <textarea className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200 min-h-[120px]" value={formBody} onChange={e=>setFormBody(e.target.value)} placeholder="Escreva o aviso completo…" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Data do aviso</label>
-                  <input type="date" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={formEventDate} onChange={e=>setFormEventDate(e.target.value)} />
+                  <input type="date" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={formEventDate} onChange={e=>setFormEventDate(e.target.value)} />
                 </div>
                 <div className="flex items-end gap-3">
                   <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -1206,7 +1225,7 @@ export default function Admin() {
             </div>
             <div className="mt-6 flex gap-2">
               <button onClick={() => setShowForm(false)} className="flex-1 rounded-xl border px-4 py-3 hover:bg-slate-50 transition">Cancelar</button>
-              <button disabled={noticeBusy} onClick={saveNotice} className="flex-1 rounded-xl bg-green-700 text-white px-4 py-3 font-semibold hover:bg-green-800 transition disabled:opacity-60">
+              <button disabled={noticeBusy} onClick={saveNotice} className="flex-1 rounded-xl bg-blue-700 text-white px-4 py-3 font-semibold hover:bg-blue-800 transition disabled:opacity-60">
                 {noticeBusy ? "Salvando…" : "Salvar"}
               </button>
             </div>
@@ -1250,11 +1269,11 @@ export default function Admin() {
                     {fichaModal.ficha.gender && <span className="mr-3">{fichaModal.ficha.gender}</span>}
                     {fichaModal.ficha.marital_status && <span>{fichaModal.ficha.marital_status}</span>}
                   </div>
-                  <div className="text-xs font-semibold text-green-700 mt-1">
+                  <div className="text-xs font-semibold text-blue-700 mt-1">
                     📍 {fichaModal.membro.congregacao || 'Inhumas - GO'}
                   </div>
                   {fichaModal.ficha.numero_registro && (
-                    <div className="text-xs font-mono text-green-700 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
+                    <div className="text-xs font-mono text-blue-700 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
                   )}
                   {/* Botões de contato rápido */}
                   <div className="flex gap-2 mt-2 flex-wrap">
@@ -1262,7 +1281,7 @@ export default function Admin() {
                       <a
                         href={whatsappLink(fichaModal.membro.telefone || fichaModal.ficha.phone || '')}
                         target="_blank" rel="noreferrer"
-                        className="rounded-lg bg-green-50 border border-green-200 text-green-700 px-3 py-1.5 text-xs font-semibold hover:bg-green-100 transition"
+                        className="rounded-lg bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 text-xs font-semibold hover:bg-blue-100 transition"
                       >
                         💬 WhatsApp
                       </a>
@@ -1305,25 +1324,25 @@ export default function Admin() {
               </div>
 
               {/* Alterar congregação */}
-              <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
-                <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3">📍 Congregação</h4>
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+                <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">📍 Congregação</h4>
                 <div className="flex items-center gap-3">
                   <select
                     value={congregacaoEditando}
                     onChange={e => setCongregacaoEditando(e.target.value)}
-                    className="flex-1 rounded-xl border border-green-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-green-300 bg-white"
+                    className="flex-1 rounded-xl border border-blue-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                   >
                     {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <button
                     onClick={salvarCongregacao}
                     disabled={congregacaoSalvando || congregacaoEditando === fichaModal.membro.congregacao}
-                    className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                    className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
                   >
                     {congregacaoSalvando ? "Salvando…" : "Salvar"}
                   </button>
                 </div>
-                <p className="text-xs text-green-500 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
+                <p className="text-xs text-blue-500 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
               </div>
 
               {/* Alterar função */}
@@ -1340,7 +1359,7 @@ export default function Admin() {
                   <button
                     onClick={salvarFuncao}
                     disabled={funcaoSalvando || funcaoEditando === (fichaModal.membro.funcao || fichaModal.ficha.church_function)}
-                    className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                    className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
                   >
                     {funcaoSalvando ? "Salvando…" : "Salvar Função"}
                   </button>

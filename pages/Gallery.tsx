@@ -83,7 +83,7 @@ const Gallery: React.FC = () => {
 
         /* ── Hero ── */
         .gl-hero {
-          background:#166534;
+          background:#1E40AF;
           padding:44px 20px 56px; position:relative; overflow:hidden;
           border-radius:0 0 2rem 2rem;
         }
@@ -150,24 +150,24 @@ const Gallery: React.FC = () => {
         /* Borda sutil no hover */
         .gl-item::after {
           content:''; position:absolute; inset:0; border-radius:16px;
-          border:1.5px solid rgba(22,101,52,.0);
+          border:1.5px solid rgba(30,64,175,.0);
           transition:border-color .25s; pointer-events:none;
         }
-        .gl-item:hover::after { border-color:rgba(22,101,52,.25); }
+        .gl-item:hover::after { border-color:rgba(30,64,175,.25); }
 
         /* ── Loading / Empty ── */
         .gl-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 0; gap:16px; }
-        .gl-spinner { width:32px; height:32px; border:2px solid #E8E5E0; border-top-color:#166534; border-radius:50%; animation:glSpin .85s linear infinite; }
+        .gl-spinner { width:32px; height:32px; border:2px solid #E8E5E0; border-top-color:#1E40AF; border-radius:50%; animation:glSpin .85s linear infinite; }
         .gl-loading-text { font-family:'Playfair Display',Georgia,serif; font-size:15px; font-style:italic; color:#A8A29E; }
         .gl-empty { text-align:center; padding:60px 24px; background:#fff; border-radius:20px; border:1px solid #E8E5E0; }
         .gl-empty-icon { font-size:40px; margin-bottom:12px; }
         .gl-empty-text { font-family:'Playfair Display',Georgia,serif; font-size:16px; color:#A8A29E; font-style:italic; margin:0 0 20px; }
-        .gl-empty-btn { display:inline-flex; align-items:center; gap:7px; background:#166534; color:#fff; font-weight:800; font-size:14px; padding:12px 24px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; }
+        .gl-empty-btn { display:inline-flex; align-items:center; gap:7px; background:#1E40AF; color:#fff; font-weight:800; font-size:14px; padding:12px 24px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; }
 
         /* ── Rodapé ── */
         .gl-footer { max-width:900px; margin:32px auto 0; padding:0 14px 60px; }
         .gl-footer-card {
-          background:#166534;
+          background:#1E40AF;
           border-radius:20px; padding:24px 22px;
           display:flex; flex-direction:column; gap:16px;
         }
@@ -225,13 +225,13 @@ const Gallery: React.FC = () => {
 
         .gl-lb-thumb { width:100%; aspect-ratio:1; border-radius:8px; overflow:hidden; cursor:pointer; opacity:.4; transition:opacity .2s, transform .2s; border:1.5px solid transparent; flex-shrink:0; }
         .gl-lb-thumb:hover { opacity:.75; transform:scale(1.04); }
-        .gl-lb-thumb-active { opacity:1 !important; border-color:rgba(22,101,52,.8); }
+        .gl-lb-thumb-active { opacity:1 !important; border-color:rgba(30,64,175,.8); }
         .gl-lb-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
 
         /* Footer do lightbox */
         .gl-lb-foot { flex-shrink:0; padding:12px 18px 16px; border-top:1px solid rgba(255,255,255,.05); display:flex; align-items:center; justify-content:center; }
-        .gl-lb-download { display:inline-flex; align-items:center; gap:8px; background:#166534; color:#fff; font-weight:800; font-size:14px; padding:12px 28px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; transition:background .18s; }
-        .gl-lb-download:hover { background:#15803D; }
+        .gl-lb-download { display:inline-flex; align-items:center; gap:8px; background:#1E40AF; color:#fff; font-weight:800; font-size:14px; padding:12px 28px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; transition:background .18s; }
+        .gl-lb-download:hover { background:#1D4ED8; }
         .gl-lb-download:disabled { opacity:.5; cursor:not-allowed; }
       `}</style>
 

@@ -40,7 +40,7 @@ const Navbar: React.FC = () => {
                 padding: '8px 10px',
                 borderRadius: '8px',
                 textDecoration: 'none',
-                color: isActive ? '#166534' : '#A8A29E',
+                color: isActive ? '#1E40AF' : '#A8A29E',
                 transition: 'color 0.15s',
                 minWidth: 44,
               }}

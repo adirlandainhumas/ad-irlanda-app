@@ -32,7 +32,7 @@ export default function Prayer() {
       <style>{`
         .pr-page { font-family: var(--font-sans, 'Lato', sans-serif); color: var(--ink, #1C1917); padding: 32px 20px 80px; max-width: 560px; margin: 0 auto; }
         .pr-hero { text-align: center; padding: 32px 0 28px; }
-        .pr-icon-wrap { width: 64px; height: 64px; border-radius: 50%; background: var(--green-light, #F0FDF4); border: 1px solid var(--green-border, #BBF7D0); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+        .pr-icon-wrap { width: 64px; height: 64px; border-radius: 50%; background: var(--green-light, #EFF6FF); border: 1px solid var(--green-border, #BFDBFE); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
         .pr-title { font-family: var(--font-serif, 'Playfair Display', serif); font-size: clamp(24px, 6vw, 30px); font-weight: 700; color: var(--ink, #1C1917); margin: 0 0 10px; }
         .pr-subtitle { font-size: 15px; color: var(--ink-2, #57534E); line-height: 1.6; margin: 0; }
         .pr-verse { font-style: italic; font-size: 13px; color: var(--amber, #B45309); margin: 14px 0 0; border-left: 2px solid var(--amber-border, #FDE68A); padding-left: 12px; text-align: left; display: inline-block; }
@@ -54,22 +54,22 @@ export default function Prayer() {
           transition: border-color .18s, background .18s;
         }
         .pr-input::placeholder, .pr-textarea::placeholder { color: var(--ink-4, #D6D3D1); }
-        .pr-input:focus, .pr-textarea:focus { border-color: var(--green, #166534); background: var(--surface, #fff); }
+        .pr-input:focus, .pr-textarea:focus { border-color: var(--green, #1E40AF); background: var(--surface, #fff); }
         .pr-textarea { resize: vertical; min-height: 130px; line-height: 1.6; }
         .pr-counter { font-size: 11px; color: var(--ink-4, #D6D3D1); text-align: right; margin-top: 5px; }
 
         .pr-btn {
           width: 100%; padding: 14px; border: none; border-radius: 12px;
-          background: var(--green, #166534);
+          background: var(--green, #1E40AF);
           color: #fff; font-family: var(--font-sans, 'Lato', sans-serif); font-size: 15px; font-weight: 700;
           cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
           transition: background .18s; margin-top: 8px;
         }
-        .pr-btn:hover:not(:disabled) { background: var(--green-hover, #15803D); }
+        .pr-btn:hover:not(:disabled) { background: var(--green-hover, #1D4ED8); }
         .pr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .pr-success { text-align: center; padding: 48px 24px; }
-        .pr-success-icon { width: 72px; height: 72px; border-radius: 50%; background: var(--green-light, #F0FDF4); border: 1px solid var(--green-border, #BBF7D0); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .pr-success-icon { width: 72px; height: 72px; border-radius: 50%; background: var(--green-light, #EFF6FF); border: 1px solid var(--green-border, #BFDBFE); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
         .pr-success-title { font-family: var(--font-serif, 'Playfair Display', serif); font-size: 26px; color: var(--ink, #1C1917); margin: 0 0 12px; }
         .pr-success-msg { font-size: 15px; color: var(--ink-2, #57534E); line-height: 1.7; margin: 0 0 28px; }
         .pr-back-btn {
@@ -87,7 +87,7 @@ export default function Prayer() {
         {submitted ? (
           <div className="pr-success">
             <div className="pr-success-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1E40AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </div>
@@ -108,7 +108,7 @@ export default function Prayer() {
           <>
             <div className="pr-hero">
               <div className="pr-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1E40AF" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </div>
