@@ -79,33 +79,26 @@ const Gallery: React.FC = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap');
-        * { box-sizing: border-box; }
-        .gl-root { font-family:'Lato',sans-serif; min-height:100vh; background:#f0f4ff; }
+        .gl-root { font-family:'Lato',sans-serif; min-height:100vh; background:#FAFAF8; }
 
         /* ── Hero ── */
         .gl-hero {
-          background:linear-gradient(155deg,#060d20 0%,#0a1535 35%,#0e1d50 65%,#050f28 100%);
-          padding:48px 20px 60px; position:relative; overflow:hidden;
-          border-radius:0 0 3rem 3rem;
+          background:#166534;
+          padding:44px 20px 56px; position:relative; overflow:hidden;
+          border-radius:0 0 2rem 2rem;
         }
-        .gl-hero::before { content:''; position:absolute; top:-100px; right:-80px; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle,rgba(0,120,255,.16) 0%,transparent 70%); pointer-events:none; }
-        .gl-hero::after  { content:''; position:absolute; bottom:-60px; left:-60px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle,rgba(30,60,200,.12) 0%,transparent 70%); pointer-events:none; }
-
-        /* Partículas */
-        @keyframes glFloat { 0%{transform:translateY(0) rotate(0);opacity:0} 10%{opacity:1} 90%{opacity:.5} 100%{transform:translateY(-110vh) rotate(360deg);opacity:0} }
-        .gl-particle { position:absolute; border-radius:50%; animation:glFloat linear infinite; pointer-events:none; }
+        .gl-hero::before { content:''; position:absolute; top:-80px; right:-60px; width:320px; height:320px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 70%); pointer-events:none; }
 
         .gl-hero-inner { position:relative; z-index:2; max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:14px; }
-        .gl-hero-kicker { font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:rgba(80,180,255,.65); font-weight:700; display:flex; align-items:center; gap:8px; }
-        .gl-hero-kicker::before { content:''; width:28px; height:1px; background:rgba(80,180,255,.4); }
-        .gl-hero-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(30px,7vw,46px); font-weight:700; color:#fff; margin:0; line-height:1.1; }
-        .gl-hero-sub { font-family:'Playfair Display',Georgia,serif; font-size:clamp(14px,3.5vw,18px); color:rgba(160,200,255,.6); font-style:italic; margin:0; max-width:420px; }
+        .gl-hero-kicker { font-size:10px; letter-spacing:.26em; text-transform:uppercase; color:rgba(255,255,255,.65); font-weight:700; display:flex; align-items:center; gap:8px; }
+        .gl-hero-kicker::before { content:''; width:28px; height:1px; background:rgba(255,255,255,.3); }
+        .gl-hero-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(28px,7vw,42px); font-weight:700; color:#fff; margin:0; line-height:1.1; }
+        .gl-hero-sub { font-family:'Playfair Display',Georgia,serif; font-size:clamp(13px,3.5vw,17px); color:rgba(255,255,255,.65); font-style:italic; margin:0; max-width:420px; }
         .gl-hero-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:6px; }
 
-        .gl-pill { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:6px 14px; font-size:11px; font-weight:700; color:rgba(180,220,255,.75); }
-        .gl-back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:6px 14px; font-size:11px; font-weight:700; color:rgba(180,220,255,.8); cursor:pointer; transition:background .18s,transform .18s; font-family:'Lato',sans-serif; }
-        .gl-back-btn:hover { background:rgba(255,255,255,.14); transform:translateY(-1px); }
+        .gl-pill { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:6px 14px; font-size:11px; font-weight:700; color:rgba(255,255,255,.85); }
+        .gl-back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.18); border-radius:999px; padding:6px 14px; font-size:11px; font-weight:700; color:rgba(255,255,255,.85); cursor:pointer; transition:background .18s; font-family:'Lato',sans-serif; }
+        .gl-back-btn:hover { background:rgba(255,255,255,.2); }
 
         /* ── Masonry grid ── */
         .gl-content { max-width:900px; margin:0 auto; padding:28px 14px 20px; }
@@ -119,12 +112,12 @@ const Gallery: React.FC = () => {
 
         .gl-item {
           position:relative; border-radius:16px; overflow:hidden;
-          background:#c8d8f0; cursor:pointer;
+          background:#E8E5E0; cursor:pointer;
           animation:glFadeUp .45s ease forwards; opacity:0;
-          box-shadow:0 4px 20px rgba(10,20,60,.08);
+          box-shadow:0 2px 10px rgba(28,25,23,.08);
           transition:transform .25s, box-shadow .25s;
         }
-        .gl-item:hover { transform:translateY(-4px) scale(1.01); box-shadow:0 12px 40px rgba(10,20,60,.18); }
+        .gl-item:hover { transform:translateY(-4px) scale(1.01); box-shadow:0 10px 32px rgba(28,25,23,.16); }
 
         /* Altura variada: 0,3,6,9... → tall; resto → normal */
         .gl-item-tall .gl-img { aspect-ratio: 3/4; }
@@ -154,48 +147,44 @@ const Gallery: React.FC = () => {
           display:flex; align-items:center; gap:5px; margin-top:3px;
         }
 
-        /* Borda brilhante no hover */
+        /* Borda sutil no hover */
         .gl-item::after {
           content:''; position:absolute; inset:0; border-radius:16px;
-          border:1.5px solid rgba(80,160,255,.0);
+          border:1.5px solid rgba(22,101,52,.0);
           transition:border-color .25s; pointer-events:none;
         }
-        .gl-item:hover::after { border-color:rgba(80,160,255,.35); }
+        .gl-item:hover::after { border-color:rgba(22,101,52,.25); }
 
         /* ── Loading / Empty ── */
         .gl-loading { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:80px 0; gap:16px; }
-        .gl-spinner { width:32px; height:32px; border:2px solid rgba(26,85,208,.12); border-top-color:rgba(26,85,208,.75); border-radius:50%; animation:glSpin .85s linear infinite; }
-        .gl-loading-text { font-family:'Playfair Display',Georgia,serif; font-size:15px; font-style:italic; color:rgba(26,85,208,.4); }
-        .gl-empty { text-align:center; padding:60px 24px; background:#fff; border-radius:24px; border:1px solid rgba(26,85,208,.07); }
+        .gl-spinner { width:32px; height:32px; border:2px solid #E8E5E0; border-top-color:#166534; border-radius:50%; animation:glSpin .85s linear infinite; }
+        .gl-loading-text { font-family:'Playfair Display',Georgia,serif; font-size:15px; font-style:italic; color:#A8A29E; }
+        .gl-empty { text-align:center; padding:60px 24px; background:#fff; border-radius:20px; border:1px solid #E8E5E0; }
         .gl-empty-icon { font-size:40px; margin-bottom:12px; }
-        .gl-empty-text { font-family:'Playfair Display',Georgia,serif; font-size:16px; color:#7888aa; font-style:italic; margin:0 0 20px; }
-        .gl-empty-btn { display:inline-flex; align-items:center; gap:7px; background:linear-gradient(130deg,#1a55d0,#0090ff); color:#fff; font-weight:800; font-size:14px; padding:12px 24px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; }
+        .gl-empty-text { font-family:'Playfair Display',Georgia,serif; font-size:16px; color:#A8A29E; font-style:italic; margin:0 0 20px; }
+        .gl-empty-btn { display:inline-flex; align-items:center; gap:7px; background:#166534; color:#fff; font-weight:800; font-size:14px; padding:12px 24px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; }
 
         /* ── Rodapé ── */
-        .gl-footer {
-          max-width:900px; margin:32px auto 0; padding:0 14px 60px;
-        }
+        .gl-footer { max-width:900px; margin:32px auto 0; padding:0 14px 60px; }
         .gl-footer-card {
-          background:linear-gradient(135deg,#060d20,#0a1535);
-          border-radius:24px; padding:24px 22px;
+          background:#166534;
+          border-radius:20px; padding:24px 22px;
           display:flex; flex-direction:column; gap:16px;
-          position:relative; overflow:hidden;
         }
-        .gl-footer-card::before { content:''; position:absolute; top:-40px; right:-40px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle,rgba(0,120,255,.12) 0%,transparent 70%); pointer-events:none; }
-        .gl-footer-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(80,180,255,.55); font-weight:700; margin:0 0 6px; }
-        .gl-footer-address { font-size:14px; color:rgba(200,220,255,.85); font-weight:600; line-height:1.6; margin:0; }
-        .gl-footer-divider { height:1px; background:rgba(255,255,255,.07); }
-        .gl-footer-social { display:flex; align-items:center; gap:10px; flex-wrap:wrap; position:relative; z-index:1; }
-        .gl-footer-social-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(80,180,255,.55); font-weight:700; flex:1; }
+        .gl-footer-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.6); font-weight:700; margin:0 0 6px; }
+        .gl-footer-address { font-size:14px; color:rgba(255,255,255,.9); font-weight:600; line-height:1.6; margin:0; }
+        .gl-footer-divider { height:1px; background:rgba(255,255,255,.15); }
+        .gl-footer-social { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .gl-footer-social-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:rgba(255,255,255,.6); font-weight:700; flex:1; }
 
         .gl-social-btn {
           display:inline-flex; align-items:center; justify-content:center;
           width:38px; height:38px; border-radius:50%;
-          background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15);
-          color:rgba(200,225,255,0.85); text-decoration:none;
-          transition:background .2s, transform .18s; flex-shrink:0;
+          background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2);
+          color:rgba(255,255,255,0.9); text-decoration:none;
+          transition:background .18s; flex-shrink:0;
         }
-        .gl-social-btn:hover { transform:translateY(-2px); background:rgba(255,255,255,0.14); }
+        .gl-social-btn:hover { background:rgba(255,255,255,0.22); }
 
         /* ── Lightbox cinematográfico ── */
         @keyframes glLbIn   { from{opacity:0} to{opacity:1} }
@@ -236,36 +225,20 @@ const Gallery: React.FC = () => {
 
         .gl-lb-thumb { width:100%; aspect-ratio:1; border-radius:8px; overflow:hidden; cursor:pointer; opacity:.4; transition:opacity .2s, transform .2s; border:1.5px solid transparent; flex-shrink:0; }
         .gl-lb-thumb:hover { opacity:.75; transform:scale(1.04); }
-        .gl-lb-thumb-active { opacity:1 !important; border-color:rgba(80,160,255,.7); }
+        .gl-lb-thumb-active { opacity:1 !important; border-color:rgba(22,101,52,.8); }
         .gl-lb-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
 
         /* Footer do lightbox */
         .gl-lb-foot { flex-shrink:0; padding:12px 18px 16px; border-top:1px solid rgba(255,255,255,.05); display:flex; align-items:center; justify-content:center; }
-        .gl-lb-download { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(130deg,#1a55d0,#0090ff); color:#fff; font-weight:800; font-size:14px; padding:12px 28px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; box-shadow:0 6px 24px rgba(26,85,208,.4); transition:transform .18s,box-shadow .18s; }
-        .gl-lb-download:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(26,85,208,.5); }
-        .gl-lb-download:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+        .gl-lb-download { display:inline-flex; align-items:center; gap:8px; background:#166534; color:#fff; font-weight:800; font-size:14px; padding:12px 28px; border-radius:999px; border:none; cursor:pointer; font-family:'Lato',sans-serif; transition:background .18s; }
+        .gl-lb-download:hover { background:#15803D; }
+        .gl-lb-download:disabled { opacity:.5; cursor:not-allowed; }
       `}</style>
 
       <div className="gl-root">
 
-        {/* Hero com partículas */}
+        {/* Hero */}
         <header className="gl-hero">
-          {[...Array(20)].map((_, i) => {
-            const size  = Math.random() * 3 + 1;
-            const left  = Math.random() * 100;
-            const delay = Math.random() * 8;
-            const dur   = Math.random() * 10 + 12;
-            return (
-              <div key={i} className="gl-particle" style={{
-                width: size, height: size,
-                left: `${left}%`, bottom: -10,
-                background: `hsl(${200 + Math.random()*40},80%,${70 + Math.random()*30}%)`,
-                opacity: Math.random() * 0.4 + 0.1,
-                animationDuration: `${dur}s`,
-                animationDelay: `${delay}s`,
-              }} />
-            );
-          })}
           <div className="gl-hero-inner">
             <p className="gl-hero-kicker">Memórias</p>
             <h1 className="gl-hero-title">Galeria do<br />Último Culto</h1>

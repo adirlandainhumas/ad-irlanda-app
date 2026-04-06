@@ -1,12 +1,255 @@
-/* index.css — apenas animações utilitárias necessárias para outras páginas */
+/* ── Design System — AOGIM Conect ──────────────────────────────────────────── */
+/* Direção: "Luz da Manhã" — quente, unificado, inspirado em uma igreja        */
+/* evangélica brasileira ao amanhecer.                                          */
 
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700;900&display=swap');
+
+/* ── Tokens ─────────────────────────────────────────────────────────────────── */
+:root {
+  /* Texto */
+  --ink:           #1C1917;
+  --ink-2:         #57534E;
+  --ink-3:         #A8A29E;
+  --ink-4:         #D6D3D1;
+
+  /* Superfícies */
+  --bg:            #FAFAF8;
+  --surface:       #FFFFFF;
+  --surface-2:     #F5F2EE;
+
+  /* Bordas */
+  --border:        #E8E5E0;
+  --border-soft:   rgba(28, 25, 23, 0.07);
+
+  /* Marca — verde-floresta */
+  --green:         #166534;
+  --green-hover:   #15803D;
+  --green-light:   #F0FDF4;
+  --green-border:  #BBF7D0;
+
+  /* Assinatura — âmbar dourado (margem de Bíblia) */
+  --amber:         #B45309;
+  --amber-accent:  #D97706;
+  --amber-light:   #FFFBEB;
+  --amber-border:  #FDE68A;
+
+  /* Semântica */
+  --danger:        #991B1B;
+  --danger-light:  #FEF2F2;
+  --danger-border: #FECACA;
+  --success:       #166534;
+  --success-light: #F0FDF4;
+  --success-border:#BBF7D0;
+
+  /* Tipografia */
+  --font-sans:     'Lato', sans-serif;
+  --font-serif:    'Playfair Display', Georgia, serif;
+
+  /* Espaçamento base: 4px */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+  --s10: 40px;
+}
+
+/* ── Reset mínimo ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Utilitários compartilhados ─────────────────────────────────────────────── */
+
+/* Página de formulário centrada (Login, Cadastro, Ficha, Prayer) */
+.page-center {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s6) var(--s4) 80px;
+}
+
+/* Card de formulário */
+.form-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: var(--s8) var(--s6);
+  box-shadow: 0 1px 4px rgba(28,25,23,0.06);
+}
+
+/* Logo centrada */
+.form-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--s6);
+}
+.form-logo img {
+  width: 64px;
+  height: auto;
+}
+
+/* Título de formulário */
+.form-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  margin: 0 0 4px;
+}
+.form-sub {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink-3);
+  text-align: center;
+  font-style: italic;
+  margin: 0 0 var(--s7, 28px);
+}
+
+/* Labels e inputs */
+.field-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.field-input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.18s, background 0.18s;
+  margin-bottom: var(--s4);
+}
+.field-input:focus {
+  border-color: var(--green);
+  background: var(--surface);
+}
+.field-input::placeholder {
+  color: var(--ink-4);
+}
+
+/* Botão primário */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--green);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.18s;
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover { background: var(--green-hover); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Botão secundário / ghost */
+.btn-secondary {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s;
+  margin-bottom: var(--s2);
+}
+.btn-secondary:hover { border-color: var(--ink-3); color: var(--ink); }
+
+/* Mensagem de erro */
+.msg-erro {
+  background: var(--danger-light);
+  border: 1px solid var(--danger-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: var(--s4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Mensagem de sucesso */
+.msg-ok {
+  background: var(--success-light);
+  border: 1px solid var(--success-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--success);
+  margin-bottom: var(--s4);
+}
+
+/* Link de navegação entre forms */
+.form-nav {
+  text-align: center;
+  margin-top: var(--s5);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+.form-nav button {
+  background: none;
+  border: none;
+  color: var(--green);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+.form-nav button:hover { text-decoration: underline; }
+
+/* Assinatura âmbar — elemento-chave do design system */
+/* Linha âmbar de 3px na borda esquerda: como a margem dourada de uma Bíblia  */
+.amber-accent {
+  border-left: 3px solid var(--amber-accent);
+}
+
+/* Seção kicker (label pequeno acima do título) */
+.section-kicker {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--green);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+/* Mantido para compatibilidade — animação de fundo */
 @keyframes gradientMove {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-
-/* Mantido para compatibilidade com outras páginas que ainda usam .animated-bg */
 .animated-bg {
   background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0ea5e9, #0f172a);
   background-size: 400% 400%;

@@ -640,14 +640,14 @@ export default function Admin() {
             <form className="mt-6 space-y-4" onSubmit={signIn}>
               <div>
                 <label className="text-xs font-semibold text-slate-600">E-mail</label>
-                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={email} onChange={e=>setEmail(e.target.value)} />
+                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={email} onChange={e=>setEmail(e.target.value)} />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Senha</label>
-                <input type="password" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
+                <input type="password" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" />
               </div>
               {noticeErr && <div className="rounded-xl bg-red-50 border border-red-100 text-red-700 px-3 py-2 text-sm">{noticeErr}</div>}
-              <button type="submit" className="w-full rounded-xl bg-blue-700 text-white py-3 font-semibold shadow-sm hover:bg-blue-800 transition">Entrar</button>
+              <button type="submit" className="w-full rounded-xl bg-green-700 text-white py-3 font-semibold shadow-sm hover:bg-green-800 transition">Entrar</button>
             </form>
           </div>
         </div>
@@ -682,7 +682,7 @@ export default function Admin() {
         <div className="mt-6 flex gap-2 flex-wrap">
           {(["notices","photos","membros","oracao","devocional"] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? (t==="devocional" ? "bg-purple-700 text-white border-purple-700" : "bg-blue-700 text-white border-blue-700") : "bg-white hover:bg-slate-50"}`}
+              className={`rounded-xl px-4 py-2 border transition relative ${tab===t ? (t==="devocional" ? "bg-purple-700 text-white border-purple-700" : "bg-green-700 text-white border-green-700") : "bg-white hover:bg-slate-50"}`}
             >
               {t === "notices"    && "Avisos"}
               {t === "photos"     && "Fotos (Galeria)"}
@@ -751,27 +751,27 @@ export default function Admin() {
             {notices.length === 0 && <div className="mt-10 text-center text-slate-500">Nenhum aviso encontrado.</div>}
 
             {/* ── Painel de Notificações Push ── */}
-            <div className="mt-10 bg-blue-50 border border-blue-200 rounded-2xl p-5">
-              <h3 className="text-base font-semibold text-blue-900 flex items-center gap-2">
+            <div className="mt-10 bg-green-50 border border-green-200 rounded-2xl p-5">
+              <h3 className="text-base font-semibold text-green-900 flex items-center gap-2">
                 🔔 Enviar Notificação Push
               </h3>
-              <p className="text-sm text-blue-700 mt-1 mb-3">Envie uma notificação para todos os membros que aceitaram receber alertas.</p>
+              <p className="text-sm text-green-700 mt-1 mb-3">Envie uma notificação para todos os membros que aceitaram receber alertas.</p>
               <div className="flex gap-2 mb-4">
-                <button onClick={() => { setPushTitle("📖 Devocional de hoje"); setPushBody("A palavra do dia está te esperando. Venha conferir!"); setPushUrl("/devocional"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Devocional</button>
-                <button onClick={() => { setPushTitle("⛪ Lembrete de Culto"); setPushBody("O culto começa em breve. Te esperamos!"); setPushUrl("/avisos"); }} className="text-xs rounded-xl border border-blue-300 bg-white px-3 py-1.5 text-blue-800 hover:bg-blue-50 transition">+ Culto</button>
+                <button onClick={() => { setPushTitle("📖 Devocional de hoje"); setPushBody("A palavra do dia está te esperando. Venha conferir!"); setPushUrl("/devocional"); }} className="text-xs rounded-xl border border-green-300 bg-white px-3 py-1.5 text-green-800 hover:bg-green-50 transition">+ Devocional</button>
+                <button onClick={() => { setPushTitle("⛪ Lembrete de Culto"); setPushBody("O culto começa em breve. Te esperamos!"); setPushUrl("/avisos"); }} className="text-xs rounded-xl border border-green-300 bg-white px-3 py-1.5 text-green-800 hover:bg-green-50 transition">+ Culto</button>
               </div>
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Título</label>
-                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Culto especial hoje!" value={pushTitle} onChange={e => setPushTitle(e.target.value)} maxLength={80} />
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" placeholder="Ex: Culto especial hoje!" value={pushTitle} onChange={e => setPushTitle(e.target.value)} maxLength={80} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Mensagem</label>
-                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" placeholder="Ex: Não perca, às 19h na sede." value={pushBody} onChange={e => setPushBody(e.target.value)} maxLength={120} />
+                  <input className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" placeholder="Ex: Não perca, às 19h na sede." value={pushBody} onChange={e => setPushBody(e.target.value)} maxLength={120} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Destino ao tocar</label>
-                  <select className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-blue-200 text-sm" value={pushUrl} onChange={e => setPushUrl(e.target.value)}>
+                  <select className="mt-1 w-full rounded-xl border px-3 py-2.5 outline-none focus:ring-2 focus:ring-green-200 text-sm" value={pushUrl} onChange={e => setPushUrl(e.target.value)}>
                     <option value="/avisos">Página de Avisos</option>
                     <option value="/devocional">Devocional</option>
                     <option value="/">Página Inicial</option>
@@ -787,7 +787,7 @@ export default function Admin() {
                     setPushTitle(""); setPushBody("");
                     setTimeout(() => setPushMsg(null), 4000);
                   }}
-                  className="w-full rounded-xl bg-blue-700 text-white py-3 font-semibold hover:bg-blue-800 transition disabled:opacity-50"
+                  className="w-full rounded-xl bg-green-700 text-white py-3 font-semibold hover:bg-green-800 transition disabled:opacity-50"
                 >
                   {pushSending ? "Enviando…" : "🔔 Notificar todos os membros"}
                 </button>
@@ -912,7 +912,7 @@ export default function Admin() {
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="🔍  Buscar por nome, e-mail ou telefone…"
-                className="w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full rounded-xl border bg-white px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-200"
               />
             </div>
 
@@ -920,7 +920,7 @@ export default function Admin() {
             <div className="mt-3 flex gap-2 flex-wrap">
               {(["pendente","aprovado","reprovado","todos"] as const).map(f => (
                 <button key={f} onClick={() => setFiltroStatus(f)}
-                  className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-blue-700 text-white border-blue-700" : "bg-white hover:bg-slate-50"}`}
+                  className={`rounded-full px-4 py-1.5 text-sm border transition ${filtroStatus===f ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
                 >
                   {f === "pendente"  && `⏳ Pendentes (${membros.filter(m=>m.status==="pendente").length})`}
                   {f === "aprovado"  && `✅ Aprovados (${membros.filter(m=>m.status==="aprovado").length})`}
@@ -933,13 +933,13 @@ export default function Admin() {
             {/* Filtro por congregação — contagens respeitam o filtro de status */}
             <div className="mt-3 flex gap-2 flex-wrap">
               <button onClick={() => setFiltroCongregacao("todas")}
-                className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
+                className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao==="todas" ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
               >
                 🏛 Todas ({contagemCong["todas"] ?? 0})
               </button>
               {CONGREGACOES.map(c => (
                 <button key={c} onClick={() => setFiltroCongregacao(c)}
-                  className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-indigo-700 text-white border-indigo-700" : "bg-white hover:bg-slate-50"}`}
+                  className={`rounded-full px-3 py-1 text-xs border transition ${filtroCongregacao===c ? "bg-green-700 text-white border-green-700" : "bg-white hover:bg-slate-50"}`}
                 >
                   📍 {c} ({contagemCong[c] ?? 0})
                 </button>
@@ -955,10 +955,10 @@ export default function Admin() {
                       <div className="text-sm text-slate-500 mt-0.5 truncate">{m.email}</div>
                       <div className="text-sm text-slate-500">{m.telefone}</div>
                       {m.funcao && (
-                        <div className="text-xs text-blue-600 font-semibold mt-1">⛪ {m.funcao}</div>
+                        <div className="text-xs text-green-700 font-semibold mt-1">⛪ {m.funcao}</div>
                       )}
                       {m.congregacao && (
-                        <div className="text-xs text-indigo-600 font-semibold mt-0.5">📍 {m.congregacao}</div>
+                        <div className="text-xs text-green-700 font-semibold mt-0.5">📍 {m.congregacao}</div>
                       )}
                       <div className="text-xs text-slate-400 mt-1">Cadastrado em {formatDateBR(m.created_at)}</div>
                     </div>
@@ -971,7 +971,7 @@ export default function Admin() {
                     <button
                       onClick={() => abrirFicha(m)}
                       disabled={fichaLoading}
-                      className="flex-1 rounded-xl border border-blue-200 text-blue-700 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 transition disabled:opacity-50"
+                      className="flex-1 rounded-xl border border-green-200 text-green-700 px-4 py-2.5 text-sm font-semibold hover:bg-green-50 transition disabled:opacity-50"
                     >
                       {fichaLoading ? "Carregando…" : "📋 Ver Ficha"}
                     </button>
@@ -1030,7 +1030,7 @@ export default function Admin() {
                 {(busca || filtroCongregacao !== "todas") && (
                   <button
                     onClick={() => { setBusca(""); setFiltroCongregacao("todas"); }}
-                    className="text-sm text-blue-600 underline"
+                    className="text-sm text-green-700 underline"
                   >
                     Limpar filtros
                   </button>
@@ -1051,7 +1051,7 @@ export default function Admin() {
               <button
                 onClick={fetchDevocional}
                 disabled={devLoading}
-                className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 flex items-center gap-2 text-sm"
+                className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 flex items-center gap-2 text-sm"
               >
                 {devLoading ? <><span className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Buscando…</> : "🔄 Buscar devocional"}
               </button>
@@ -1144,7 +1144,7 @@ export default function Admin() {
                 {legenda && (
                   <div className="mt-4 space-y-3">
                     <textarea
-                      className="w-full rounded-xl border px-4 py-3 text-sm text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-blue-200 min-h-[160px] leading-relaxed"
+                      className="w-full rounded-xl border px-4 py-3 text-sm text-slate-700 bg-slate-50 outline-none focus:ring-2 focus:ring-green-200 min-h-[160px] leading-relaxed resize-none"
                       value={legenda}
                       onChange={e => setLegenda(e.target.value)}
                     />
@@ -1158,7 +1158,7 @@ export default function Admin() {
                       <button
                         onClick={gerarLegenda}
                         disabled={legendaBusy}
-                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-blue-700 border-blue-200 hover:bg-blue-50 transition disabled:opacity-50"
+                        className="rounded-xl border px-4 py-2 text-sm font-semibold text-green-700 border-green-200 hover:bg-green-50 transition disabled:opacity-50"
                       >
                         🔁 Gerar outra versão
                       </button>
@@ -1185,16 +1185,16 @@ export default function Admin() {
             <div className="mt-4 space-y-3">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Título</label>
-                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={formTitle} onChange={e=>setFormTitle(e.target.value)} placeholder="Ex.: 20/02 CULTO DA MEIA NOITE" />
+                <input className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={formTitle} onChange={e=>setFormTitle(e.target.value)} placeholder="Ex.: 20/02 CULTO DA MEIA NOITE" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Texto do Aviso</label>
-                <textarea className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200 min-h-[120px]" value={formBody} onChange={e=>setFormBody(e.target.value)} placeholder="Escreva o aviso completo…" />
+                <textarea className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200 min-h-[120px]" value={formBody} onChange={e=>setFormBody(e.target.value)} placeholder="Escreva o aviso completo…" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-slate-600">Data do aviso</label>
-                  <input type="date" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-blue-200" value={formEventDate} onChange={e=>setFormEventDate(e.target.value)} />
+                  <input type="date" className="mt-1 w-full rounded-xl border px-3 py-3 outline-none focus:ring-2 focus:ring-green-200" value={formEventDate} onChange={e=>setFormEventDate(e.target.value)} />
                 </div>
                 <div className="flex items-end gap-3">
                   <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -1206,7 +1206,7 @@ export default function Admin() {
             </div>
             <div className="mt-6 flex gap-2">
               <button onClick={() => setShowForm(false)} className="flex-1 rounded-xl border px-4 py-3 hover:bg-slate-50 transition">Cancelar</button>
-              <button disabled={noticeBusy} onClick={saveNotice} className="flex-1 rounded-xl bg-blue-700 text-white px-4 py-3 font-semibold hover:bg-blue-800 transition disabled:opacity-60">
+              <button disabled={noticeBusy} onClick={saveNotice} className="flex-1 rounded-xl bg-green-700 text-white px-4 py-3 font-semibold hover:bg-green-800 transition disabled:opacity-60">
                 {noticeBusy ? "Salvando…" : "Salvar"}
               </button>
             </div>
@@ -1250,11 +1250,11 @@ export default function Admin() {
                     {fichaModal.ficha.gender && <span className="mr-3">{fichaModal.ficha.gender}</span>}
                     {fichaModal.ficha.marital_status && <span>{fichaModal.ficha.marital_status}</span>}
                   </div>
-                  <div className="text-xs font-semibold text-indigo-600 mt-1">
+                  <div className="text-xs font-semibold text-green-700 mt-1">
                     📍 {fichaModal.membro.congregacao || 'Inhumas - GO'}
                   </div>
                   {fichaModal.ficha.numero_registro && (
-                    <div className="text-xs font-mono text-blue-600 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
+                    <div className="text-xs font-mono text-green-700 mt-1">Nº {fichaModal.ficha.numero_registro}</div>
                   )}
                   {/* Botões de contato rápido */}
                   <div className="flex gap-2 mt-2 flex-wrap">
@@ -1270,7 +1270,7 @@ export default function Admin() {
                     {(fichaModal.membro.email || fichaModal.ficha.email) && (
                       <a
                         href={`mailto:${fichaModal.membro.email || fichaModal.ficha.email}`}
-                        className="rounded-lg bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1.5 text-xs font-semibold hover:bg-blue-100 transition"
+                        className="rounded-lg bg-slate-50 border border-slate-200 text-slate-700 px-3 py-1.5 text-xs font-semibold hover:bg-slate-100 transition"
                       >
                         ✉️ E-mail
                       </a>
@@ -1305,47 +1305,47 @@ export default function Admin() {
               </div>
 
               {/* Alterar congregação */}
-              <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
-                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-3">📍 Congregação</h4>
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+                <h4 className="text-xs font-bold text-green-700 uppercase tracking-wider mb-3">📍 Congregação</h4>
                 <div className="flex items-center gap-3">
                   <select
                     value={congregacaoEditando}
                     onChange={e => setCongregacaoEditando(e.target.value)}
-                    className="flex-1 rounded-xl border border-indigo-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                    className="flex-1 rounded-xl border border-green-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-green-300 bg-white"
                   >
                     {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <button
                     onClick={salvarCongregacao}
                     disabled={congregacaoSalvando || congregacaoEditando === fichaModal.membro.congregacao}
-                    className="rounded-xl bg-indigo-700 text-white px-5 py-2.5 font-semibold hover:bg-indigo-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                    className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
                   >
                     {congregacaoSalvando ? "Salvando…" : "Salvar"}
                   </button>
                 </div>
-                <p className="text-xs text-indigo-400 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
+                <p className="text-xs text-green-500 mt-2">Somente o administrador pode alterar a congregação do membro.</p>
               </div>
 
               {/* Alterar função */}
-              <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-                <h4 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">⛪ Função na Igreja</h4>
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-3">⛪ Função na Igreja</h4>
                 <div className="flex items-center gap-3">
                   <select
                     value={funcaoEditando}
                     onChange={e => setFuncaoEditando(e.target.value)}
-                    className="flex-1 rounded-xl border border-blue-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                    className="flex-1 rounded-xl border border-amber-200 px-3 py-2.5 text-slate-800 font-semibold outline-none focus:ring-2 focus:ring-amber-300 bg-white"
                   >
                     {FUNCOES.map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                   <button
                     onClick={salvarFuncao}
                     disabled={funcaoSalvando || funcaoEditando === (fichaModal.membro.funcao || fichaModal.ficha.church_function)}
-                    className="rounded-xl bg-blue-700 text-white px-5 py-2.5 font-semibold hover:bg-blue-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
+                    className="rounded-xl bg-green-700 text-white px-5 py-2.5 font-semibold hover:bg-green-800 transition disabled:opacity-50 text-sm whitespace-nowrap"
                   >
                     {funcaoSalvando ? "Salvando…" : "Salvar Função"}
                   </button>
                 </div>
-                <p className="text-xs text-blue-400 mt-2">Somente o administrador pode alterar a função do membro.</p>
+                <p className="text-xs text-amber-500 mt-2">Somente o administrador pode alterar a função do membro.</p>
               </div>
 
               {/* Ações de aprovação */}

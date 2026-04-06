@@ -28,76 +28,74 @@ export default function Prayer() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(160deg, #060d22 0%, #0b1535 50%, #0a1a4a 100%)" }}>
+    <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Lato:wght@300;400;700&display=swap');
-        .pr-page { font-family: 'Lato', sans-serif; color: #e8f0ff; padding: 32px 20px 80px; max-width: 560px; margin: 0 auto; }
-        .pr-hero { text-align: center; padding: 40px 0 36px; }
-        .pr-icon-wrap { width: 72px; height: 72px; border-radius: 50%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-        .pr-title { font-family: 'Playfair Display', serif; font-size: clamp(26px, 6vw, 34px); font-weight: 700; color: #fff; margin: 0 0 10px; }
-        .pr-subtitle { font-size: 15px; color: rgba(200,220,255,0.7); line-height: 1.6; margin: 0; }
-        .pr-verse { font-style: italic; font-size: 13px; color: rgba(180,205,255,0.55); margin: 16px 0 0; }
+        .pr-page { font-family: var(--font-sans, 'Lato', sans-serif); color: var(--ink, #1C1917); padding: 32px 20px 80px; max-width: 560px; margin: 0 auto; }
+        .pr-hero { text-align: center; padding: 32px 0 28px; }
+        .pr-icon-wrap { width: 64px; height: 64px; border-radius: 50%; background: var(--green-light, #F0FDF4); border: 1px solid var(--green-border, #BBF7D0); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+        .pr-title { font-family: var(--font-serif, 'Playfair Display', serif); font-size: clamp(24px, 6vw, 30px); font-weight: 700; color: var(--ink, #1C1917); margin: 0 0 10px; }
+        .pr-subtitle { font-size: 15px; color: var(--ink-2, #57534E); line-height: 1.6; margin: 0; }
+        .pr-verse { font-style: italic; font-size: 13px; color: var(--amber, #B45309); margin: 14px 0 0; border-left: 2px solid var(--amber-border, #FDE68A); padding-left: 12px; text-align: left; display: inline-block; }
 
-        .pr-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 32px 28px; }
-        .pr-field { margin-bottom: 20px; }
-        .pr-label { display: block; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: rgba(180,210,255,0.7); text-transform: uppercase; margin-bottom: 8px; }
-        .pr-label span { font-weight: 400; color: rgba(180,210,255,0.4); text-transform: none; letter-spacing: 0; font-size: 12px; margin-left: 6px; }
+        .pr-card { background: var(--surface, #fff); border: 1px solid var(--border, #E8E5E0); border-radius: 16px; padding: 28px 24px; box-shadow: 0 1px 4px rgba(28,25,23,0.06); }
+        .pr-field { margin-bottom: 18px; }
+        .pr-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: var(--ink-3, #A8A29E); text-transform: uppercase; margin-bottom: 6px; }
+        .pr-label span { font-weight: 400; color: var(--ink-4, #D6D3D1); text-transform: none; letter-spacing: 0; font-size: 12px; margin-left: 6px; }
         .pr-input, .pr-textarea {
           width: 100%; box-sizing: border-box;
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 12px;
-          color: #e8f0ff;
-          font-family: 'Lato', sans-serif;
+          background: var(--surface-2, #F5F2EE);
+          border: 1px solid var(--border, #E8E5E0);
+          border-radius: 10px;
+          color: var(--ink, #1C1917);
+          font-family: var(--font-sans, 'Lato', sans-serif);
           font-size: 15px;
-          padding: 13px 16px;
+          padding: 12px 14px;
           outline: none;
-          transition: border-color .2s, background .2s;
+          transition: border-color .18s, background .18s;
         }
-        .pr-input::placeholder, .pr-textarea::placeholder { color: rgba(180,210,255,0.3); }
-        .pr-input:focus, .pr-textarea:focus { border-color: rgba(80,140,255,0.6); background: rgba(255,255,255,0.08); }
+        .pr-input::placeholder, .pr-textarea::placeholder { color: var(--ink-4, #D6D3D1); }
+        .pr-input:focus, .pr-textarea:focus { border-color: var(--green, #166534); background: var(--surface, #fff); }
         .pr-textarea { resize: vertical; min-height: 130px; line-height: 1.6; }
-        .pr-counter { font-size: 11px; color: rgba(180,210,255,0.35); text-align: right; margin-top: 5px; }
+        .pr-counter { font-size: 11px; color: var(--ink-4, #D6D3D1); text-align: right; margin-top: 5px; }
 
         .pr-btn {
-          width: 100%; padding: 15px; border: none; border-radius: 14px;
-          background: linear-gradient(130deg, #1a55d0, #0090ff);
-          color: #fff; font-family: 'Lato', sans-serif; font-size: 16px; font-weight: 700;
+          width: 100%; padding: 14px; border: none; border-radius: 12px;
+          background: var(--green, #166534);
+          color: #fff; font-family: var(--font-sans, 'Lato', sans-serif); font-size: 15px; font-weight: 700;
           cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-          transition: transform .2s, box-shadow .2s; margin-top: 8px;
-          box-shadow: 0 8px 28px rgba(0,100,255,0.3);
+          transition: background .18s; margin-top: 8px;
         }
-        .pr-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(0,100,255,0.45); }
-        .pr-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .pr-btn:hover:not(:disabled) { background: var(--green-hover, #15803D); }
+        .pr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .pr-success { text-align: center; padding: 48px 24px; }
-        .pr-success-icon { width: 80px; height: 80px; border-radius: 50%; background: rgba(80,200,120,0.12); border: 1px solid rgba(80,200,120,0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
-        .pr-success-title { font-family: 'Playfair Display', serif; font-size: 26px; color: #fff; margin: 0 0 12px; }
-        .pr-success-msg { font-size: 15px; color: rgba(200,220,255,0.7); line-height: 1.7; margin: 0 0 32px; }
+        .pr-success-icon { width: 72px; height: 72px; border-radius: 50%; background: var(--green-light, #F0FDF4); border: 1px solid var(--green-border, #BBF7D0); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .pr-success-title { font-family: var(--font-serif, 'Playfair Display', serif); font-size: 26px; color: var(--ink, #1C1917); margin: 0 0 12px; }
+        .pr-success-msg { font-size: 15px; color: var(--ink-2, #57534E); line-height: 1.7; margin: 0 0 28px; }
         .pr-back-btn {
           display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 28px; border-radius: 50px;
-          background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
-          color: rgba(200,220,255,0.85); font-family: 'Lato', sans-serif; font-size: 15px;
-          cursor: pointer; text-decoration: none; transition: background .2s;
+          padding: 11px 24px; border-radius: 10px;
+          background: var(--surface, #fff); border: 1px solid var(--border, #E8E5E0);
+          color: var(--ink-2, #57534E); font-family: var(--font-sans, 'Lato', sans-serif); font-size: 14px; font-weight: 700;
+          cursor: pointer; text-decoration: none; transition: border-color .18s, color .18s;
         }
-        .pr-back-btn:hover { background: rgba(255,255,255,0.13); }
-        .pr-error { background: rgba(220,60,60,0.12); border: 1px solid rgba(220,80,80,0.3); border-radius: 10px; padding: 12px 16px; font-size: 14px; color: #ffaaaa; margin-top: 12px; }
+        .pr-back-btn:hover { border-color: var(--ink-3, #A8A29E); color: var(--ink, #1C1917); }
+        .pr-error { background: var(--danger-light, #FEF2F2); border: 1px solid var(--danger-border, #FECACA); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--danger, #991B1B); margin-top: 12px; }
       `}</style>
 
       <div className="pr-page">
         {submitted ? (
           <div className="pr-success">
             <div className="pr-success-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="rgba(80,200,120,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 36, height: 36 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
             </div>
-            <h2 className="pr-success-title">Pedido recebido! 🙏</h2>
+            <h2 className="pr-success-title">Pedido recebido!</h2>
             <p className="pr-success-msg">
               Recebemos seu pedido de oração.<br />
               Estamos orando por você com todo amor e fé.<br />
-              <em style={{ color: "rgba(180,210,255,0.5)", fontSize: 13 }}>"O SENHOR está perto dos que têm o coração quebrantado." — Sl 34:18</em>
+              <em style={{ color: "#B45309", fontSize: 13 }}>"O SENHOR está perto dos que têm o coração quebrantado." — Sl 34:18</em>
             </p>
             <a href="/#/" className="pr-back-btn">
               <svg viewBox="0 0 20 20" fill="currentColor" style={{ width: 16, height: 16 }}>
@@ -110,7 +108,7 @@ export default function Prayer() {
           <>
             <div className="pr-hero">
               <div className="pr-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(150,190,255,0.8)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ width: 28, height: 28 }}>
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
               </div>
@@ -187,6 +185,6 @@ export default function Prayer() {
           </>
         )}
       </div>
-    </div>
+    </>
   );
 }

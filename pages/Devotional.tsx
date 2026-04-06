@@ -219,22 +219,12 @@ export default function Devotional() {
   return(
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap');
-        *{box-sizing:border-box;}
-
-        .dv-root{
-          font-family:'Lato',sans-serif;
-          min-height:100vh;
-          background:linear-gradient(155deg,#060d20 0%,#0a1535 40%,#0e1d50 70%,#050f28 100%);
-          position:relative; overflow-x:hidden;
-        }
-        .dv-glow-a{position:fixed;pointer-events:none;z-index:0;top:-10%;left:-15%;width:60vw;height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(30,90,210,0.13) 0%,transparent 70%);}
-        .dv-glow-b{position:fixed;pointer-events:none;z-index:0;bottom:-10%;right:-10%;width:50vw;height:50vw;border-radius:50%;background:radial-gradient(circle,rgba(0,140,255,0.1) 0%,transparent 70%);}
-
-        @keyframes dvFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes dvFadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         @keyframes dvSpin{to{transform:rotate(360deg)}}
 
-        .dv-in{opacity:0;animation:dvFadeUp .5s ease forwards;}
+        .dv-root{font-family:'Lato',sans-serif;min-height:100vh;background:#FAFAF8;}
+
+        .dv-in{opacity:0;animation:dvFadeUp .45s ease forwards;}
         .dv-in-1{animation-delay:.05s}
         .dv-in-2{animation-delay:.15s}
         .dv-in-3{animation-delay:.28s}
@@ -242,91 +232,90 @@ export default function Devotional() {
         .dv-in-5{animation-delay:.56s}
 
         .dv-verse-card{
-          border-radius:20px; padding:26px 22px 20px;
-          background:linear-gradient(135deg,rgba(20,70,180,0.16),rgba(0,100,220,0.07));
-          border:1px solid rgba(60,140,255,0.2);
+          border-radius:16px; padding:24px 22px 20px;
+          background:#FFFBEB;
+          border:1px solid #FDE68A;
+          border-left:3px solid #D97706;
           position:relative; overflow:hidden;
         }
         .dv-verse-card::before{
           content:'\u201C';
           font-family:'Playfair Display',Georgia,serif;
-          font-size:100px; color:rgba(40,120,255,0.1);
+          font-size:100px; color:rgba(180,83,9,0.07);
           position:absolute; top:-10px; left:8px;
           line-height:1; pointer-events:none;
         }
 
         .dv-section-card{
-          border-radius:18px;
-          background:rgba(255,255,255,0.03);
-          border:1px solid rgba(60,140,255,0.1);
+          border-radius:14px;
+          background:#FFFFFF;
+          border:1px solid #E8E5E0;
           overflow:hidden;
+          box-shadow:0 1px 3px rgba(28,25,23,0.05);
         }
         .dv-section-header{
           display:flex; align-items:center; justify-content:space-between;
-          padding:14px 18px;
-          border-bottom:1px solid rgba(60,140,255,0.08);
+          padding:13px 18px;
+          border-bottom:1px solid #E8E5E0;
           cursor:pointer; user-select:none;
         }
-        .dv-section-header:hover{background:rgba(60,140,255,0.05);}
+        .dv-section-header:hover{background:#F5F2EE;}
         .dv-section-label{
           font-size:10px; font-weight:700; letter-spacing:.18em;
-          text-transform:uppercase; color:rgba(80,160,255,0.7);
+          text-transform:uppercase; color:#A8A29E;
           display:flex; align-items:center; gap:8px;
         }
-        .dv-section-chevron{font-size:12px;color:rgba(80,160,255,0.5);transition:transform .25s;}
+        .dv-section-chevron{font-size:11px;color:#A8A29E;transition:transform .25s;}
         .dv-section-chevron-open{transform:rotate(180deg);}
         .dv-section-body{padding:16px 18px 18px;}
         .dv-section-text{
           font-family:'Playfair Display',Georgia,serif;
           font-size:clamp(14px,4vw,16px);
-          line-height:1.85; color:rgba(190,215,250,0.82); margin:0;
+          line-height:1.85; color:#57534E; margin:0;
         }
         .dv-read-more{
           background:none; border:none; cursor:pointer;
-          font-size:12px; font-weight:700; color:rgba(80,160,255,0.7);
+          font-size:12px; font-weight:700; color:#166534;
           padding:8px 0 0; display:block; font-family:'Lato',sans-serif;
           transition:color .15s;
         }
-        .dv-read-more:hover{color:rgba(120,180,255,0.9);}
+        .dv-read-more:hover{color:#15803D;}
 
-        .dv-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(60,140,255,0.25),transparent);}
+        .dv-divider{height:1px;background:linear-gradient(90deg,transparent,#E8E5E0,transparent);}
 
-        .dv-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:none;border-radius:16px;padding:15px 0;cursor:pointer;font-family:'Lato',sans-serif;font-size:15px;font-weight:700;color:#fff;transition:transform .18s,box-shadow .18s,opacity .18s;}
-        .dv-btn:hover{transform:translateY(-2px);}
-        .dv-btn:active{transform:translateY(1px);}
-        .dv-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
-        .dv-btn-wa{background:linear-gradient(130deg,#158a4a,#1db860);box-shadow:0 6px 28px rgba(15,140,60,0.28);}
-        .dv-btn-wa:hover{box-shadow:0 10px 36px rgba(15,140,60,0.42);}
-        .dv-btn-ig{background:linear-gradient(130deg,#1040b0,#0080e0,#00aaff);box-shadow:0 6px 28px rgba(0,100,220,0.28);}
-        .dv-btn-ig:hover{box-shadow:0 10px 36px rgba(0,100,220,0.42);}
-        .dv-btn-sm{flex:1;border:none;border-radius:14px;padding:13px 0;cursor:pointer;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .18s;}
-        .dv-btn-sm:hover{transform:translateY(-2px);}
-        .dv-btn-outline{padding:12px 16px;border-radius:14px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Lato',sans-serif;color:rgba(160,200,255,0.7);border:1px solid rgba(60,140,255,0.18);background:rgba(30,80,180,0.08);transition:background .18s;}
-        .dv-btn-outline:hover{background:rgba(30,80,180,0.15);}
+        .dv-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:none;border-radius:14px;padding:14px 0;cursor:pointer;font-family:'Lato',sans-serif;font-size:15px;font-weight:700;color:#fff;transition:opacity .18s,transform .18s;}
+        .dv-btn:hover{opacity:.9;transform:translateY(-1px);}
+        .dv-btn:active{transform:translateY(0);}
+        .dv-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+        .dv-btn-wa{background:#166534;}
+        .dv-btn-wa:hover{background:#15803D;opacity:1;}
+        .dv-btn-ig{background:linear-gradient(130deg,#1040b0,#0080e0,#00aaff);}
+        .dv-btn-sm{flex:1;border:none;border-radius:12px;padding:12px 0;cursor:pointer;font-family:'Lato',sans-serif;font-size:13px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .18s;}
+        .dv-btn-sm:hover{opacity:.9;}
+        .dv-btn-outline{padding:11px 14px;border-radius:12px;cursor:pointer;font-size:12px;font-weight:700;font-family:'Lato',sans-serif;color:#57534E;border:1px solid #E8E5E0;background:transparent;transition:border-color .18s,color .18s;}
+        .dv-btn-outline:hover{border-color:#A8A29E;color:#1C1917;}
 
-        .dv-preview{border-radius:16px;overflow:hidden;border:1px solid rgba(60,140,255,0.2);box-shadow:0 16px 48px rgba(0,80,200,0.22);}
+        .dv-preview{border-radius:12px;overflow:hidden;border:1px solid #E8E5E0;box-shadow:0 4px 16px rgba(28,25,23,0.1);}
       `}</style>
 
       <main className="dv-root">
-        <div className="dv-glow-a"/><div className="dv-glow-b"/>
-
         {/* Logo */}
-        <div style={{display:"flex",justifyContent:"center",paddingTop:24,paddingBottom:4,position:"relative",zIndex:1}}>
-          <img src={logoUrl} alt="AOGIM Conect" style={{width:80,objectFit:"contain",filter:"drop-shadow(0 0 16px rgba(80,160,255,0.28))"}}/>
+        <div style={{display:"flex",justifyContent:"center",paddingTop:24,paddingBottom:4}}>
+          <img src={logoUrl} alt="AOGIM Conect" style={{width:72,objectFit:"contain"}}/>
         </div>
 
-        <div style={{position:"relative",zIndex:1,width:"100%",maxWidth:520,margin:"0 auto",padding:"0 16px 80px"}}>
+        <div style={{width:"100%",maxWidth:520,margin:"0 auto",padding:"0 16px 80px"}}>
 
           {/* Loading */}
           {loading&&(
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"65vh",gap:16}}>
-              <div style={{width:28,height:28,border:"2px solid rgba(60,140,255,0.18)",borderTopColor:"rgba(80,180,255,0.85)",borderRadius:"50%",animation:"dvSpin .85s linear infinite"}}/>
-              <p style={{color:"rgba(80,160,255,0.5)",fontSize:13,letterSpacing:".1em",fontFamily:"Georgia,serif",fontStyle:"italic"}}>Carregando…</p>
+              <div style={{width:28,height:28,border:"2px solid #E8E5E0",borderTopColor:"#166534",borderRadius:"50%",animation:"dvSpin .85s linear infinite"}}/>
+              <p style={{color:"#A8A29E",fontSize:13,letterSpacing:".1em",fontFamily:"Georgia,serif",fontStyle:"italic"}}>Carregando…</p>
             </div>
           )}
 
           {!loading&&!data&&(
-            <p style={{textAlign:"center",color:"rgba(150,190,255,0.6)",marginTop:80,fontSize:15,fontFamily:"Georgia,serif",fontStyle:"italic"}}>
+            <p style={{textAlign:"center",color:"#A8A29E",marginTop:80,fontSize:15,fontFamily:"Georgia,serif",fontStyle:"italic"}}>
               Não consegui carregar o devocional agora. Tente novamente em instantes.
             </p>
           )}
@@ -335,16 +324,16 @@ export default function Devotional() {
             <>
               {/* Cabeçalho */}
               <div className="dv-in dv-in-1" style={{textAlign:"center",paddingTop:8,paddingBottom:20}}>
-                <span style={{fontSize:10,letterSpacing:".22em",color:"rgba(80,160,255,0.6)",textTransform:"uppercase",fontWeight:700}}>
-                  ✦ &nbsp;Devocional do Dia&nbsp; ✦
+                <span style={{fontSize:10,letterSpacing:".22em",color:"#166534",textTransform:"uppercase",fontWeight:700}}>
+                  Devocional do Dia
                 </span>
                 {data.dateLabel&&(
-                  <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,color:"rgba(100,180,255,0.45)",fontStyle:"italic",margin:"6px 0 4px"}}>
+                  <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:14,color:"#A8A29E",fontStyle:"italic",margin:"6px 0 4px"}}>
                     {data.dateLabel}
                   </p>
                 )}
                 {data.title&&(
-                  <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(20px,5.5vw,26px)",fontWeight:700,color:"#ddeeff",margin:"8px 0 0",lineHeight:1.25}}>
+                  <h1 style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(20px,5.5vw,26px)",fontWeight:700,color:"#1C1917",margin:"8px 0 0",lineHeight:1.25}}>
                     {data.title}
                   </h1>
                 )}
@@ -354,13 +343,13 @@ export default function Devotional() {
 
               {/* Versículo */}
               <div className="dv-verse-card dv-in dv-in-2" style={{marginBottom:16}}>
-                <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(15px,4.5vw,18px)",color:"rgba(215,235,255,0.93)",lineHeight:1.7,fontStyle:"italic",textAlign:"center",position:"relative",zIndex:1,margin:0}}>
+                <p style={{fontFamily:"'Playfair Display',Georgia,serif",fontSize:"clamp(15px,4.5vw,18px)",color:"#57534E",lineHeight:1.7,fontStyle:"italic",textAlign:"center",position:"relative",zIndex:1,margin:0}}>
                   "{data.verseText}"
                 </p>
                 <div style={{marginTop:14,display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{flex:1,height:1,background:"rgba(60,140,255,0.18)"}}/>
-                  <span style={{fontSize:12,fontWeight:700,color:"rgba(80,180,255,0.9)",letterSpacing:".07em"}}>{data.verseRef}</span>
-                  <div style={{flex:1,height:1,background:"rgba(60,140,255,0.18)"}}/>
+                  <div style={{flex:1,height:1,background:"#FDE68A"}}/>
+                  <span style={{fontSize:12,fontWeight:700,color:"#B45309",letterSpacing:".07em"}}>{data.verseRef}</span>
+                  <div style={{flex:1,height:1,background:"#FDE68A"}}/>
                 </div>
               </div>
 
@@ -445,7 +434,7 @@ export default function Devotional() {
                       </button>
                       <button className="dv-btn-outline" onClick={()=>setImgGerada(null)}>Refazer</button>
                     </div>
-                    <p style={{textAlign:"center",fontSize:11,color:"rgba(80,160,255,0.35)",fontStyle:"italic",fontFamily:"Georgia,serif",margin:0}}>
+                    <p style={{textAlign:"center",fontSize:11,color:"#A8A29E",fontStyle:"italic",fontFamily:"Georgia,serif",margin:0}}>
                       Pronto para os Stories do Instagram
                     </p>
                   </div>

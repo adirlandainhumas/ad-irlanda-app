@@ -238,7 +238,7 @@ const CSS = `
     border-radius: 10px;
     padding: 18px 20px;
     border: 1px solid var(--border);
-    border-left: 3px solid var(--green);
+    border-left: 3px solid var(--amber-accent);
     transition: box-shadow 0.15s;
   }
   .hm-notice-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }

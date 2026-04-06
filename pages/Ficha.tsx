@@ -79,46 +79,47 @@ export default function Ficha() {
   };
 
   const inputStyle: React.CSSProperties = {
-    width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(60,140,255,0.2)",
-    borderRadius:12, padding:"12px 14px", fontSize:15, color:"#ddeeff",
+    width:"100%", background:"#F5F2EE", border:"1px solid #E8E5E0",
+    borderRadius:10, padding:"12px 14px", fontSize:15, color:"#1C1917",
     fontFamily:"'Lato',sans-serif", outline:"none", marginBottom:14,
+    transition:"border-color .18s, background .18s",
   };
   const labelStyle: React.CSSProperties = {
     fontSize:11, fontWeight:700, letterSpacing:".12em", textTransform:"uppercase" as const,
-    color:"rgba(80,160,255,0.7)", marginBottom:6, display:"block",
+    color:"#A8A29E", marginBottom:6, display:"block",
   };
   const selectStyle: React.CSSProperties = { ...inputStyle, appearance:"none" as const };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Lato:wght@300;400;700&display=swap');
-        * { box-sizing:border-box; }
-        .fi-root { font-family:'Lato',sans-serif; min-height:100vh; background:linear-gradient(155deg,#060d20 0%,#0a1535 40%,#0e1d50 70%,#050f28 100%); padding:24px 16px 80px; }
+        .fi-root { font-family:'Lato',sans-serif; min-height:100vh; background:#FAFAF8; padding:24px 16px 80px; }
         .fi-inner { max-width:500px; margin:0 auto; }
         .fi-logo { display:flex; justify-content:center; margin-bottom:20px; }
-        .fi-logo img { width:64px; filter:drop-shadow(0 0 12px rgba(80,160,255,0.28)); }
-        .fi-title { font-family:'Playfair Display',Georgia,serif; font-size:20px; font-weight:700; color:#ddeeff; text-align:center; margin:0 0 4px; }
-        .fi-sub { font-size:13px; color:rgba(120,180,255,0.5); text-align:center; font-style:italic; margin:0 0 24px; font-family:'Playfair Display',Georgia,serif; }
+        .fi-logo img { width:64px; }
+        .fi-title { font-family:'Playfair Display',Georgia,serif; font-size:20px; font-weight:700; color:#1C1917; text-align:center; margin:0 0 4px; }
+        .fi-sub { font-size:13px; color:#A8A29E; text-align:center; font-style:italic; margin:0 0 24px; font-family:'Playfair Display',Georgia,serif; }
         .fi-steps { display:flex; justify-content:center; gap:8px; margin-bottom:28px; }
-        .fi-step { width:32px; height:4px; border-radius:999px; background:rgba(60,140,255,0.15); transition:background .3s; }
-        .fi-step-active { background:rgba(26,85,208,0.8); }
-        .fi-step-done { background:rgba(0,180,100,0.6); }
-        .fi-card { background:rgba(255,255,255,0.04); border:1px solid rgba(60,140,255,0.15); border-radius:20px; padding:24px; margin-bottom:16px; }
-        .fi-section { font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:rgba(80,160,255,0.55); margin:0 0 18px; display:flex; align-items:center; gap:8px; }
-        .fi-section::after { content:''; flex:1; height:1px; background:rgba(60,140,255,0.12); }
+        .fi-step { width:32px; height:4px; border-radius:999px; background:#E8E5E0; transition:background .3s; }
+        .fi-step-active { background:#166534; }
+        .fi-step-done { background:#BBF7D0; }
+        .fi-card { background:#FFFFFF; border:1px solid #E8E5E0; border-radius:16px; padding:24px; margin-bottom:16px; box-shadow:0 1px 4px rgba(28,25,23,0.05); }
+        .fi-section { font-size:10px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:#A8A29E; margin:0 0 18px; display:flex; align-items:center; gap:8px; }
+        .fi-section::after { content:''; flex:1; height:1px; background:#E8E5E0; }
         .fi-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-        .fi-erro { background:rgba(220,50,50,0.12); border:1px solid rgba(220,50,50,0.25); border-radius:10px; padding:10px 14px; font-size:13px; color:rgba(255,120,120,0.9); margin-bottom:16px; }
-        .fi-btn { width:100%; padding:15px; border:none; border-radius:14px; background:linear-gradient(130deg,#1a55d0,#0090ff); color:#fff; font-size:15px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; box-shadow:0 6px 24px rgba(26,85,208,0.35); transition:transform .18s; }
-        .fi-btn:hover { transform:translateY(-2px); }
-        .fi-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-        .fi-btn-sec { width:100%; padding:13px; border:1px solid rgba(60,140,255,0.2); border-radius:14px; background:transparent; color:rgba(120,180,255,0.7); font-size:14px; font-weight:600; font-family:'Lato',sans-serif; cursor:pointer; margin-bottom:10px; }
+        .fi-erro { background:#FEF2F2; border:1px solid #FECACA; border-radius:10px; padding:10px 14px; font-size:13px; color:#991B1B; margin-bottom:16px; }
+        .fi-btn { width:100%; padding:14px; border:none; border-radius:12px; background:#166534; color:#fff; font-size:15px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; transition:background .18s; }
+        .fi-btn:hover { background:#15803D; }
+        .fi-btn:disabled { opacity:.5; cursor:not-allowed; }
+        .fi-btn-sec { width:100%; padding:13px; border:1px solid #E8E5E0; border-radius:12px; background:transparent; color:#57534E; font-size:14px; font-weight:700; font-family:'Lato',sans-serif; cursor:pointer; margin-bottom:10px; transition:border-color .18s, color .18s; }
+        .fi-btn-sec:hover { border-color:#A8A29E; color:#1C1917; }
 
         /* Foto upload */
         .fi-foto-area { display:flex; flex-direction:column; align-items:center; gap:14px; margin-bottom:16px; }
-        .fi-foto-preview { width:100px; height:100px; border-radius:50%; overflow:hidden; border:2px solid rgba(60,140,255,0.3); background:rgba(255,255,255,0.05); display:grid; place-items:center; }
+        .fi-foto-preview { width:100px; height:100px; border-radius:50%; overflow:hidden; border:2px solid #E8E5E0; background:#F5F2EE; display:grid; place-items:center; }
         .fi-foto-preview img { width:100%; height:100%; object-fit:cover; }
-        .fi-foto-btn { display:inline-flex; align-items:center; gap:7px; background:rgba(26,85,208,0.15); border:1px solid rgba(60,140,255,0.25); border-radius:999px; padding:8px 18px; font-size:13px; font-weight:700; color:rgba(100,180,255,0.85); cursor:pointer; font-family:'Lato',sans-serif; }
+        .fi-foto-btn { display:inline-flex; align-items:center; gap:7px; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:999px; padding:8px 18px; font-size:13px; font-weight:700; color:#166534; cursor:pointer; font-family:'Lato',sans-serif; transition:background .15s; }
+        .fi-foto-btn:hover { background:#dcfce7; }
       `}</style>
 
       <main className="fi-root">
@@ -236,7 +237,7 @@ export default function Ficha() {
                 <div className="fi-foto-preview">
                   {fotoPreview
                     ? <img src={fotoPreview} alt="preview"/>
-                    : <svg viewBox="0 0 24 24" fill="none" stroke="rgba(80,160,255,0.4)" strokeWidth="1.5" style={{width:36,height:36}}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="#D6D3D1" strokeWidth="1.5" style={{width:36,height:36}}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   }
                 </div>
                 <label className="fi-foto-btn">
@@ -244,7 +245,7 @@ export default function Ficha() {
                   {fotoPreview ? "Trocar foto" : "Enviar foto"}
                   <input type="file" accept="image/*" style={{display:"none"}} onChange={handleFoto} />
                 </label>
-                <p style={{fontSize:11,color:"rgba(100,160,255,0.4)",margin:0,textAlign:"center"}}>
+                <p style={{fontSize:11,color:"#A8A29E",margin:0,textAlign:"center"}}>
                   Foto recente, fundo neutro. Será usada no cartão de membro.
                 </p>
               </div>
