@@ -16,7 +16,7 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// ─── Story 1080×1920 — "Vitral Sagrado" ─────────────────────────────────────
+// ─── Story 1080×1920 — design profissional estilo Glorify ───────────────────
 function gerarStory(data: DevocionalData): Promise<string> {
   return new Promise((resolve) => {
     const W=1080, H=1920;
@@ -24,73 +24,67 @@ function gerarStory(data: DevocionalData): Promise<string> {
     c.width=W; c.height=H;
     const ctx=c.getContext("2d")!;
 
-    /* ── 1. Fundo: gradiente azul noturno radial ── */
-    const bg=ctx.createRadialGradient(W/2,H*0.28,0,W/2,H*0.28,W*1.2);
-    bg.addColorStop(0,"#0a1e4a"); bg.addColorStop(0.4,"#040e26");
-    bg.addColorStop(1,"#010812");
+    /* ── 1. Fundo: azul profundo com aurora dourada no topo ── */
+    const bg=ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,"#0f1f4e"); bg.addColorStop(0.35,"#0b1535");
+    bg.addColorStop(0.68,"#080e22"); bg.addColorStop(1,"#050918");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    /* ── 2. Estrelas — ~12% âmbar ── */
+    // Aurora (claridade dourada sutil no topo)
+    const dawn=ctx.createRadialGradient(W/2,-80,0,W/2,-80,W*0.85);
+    dawn.addColorStop(0,"rgba(251,191,36,0.20)"); dawn.addColorStop(0.42,"rgba(217,119,6,0.06)"); dawn.addColorStop(1,"transparent");
+    ctx.fillStyle=dawn; ctx.fillRect(0,0,W,H*0.6);
+
+    // Vinheta lateral
+    const vig=ctx.createRadialGradient(W/2,H*0.5,H*0.15,W/2,H*0.5,H*0.88);
+    vig.addColorStop(0,"transparent"); vig.addColorStop(1,"rgba(3,6,18,0.52)");
+    ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+
+    /* ── 2. Moldura elegante ── */
+    const pad=72;
     ctx.save();
-    for(let i=0;i<110;i++){
-      const px=Math.random()*W, py=Math.random()*H*0.75, pr=Math.random()*2+0.3;
-      ctx.globalAlpha=Math.random()*0.55+0.08;
-      ctx.fillStyle=i<14?`hsl(${38+Math.random()*14},95%,${72+Math.random()*20}%)`:
-                          `hsl(${210+Math.random()*28},85%,${70+Math.random()*26}%)`;
-      ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
-    }
+    ctx.strokeStyle="rgba(251,191,36,0.28)"; ctx.lineWidth=1;
+    ctx.strokeRect(pad,pad,W-pad*2,H-pad*2);
+    ctx.strokeStyle="rgba(251,191,36,0.10)"; ctx.lineWidth=0.5;
+    ctx.strokeRect(pad+12,pad+12,W-pad*2-24,H-pad*2-24);
     ctx.restore();
 
-    /* ── 3. Cruz de Luz ── */
-    const CX=W/2, CY=380;
-    // Raios em cruz — vertical
-    const vg=ctx.createLinearGradient(CX,0,CX,CY*2.2);
-    vg.addColorStop(0,"rgba(251,191,36,0)"); vg.addColorStop(0.35,"rgba(251,191,36,0.18)");
-    vg.addColorStop(0.55,"rgba(255,215,80,0.42)"); vg.addColorStop(0.75,"rgba(251,191,36,0.18)"); vg.addColorStop(1,"rgba(251,191,36,0)");
-    ctx.save(); ctx.fillStyle=vg; ctx.fillRect(CX-22,0,44,CY*2.2); ctx.restore();
-    // Raios em cruz — horizontal
-    const hg2=ctx.createLinearGradient(0,CY,W,CY);
-    hg2.addColorStop(0,"rgba(251,191,36,0)"); hg2.addColorStop(0.25,"rgba(251,191,36,0.1)");
-    hg2.addColorStop(0.5,"rgba(251,191,36,0.28)"); hg2.addColorStop(0.75,"rgba(251,191,36,0.1)"); hg2.addColorStop(1,"rgba(251,191,36,0)");
-    ctx.save(); ctx.fillStyle=hg2; ctx.fillRect(0,CY-18,W,36); ctx.restore();
-
-    /* ── 4. Janela de Rosa (rosa geométrica) ── */
-    const R=185;
-    const drawRose=(alpha:number,strokeColor:string,lw:number)=>{
-      ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=strokeColor; ctx.lineWidth=lw;
-      // Anel externo
-      ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.stroke();
-      // 8 pétalas (círculos inscritos)
-      const pr=R*0.42, dist=R-pr;
-      for(let i=0;i<8;i++){
-        const a=(i/8)*Math.PI*2-Math.PI/2;
-        ctx.beginPath(); ctx.arc(CX+dist*Math.cos(a),CY+dist*Math.sin(a),pr,0,Math.PI*2); ctx.stroke();
-      }
-      // Anel interno
-      ctx.beginPath(); ctx.arc(CX,CY,R*0.22,0,Math.PI*2); ctx.stroke();
-      // 8 raios do anel interno ao externo
-      for(let i=0;i<8;i++){
-        const a=(i/8)*Math.PI*2-Math.PI/2;
-        ctx.beginPath();
-        ctx.moveTo(CX+R*0.22*Math.cos(a),CY+R*0.22*Math.sin(a));
-        ctx.lineTo(CX+R*Math.cos(a),CY+R*Math.sin(a));
-        ctx.stroke();
-      }
-      ctx.restore();
+    // Cantos em L
+    const cs=60;
+    const corner=(x:number,y:number,sx:number,sy:number)=>{
+      ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.88)"; ctx.lineWidth=3; ctx.lineCap="round";
+      ctx.beginPath(); ctx.moveTo(x+sx*cs,y); ctx.lineTo(x,y); ctx.lineTo(x,y+sy*cs);
+      ctx.stroke(); ctx.restore();
     };
-    drawRose(0.18,"rgba(96,165,250,1)",1);     // azul — camada base
-    drawRose(0.55,"rgba(251,191,36,1)",1.4);   // âmbar — camada principal
+    corner(pad,pad,1,1); corner(W-pad,pad,-1,1);
+    corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
 
-    /* ── 5. Glow central da rosa ── */
-    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,R*0.8);
-    cg.addColorStop(0,"rgba(255,215,80,0.22)"); cg.addColorStop(0.45,"rgba(251,191,36,0.07)"); cg.addColorStop(1,"transparent");
+    /* ── 3. Cruz simples e elegante ── */
+    const CX=W/2, CY=340;
+    const cH=110, cW=74, cT=13, cArm=36;
+
+    // Brilho suave atrás da cruz
+    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,160);
+    cg.addColorStop(0,"rgba(251,191,36,0.14)"); cg.addColorStop(0.55,"rgba(251,191,36,0.04)"); cg.addColorStop(1,"transparent");
     ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
 
-    /* ── 6. Barra âmbar no topo ── */
-    const tb=ctx.createLinearGradient(0,0,W,0);
-    tb.addColorStop(0,"rgba(217,119,6,0.3)"); tb.addColorStop(0.35,"rgba(251,191,36,0.9)");
-    tb.addColorStop(0.65,"rgba(251,191,36,0.9)"); tb.addColorStop(1,"rgba(217,119,6,0.3)");
-    ctx.fillStyle=tb; ctx.fillRect(0,0,W,7);
+    // Cruz preenchida sutil
+    ctx.save(); ctx.globalAlpha=0.09; ctx.fillStyle="#fbbf24";
+    ctx.fillRect(CX-cT/2,CY-cH/2,cT,cH);
+    ctx.fillRect(CX-cW/2,CY-cH/2+cArm,cW,cT);
+    ctx.restore();
+
+    // Cruz stroke branco suave (espessura)
+    ctx.save(); ctx.strokeStyle="rgba(255,255,255,0.10)"; ctx.lineWidth=8; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    ctx.restore();
+
+    // Cruz stroke dourado principal
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.85)"; ctx.lineWidth=2.5; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    ctx.restore();
 
     /* ── Helpers de texto ── */
     const wrap=(text:string,maxW:number,font:string)=>{
@@ -102,76 +96,69 @@ function gerarStory(data: DevocionalData): Promise<string> {
         return[...lines.slice(0,-1),test];
       },[""]).filter(Boolean);
     };
-    const center=(text:string,y:number,font:string,color:string,alpha=1,sc?:string,sb?:number)=>{
+    const center=(text:string,y:number,font:string,color:string,alpha=1)=>{
       ctx.save(); ctx.globalAlpha=alpha; ctx.font=font; ctx.fillStyle=color; ctx.textAlign="center";
-      if(sc){ctx.shadowColor=sc;ctx.shadowBlur=sb??0;}
       ctx.fillText(text,W/2,y); ctx.restore();
     };
-    const hline=(y:number,alpha=0.25,color="rgba(120,170,255,1)")=>{
-      ctx.save();
-      const l=ctx.createLinearGradient(120,0,W-120,0);
-      l.addColorStop(0,"transparent"); l.addColorStop(0.5,color.replace("1)",`${alpha})`)); l.addColorStop(1,"transparent");
-      ctx.strokeStyle=l.toString(); ctx.lineWidth=1;
-      ctx.beginPath(); ctx.moveTo(120,y); ctx.lineTo(W-120,y); ctx.stroke(); ctx.restore();
-    };
-    const amberDivider=(y:number)=>{
-      ctx.save();
-      const l=ctx.createLinearGradient(W/2-90,0,W/2+90,0);
-      l.addColorStop(0,"transparent"); l.addColorStop(0.5,"rgba(251,191,36,0.65)"); l.addColorStop(1,"transparent");
-      ctx.strokeStyle=l.toString(); ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(W/2-90,y); ctx.lineTo(W/2+90,y); ctx.stroke(); ctx.restore();
+    const hLine=(y:number,alpha:number,short=false)=>{
+      const margin=short?W*0.25:pad+30;
+      const g=ctx.createLinearGradient(margin,y,W-margin,y);
+      g.addColorStop(0,"transparent"); g.addColorStop(0.15,"rgba(251,191,36,"+alpha+")");
+      g.addColorStop(0.85,"rgba(251,191,36,"+alpha+")"); g.addColorStop(1,"transparent");
+      ctx.save(); ctx.fillStyle=g; ctx.fillRect(margin,y-0.8,W-margin*2,1.6); ctx.restore();
     };
 
-    /* ── 7. Cabeçalho ── */
-    const hdrY=CY+R+60;
-    center("M I N I S T É R I O   I R L A N D A",hdrY,"300 25px Georgia,serif","rgba(147,197,253,0.60)");
-    amberDivider(hdrY+22);
-    center("DEVOCIONAL  DO  DIA",hdrY+58,"700 22px sans-serif","rgba(96,165,250,0.72)");
-    center(data.dateLabel,hdrY+100,"italic 300 24px Georgia,serif","rgba(147,197,253,0.42)");
-    hline(hdrY+132);
+    /* ── 4. Cabeçalho ── */
+    const hdrY=CY+cH/2+56;
+    center("M I N I S T É R I O   I R L A N D A",hdrY,"300 28px Georgia,serif","rgba(186,214,255,0.58)");
+    hLine(hdrY+20,0.45,true);
+    center("DEVOCIONAL  DO  DIA",hdrY+62,"700 26px sans-serif","rgba(147,197,253,0.75)");
+    center(data.dateLabel,hdrY+108,"italic 300 27px Georgia,serif","rgba(147,197,253,0.42)");
+    hLine(hdrY+142,0.30);
 
-    /* ── 8. Título ── */
-    let ty=hdrY+168;
+    /* ── 5. Título ── */
+    let ty=hdrY+192;
     if(data.title){
-      const tlines=wrap(data.title,W-140,"600 62px Georgia,serif");
-      ctx.save(); ctx.font="600 62px Georgia,serif"; ctx.fillStyle="#e4eeff";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(251,191,36,0.25)"; ctx.shadowBlur=22;
-      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=84;}); ctx.restore(); ty+=24;
+      const tlines=wrap(data.title,W-160,"600 68px Georgia,serif");
+      ctx.save(); ctx.font="600 68px Georgia,serif"; ctx.fillStyle="#dce8ff";
+      ctx.textAlign="center";
+      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=92;}); ctx.restore(); ty+=28;
     }
 
-    /* ── 9. Versículo ── */
-    center("✦",ty,"22px serif","rgba(251,191,36,0.85)"); ty+=56;
-    ctx.save(); ctx.font="italic 112px Georgia,serif"; ctx.fillStyle="rgba(212,120,14,0.07)";
-    ctx.textAlign="left"; ctx.fillText("\u201C",90,ty+8); ctx.restore();
-    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 42px Georgia,serif");
-    ctx.save(); ctx.font="italic 42px Georgia,serif"; ctx.fillStyle="rgba(220,234,255,0.94)";
-    ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.15)"; ctx.shadowBlur=10;
-    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=64;}); ctx.restore(); ty+=16;
+    /* ── 6. Versículo ── */
+    hLine(ty,0.22,true); ty+=52;
+    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 44px Georgia,serif");
+    ctx.save(); ctx.font="italic 44px Georgia,serif"; ctx.fillStyle="rgba(220,234,255,0.92)";
+    ctx.textAlign="center";
+    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=68;}); ctx.restore(); ty+=20;
 
-    // Ref em âmbar
-    amberDivider(ty); ty+=48;
-    ctx.save(); ctx.font="700 38px Georgia,serif"; ctx.fillStyle="rgba(251,191,36,0.95)";
-    ctx.textAlign="center"; ctx.shadowColor="rgba(217,119,6,0.5)"; ctx.shadowBlur=16;
-    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=60;
+    hLine(ty,0.38,true); ty+=52;
+    ctx.save(); ctx.font="700 40px Georgia,serif"; ctx.fillStyle="rgba(251,191,36,0.95)";
+    ctx.textAlign="center";
+    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=72;
 
-    center("✦",ty,"20px serif","rgba(251,191,36,0.50)"); ty+=54;
+    hLine(ty,0.20); ty+=60;
 
-    /* ── 10. Corpo ── */
-    const shortBody=data.body.length>240?data.body.slice(0,240).replace(/\s\w+$/,"")+"…":data.body;
-    const blines=wrap(shortBody,W-180,"400 34px Georgia,serif");
-    ctx.save(); ctx.font="400 34px Georgia,serif";
-    ctx.fillStyle="rgba(186,214,255,0.72)"; ctx.textAlign="center";
-    blines.slice(0,6).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=54;}); ctx.restore();
+    /* ── 7. Corpo (resumido) ── */
+    const shortBody=data.body.length>280?data.body.slice(0,280).replace(/\s\w+$/,"")+"…":data.body;
+    const blines=wrap(shortBody,W-200,"400 36px Georgia,serif");
+    ctx.save(); ctx.font="400 36px Georgia,serif";
+    ctx.fillStyle="rgba(186,214,255,0.70)"; ctx.textAlign="center";
+    blines.slice(0,7).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=58;}); ctx.restore();
 
-    /* ── 11. Rodapé ── */
-    const footY=H-160;
-    hline(footY-50,0.18);
-    ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
-    ctx.shadowColor="rgba(59,130,246,0.55)"; ctx.shadowBlur=28;
-    const fg=ctx.createLinearGradient(W/2-170,0,W/2+170,0);
-    fg.addColorStop(0,"#60a5fa"); fg.addColorStop(0.5,"#93c5fd"); fg.addColorStop(1,"#60a5fa");
-    ctx.fillStyle=fg; ctx.fillText("#AOGIM",W/2,footY+22); ctx.restore();
-    center("✦",footY+60,"14px serif","rgba(251,191,36,0.45)");
+    /* ── 8. Rodapé ── */
+    const footY=H-180;
+    hLine(footY-40,0.18);
+    ctx.save(); ctx.font="700 56px Georgia,serif"; ctx.textAlign="center";
+    ctx.fillStyle="rgba(147,197,253,0.90)";
+    ctx.fillText("#AOGIM",W/2,footY+28); ctx.restore();
+
+    /* ── 9. Barras âmbar topo e base ── */
+    const bar=ctx.createLinearGradient(0,0,W,0);
+    bar.addColorStop(0,"transparent"); bar.addColorStop(0.18,"rgba(251,191,36,0.95)");
+    bar.addColorStop(0.82,"rgba(251,191,36,0.95)"); bar.addColorStop(1,"transparent");
+    ctx.fillStyle=bar; ctx.fillRect(0,0,W,6);
+    ctx.fillStyle=bar; ctx.fillRect(0,H-6,W,6);
 
     resolve(c.toDataURL("image/png"));
   });
