@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { trackPixCopy, trackSocialClick } from "../lib/analytics";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const LOGO_FULL =
   "https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/assets/branding/logo.png";
@@ -267,36 +268,46 @@ const CSS = `
     margin-top: 10px;
   }
 
-  /* ── Galeria ── */
-  .hm-gallery-grid {
-    display: grid;
-    gap: 6px;
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .hm-gallery-item {
-    display: block; text-decoration: none;
-    border-radius: 8px; overflow: hidden;
+  /* ── Carrossel Galeria ── */
+  @keyframes hmSlNext { from{opacity:0;transform:translateX(5%)} to{opacity:1;transform:translateX(0)} }
+  @keyframes hmSlPrev { from{opacity:0;transform:translateX(-5%)} to{opacity:1;transform:translateX(0)} }
+
+  .hm-carousel-wrap {
+    position: relative; overflow: hidden;
+    border-radius: 14px; aspect-ratio: 16/9;
     background: var(--border);
-    position: relative;
-    aspect-ratio: 1;
   }
-  .hm-gallery-item:first-child {
-    grid-column: span 2;
-    grid-row: span 2;
-    border-radius: 10px;
+  .hm-carousel-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
   }
-  .hm-gallery-img {
-    width: 100%; height: 100%; object-fit: cover;
-    transition: transform 0.3s ease;
-    display: block;
-  }
-  .hm-gallery-item:hover .hm-gallery-img { transform: scale(1.03); }
-  .hm-gallery-overlay {
+  .hm-carousel-img-next { animation: hmSlNext 480ms cubic-bezier(.16,1,.3,1) forwards; }
+  .hm-carousel-img-prev { animation: hmSlPrev 480ms cubic-bezier(.16,1,.3,1) forwards; }
+  .hm-carousel-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.25) 100%);
-    opacity: 0; transition: opacity 0.2s;
+    background: linear-gradient(to top, rgba(10,22,48,.5) 0%, transparent 45%);
+    pointer-events: none; z-index: 2;
   }
-  .hm-gallery-item:hover .hm-gallery-overlay { opacity: 1; }
+  .hm-carousel-nav {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 10;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.18);
+    color: #fff; display: grid; place-items: center; cursor: pointer;
+    transition: background .18s;
+  }
+  .hm-carousel-nav:hover { background: rgba(0,0,0,.55); }
+  .hm-carousel-nav-l { left: 8px; }
+  .hm-carousel-nav-r { right: 8px; }
+  .hm-carousel-dots {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; z-index: 10;
+  }
+  .hm-carousel-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.4); border: none; padding: 0; cursor: pointer;
+    transition: background .22s, transform .22s;
+  }
+  .hm-carousel-dot-active { background: rgba(251,191,36,.95); transform: scale(1.3); }
 
   /* ── Localização ── */
   .hm-location {
@@ -456,6 +467,11 @@ export default function Home() {
   const [loadingNotices, setLoadingNotices] = useState(true);
   const [galleryPreview, setGalleryPreview] = useState<string[]>([]);
   const [loadingGallery, setLoadingGallery] = useState(true);
+  const [slide, setSlide]                   = useState(0);
+  const [slideDir, setSlideDir]             = useState<'next'|'prev'>('next');
+  const [sliding, setSliding]               = useState(false);
+  const intervalRef                          = useRef<ReturnType<typeof setInterval>|null>(null);
+  const touchStartRef                        = useRef<number|null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -472,20 +488,57 @@ export default function Home() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.storage
-        .from(GALLERY_BUCKET)
-        .list(GALLERY_PATH, { limit: 30, sortBy: { column: "created_at", order: "desc" } });
-      if (!error && data) {
-        const urls = data
-          .filter((f) => !!f.name && !f.name.startsWith("."))
-          .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
-          .slice(0, 6)
-          .map((f) => supabase.storage.from(GALLERY_BUCKET).getPublicUrl(`${GALLERY_PATH}/${f.name}`).data.publicUrl);
-        setGalleryPreview(urls);
+      try {
+        const res = await fetch("/.netlify/functions/drive-fotos");
+        const json = await res.json();
+        const urls: string[] = (json.fotos ?? []).map((f: { url: string }) => f.url);
+        setGalleryPreview(urls.slice(0, 7));
+      } catch {
+        setGalleryPreview([]);
+      } finally {
+        setLoadingGallery(false);
       }
-      setLoadingGallery(false);
     })();
   }, []);
+
+  const goSlide = useCallback((dir: 'next'|'prev') => {
+    if (sliding || galleryPreview.length < 2) return;
+    setSliding(true);
+    setSlideDir(dir);
+    setSlide(prev =>
+      dir === 'next'
+        ? (prev + 1 >= galleryPreview.length ? 0 : prev + 1)
+        : (prev - 1 < 0 ? galleryPreview.length - 1 : prev - 1)
+    );
+    setTimeout(() => setSliding(false), 480);
+  }, [sliding, galleryPreview.length]);
+
+  useEffect(() => {
+    if (galleryPreview.length < 2) return;
+    intervalRef.current = setInterval(() => goSlide('next'), 4500);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [galleryPreview.length, goSlide]);
+
+  const resetInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (galleryPreview.length < 2) return;
+    intervalRef.current = setInterval(() => goSlide('next'), 4500);
+  };
+  const manualSlide = (dir: 'next'|'prev') => { resetInterval(); goSlide(dir); };
+  const goToSlide = (i: number) => {
+    if (i === slide) return;
+    resetInterval();
+    setSlideDir(i > slide ? 'next' : 'prev');
+    setSliding(true); setSlide(i);
+    setTimeout(() => setSliding(false), 480);
+  };
+  const onTouchStart = (e: React.TouchEvent) => { touchStartRef.current = e.touches[0].clientX; };
+  const onTouchEnd   = (e: React.TouchEvent) => {
+    if (touchStartRef.current === null) return;
+    const diff = touchStartRef.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 44) manualSlide(diff > 0 ? 'next' : 'prev');
+    touchStartRef.current = null;
+  };
 
   const pastorWhatsUrl = `https://wa.me/${PASTOR_WHATSAPP_NUMBER}?text=${encodeURIComponent("Olá, pastor! Gostaria de falar com o senhor.")}`;
   const shareLocationWhatsUrl = `https://wa.me/?text=${encodeURIComponent(`Localização da igreja:\n${CHURCH_MAPS_LINK}\n\nEndereço:\n${ADDRESS_LINE_1}\n${ADDRESS_LINE_2}`)}`;
@@ -588,7 +641,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Galeria */}
+          {/* Galeria — Carrossel */}
           <div>
             <div className="hm-section-header">
               <div>
@@ -603,13 +656,29 @@ export default function Home() {
             ) : galleryPreview.length === 0 ? (
               <div className="hm-empty">As fotos do último culto aparecerão aqui assim que forem publicadas.</div>
             ) : (
-              <div className="hm-gallery-grid">
-                {galleryPreview.map((url) => (
-                  <Link key={url} to="/galeria" className="hm-gallery-item">
-                    <img src={url} alt="Foto do culto" className="hm-gallery-img" loading="lazy" />
-                    <div className="hm-gallery-overlay" />
-                  </Link>
-                ))}
+              <div className="hm-carousel-wrap" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+                <img
+                  key={slide}
+                  src={galleryPreview[slide]}
+                  alt={`Foto ${slide + 1}`}
+                  className={`hm-carousel-img ${slideDir === 'next' ? 'hm-carousel-img-next' : 'hm-carousel-img-prev'}`}
+                />
+                <div className="hm-carousel-overlay" />
+                {galleryPreview.length > 1 && (
+                  <>
+                    <button className="hm-carousel-nav hm-carousel-nav-l" onClick={() => manualSlide('prev')} aria-label="Anterior">
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button className="hm-carousel-nav hm-carousel-nav-r" onClick={() => manualSlide('next')} aria-label="Próximo">
+                      <ChevronRight size={16} />
+                    </button>
+                    <div className="hm-carousel-dots">
+                      {galleryPreview.map((_, i) => (
+                        <button key={i} className={`hm-carousel-dot ${i === slide ? 'hm-carousel-dot-active' : ''}`} onClick={() => goToSlide(i)} aria-label={`Slide ${i + 1}`} />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
