@@ -445,29 +445,29 @@ export default function Admin() {
     corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
 
     // ── ELEMENTO DECORATIVO: arco + linha central ──
-    const CX=W/2, CY=260;
+    const CX=W/2, CY=190;
 
     // Glow sutil centralizado
-    const cg = ctx.createRadialGradient(CX,CY,0,CX,CY,160);
+    const cg = ctx.createRadialGradient(CX,CY+25,0,CX,CY+25,130);
     cg.addColorStop(0,"rgba(251,191,36,0.10)"); cg.addColorStop(0.6,"rgba(251,191,36,0.03)"); cg.addColorStop(1,"transparent");
     ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
 
     // Arco decorativo
     ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.45)"; ctx.lineWidth=1.5; ctx.lineCap="round";
-    ctx.beginPath(); ctx.arc(CX,CY+35,100,-Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(CX,CY+25,82,-Math.PI,0); ctx.stroke();
     ctx.restore();
     ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.18)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY+35,118,-Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(CX,CY+25,96,-Math.PI,0); ctx.stroke();
     ctx.restore();
 
     // Linha horizontal central
-    const lg = ctx.createLinearGradient(CX-150,CY+35,CX+150,CY+35);
+    const lg = ctx.createLinearGradient(CX-120,CY+25,CX+120,CY+25);
     lg.addColorStop(0,"transparent"); lg.addColorStop(0.2,"rgba(251,191,36,0.55)"); lg.addColorStop(0.8,"rgba(251,191,36,0.55)"); lg.addColorStop(1,"transparent");
-    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-150,CY+34,300,1.5); ctx.restore();
+    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-120,CY+24,240,1.5); ctx.restore();
 
     // Ponto central
     ctx.save(); ctx.globalAlpha=0.70; ctx.fillStyle="#fbbf24";
-    ctx.beginPath(); ctx.arc(CX,CY+35,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(CX,CY+25,3.5,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     // ── LINHAS SEPARADORAS CLEAN ──
@@ -477,9 +477,9 @@ export default function Admin() {
       g.addColorStop(0.85,"rgba(251,191,36,"+alpha+")"); g.addColorStop(1,"transparent");
       ctx.save(); ctx.fillStyle=g; ctx.fillRect(pad+20,y-0.75,W-pad*2-40,1.5); ctx.restore();
     };
-    hLine(CY+160,0.55);   // abaixo do elemento decorativo
-    hLine(CY-60,0.22);    // acima do elemento (sutil)
-    hLine(H*0.86,0.22);   // divisor inferior
+    hLine(CY+126,0.50);   // abaixo do elemento
+    hLine(CY-44,0.18);    // acima (sutil)
+    hLine(H*0.86,0.20);   // divisor inferior
 
     // Barra dourada sólida no topo e base
     const bar = ctx.createLinearGradient(0,0,W,0);
@@ -512,28 +512,26 @@ export default function Admin() {
     // Slide 1: Capa
     {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,378); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",348,"300 22px Georgia,serif","rgba(147,197,253,0.55)");
-      dvAmberLine(ctx,360);
-      dvCenter(ctx,"DEVOCIONAL  DO  DIA",415,"700 21px sans-serif","rgba(96,165,250,0.72)");
-      dvCenter(ctx,d.dateLabel,455,"italic 300 22px Georgia,serif","rgba(147,197,253,0.40)");
-      dvHline(ctx,482);
-      let ty=520;
+      dvHline(ctx,326); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",300,"300 21px Georgia,serif","rgba(147,197,253,0.55)");
+      dvAmberLine(ctx,312);
+      dvCenter(ctx,"DEVOCIONAL  DO  DIA",358,"700 20px sans-serif","rgba(96,165,250,0.72)");
+      dvCenter(ctx,d.dateLabel,394,"italic 300 21px Georgia,serif","rgba(147,197,253,0.40)");
+      dvHline(ctx,418);
+      let ty=455;
       if(d.title){
-        const tl=dvWrap(ctx,d.title,W-140,"600 64px Georgia,serif");
-        ctx.save(); ctx.font="600 64px Georgia,serif"; ctx.fillStyle="#dce8ff";
-        ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=26;
-        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=84;}); ctx.restore(); ty+=20;
+        const tl=dvWrap(ctx,d.title,W-140,"600 60px Georgia,serif");
+        ctx.save(); ctx.font="600 60px Georgia,serif"; ctx.fillStyle="#dce8ff";
+        ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=22;
+        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=76;}); ctx.restore(); ty+=14;
       }
-      dvCenter(ctx,"✦",ty,"22px serif","rgba(251,191,36,0.78)"); ty+=58;
-      ctx.save(); ctx.font="italic 120px Georgia,serif"; ctx.fillStyle="rgba(212,120,14,0.07)";
-      ctx.textAlign="left"; ctx.fillText("\u201C",82,ty+10); ctx.restore();
-      const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 40px Georgia,serif");
-      ctx.save(); ctx.font="italic 40px Georgia,serif"; ctx.fillStyle="rgba(214,231,255,0.93)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.14)"; ctx.shadowBlur=8;
-      vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore(); ty+=18;
-      dvHline(ctx,ty,0.18); ty+=52;
-      ctx.save(); ctx.font="600 36px Georgia,serif"; ctx.fillStyle="rgba(147,197,253,0.96)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(59,130,246,0.35)"; ctx.shadowBlur=14;
+      dvCenter(ctx,"✦",ty,"20px serif","rgba(251,191,36,0.78)"); ty+=46;
+      const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 38px Georgia,serif");
+      ctx.save(); ctx.font="italic 38px Georgia,serif"; ctx.fillStyle="rgba(214,231,255,0.93)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.14)"; ctx.shadowBlur=6;
+      vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=58;}); ctx.restore(); ty+=14;
+      dvHline(ctx,ty,0.18); ty+=44;
+      ctx.save(); ctx.font="600 34px Georgia,serif"; ctx.fillStyle="rgba(147,197,253,0.96)";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(59,130,246,0.35)"; ctx.shadowBlur=12;
       ctx.fillText(d.verseRef,W/2,ty); ctx.restore();
       dvDots(ctx,0,total,H);
       result.push(c.toDataURL("image/png"));
@@ -542,16 +540,16 @@ export default function Admin() {
     // Slides de reflexão
     const textSlide = (idx:number, bodyText:string, isCont:boolean, hasMore:boolean) => {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,368); dvCenter(ctx,"✝",335,"48px serif","rgba(147,197,253,0.72)");
-      ctx.save(); ctx.font="700 24px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,412); ctx.restore();
-      dvAmberLine(ctx,430);
-      let startY=490;
-      if(isCont){ dvCenter(ctx,"continuação",472,"italic 300 22px Georgia,serif","rgba(147,197,253,0.32)"); startY=510; }
-      const bl=dvWrap(ctx,bodyText,W-160,"400 36px Georgia,serif");
-      ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="rgba(186,214,255,0.82)"; ctx.textAlign="center";
-      let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
-      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-100,"italic 300 25px Georgia,serif","rgba(147,197,253,0.38)"); }
+      dvHline(ctx,316); dvCenter(ctx,"—",288,"36px serif","rgba(147,197,253,0.60)");
+      ctx.save(); ctx.font="700 22px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,354); ctx.restore();
+      dvAmberLine(ctx,370);
+      let startY=415;
+      if(isCont){ dvCenter(ctx,"continuação",400,"italic 300 21px Georgia,serif","rgba(147,197,253,0.32)"); startY=432; }
+      const bl=dvWrap(ctx,bodyText,W-160,"400 34px Georgia,serif");
+      ctx.save(); ctx.font="400 34px Georgia,serif"; ctx.fillStyle="rgba(186,214,255,0.82)"; ctx.textAlign="center";
+      let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=56;}); ctx.restore();
+      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-90,"italic 300 23px Georgia,serif","rgba(147,197,253,0.38)"); }
       dvDots(ctx,idx,total,H);
       result.push(c.toDataURL("image/png"));
     };
@@ -562,13 +560,13 @@ export default function Admin() {
     {
       const idx = body2 ? 3 : 2;
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,368); dvCenter(ctx,"🙏",335,"48px serif","rgba(147,197,253,0.72)");
-      ctx.save(); ctx.font="700 24px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,412); ctx.restore();
-      dvAmberLine(ctx,430);
-      const pl=dvWrap(ctx,d.prayer,W-160,"italic 36px Georgia,serif");
-      ctx.save(); ctx.font="italic 36px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.86)"; ctx.textAlign="center";
-      let ty=490; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+      dvHline(ctx,316); dvCenter(ctx,"🙏",288,"42px serif","rgba(147,197,253,0.72)");
+      ctx.save(); ctx.font="700 22px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,354); ctx.restore();
+      dvAmberLine(ctx,370);
+      const pl=dvWrap(ctx,d.prayer,W-160,"italic 34px Georgia,serif");
+      ctx.save(); ctx.font="italic 34px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.86)"; ctx.textAlign="center";
+      let ty=415; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=56;}); ctx.restore();
       dvDots(ctx,idx,total,H);
       result.push(c.toDataURL("image/png"));
     }

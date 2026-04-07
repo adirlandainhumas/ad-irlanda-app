@@ -60,31 +60,29 @@ function gerarStory(data: DevocionalData): Promise<string> {
     corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
 
     /* ── 3. Elemento decorativo: arco + linha central ── */
-    const CX=W/2, CY=300;
+    const CX=W/2, CY=200;
 
     // Glow sutil centralizado
-    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,200);
+    const cg=ctx.createRadialGradient(CX,CY+30,0,CX,CY+30,160);
     cg.addColorStop(0,"rgba(251,191,36,0.10)"); cg.addColorStop(0.6,"rgba(251,191,36,0.03)"); cg.addColorStop(1,"transparent");
     ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
 
-    // Arco superior decorativo
+    // Arco decorativo
     ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.45)"; ctx.lineWidth=1.5; ctx.lineCap="round";
-    ctx.beginPath(); ctx.arc(CX,CY+40,110,-Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(CX,CY+30,90,-Math.PI,0); ctx.stroke();
     ctx.restore();
-
-    // Arco externo mais suave
     ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.18)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY+40,130,-Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(CX,CY+30,106,-Math.PI,0); ctx.stroke();
     ctx.restore();
 
     // Linha horizontal central
-    const lg=ctx.createLinearGradient(CX-160,CY+40,CX+160,CY+40);
+    const lg=ctx.createLinearGradient(CX-140,CY+30,CX+140,CY+30);
     lg.addColorStop(0,"transparent"); lg.addColorStop(0.2,"rgba(251,191,36,0.55)"); lg.addColorStop(0.8,"rgba(251,191,36,0.55)"); lg.addColorStop(1,"transparent");
-    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-160,CY+39,320,1.5); ctx.restore();
+    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-140,CY+29,280,1.5); ctx.restore();
 
     // Ponto central
     ctx.save(); ctx.globalAlpha=0.7; ctx.fillStyle="#fbbf24";
-    ctx.beginPath(); ctx.arc(CX,CY+40,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(CX,CY+30,4,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     /* ── Helpers de texto ── */
@@ -110,49 +108,49 @@ function gerarStory(data: DevocionalData): Promise<string> {
     };
 
     /* ── 4. Cabeçalho ── */
-    const hdrY=CY+210;
-    center("M I N I S T É R I O   I R L A N D A",hdrY,"300 28px Georgia,serif","rgba(186,214,255,0.58)");
-    hLine(hdrY+20,0.45,true);
-    center("DEVOCIONAL  DO  DIA",hdrY+62,"700 26px sans-serif","rgba(147,197,253,0.75)");
-    center(data.dateLabel,hdrY+108,"italic 300 27px Georgia,serif","rgba(147,197,253,0.42)");
-    hLine(hdrY+142,0.30);
+    const hdrY=CY+148;
+    center("M I N I S T É R I O   I R L A N D A",hdrY,"300 26px Georgia,serif","rgba(186,214,255,0.58)");
+    hLine(hdrY+16,0.40,true);
+    center("DEVOCIONAL  DO  DIA",hdrY+50,"700 24px sans-serif","rgba(147,197,253,0.75)");
+    center(data.dateLabel,hdrY+90,"italic 300 25px Georgia,serif","rgba(147,197,253,0.42)");
+    hLine(hdrY+118,0.28);
 
     /* ── 5. Título ── */
-    let ty=hdrY+192;
+    let ty=hdrY+158;
     if(data.title){
-      const tlines=wrap(data.title,W-160,"600 68px Georgia,serif");
-      ctx.save(); ctx.font="600 68px Georgia,serif"; ctx.fillStyle="#dce8ff";
+      const tlines=wrap(data.title,W-160,"600 64px Georgia,serif");
+      ctx.save(); ctx.font="600 64px Georgia,serif"; ctx.fillStyle="#dce8ff";
       ctx.textAlign="center";
-      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=92;}); ctx.restore(); ty+=28;
+      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=82;}); ctx.restore(); ty+=14;
     }
 
     /* ── 6. Versículo ── */
-    hLine(ty,0.22,true); ty+=52;
-    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 44px Georgia,serif");
-    ctx.save(); ctx.font="italic 44px Georgia,serif"; ctx.fillStyle="rgba(220,234,255,0.92)";
+    hLine(ty,0.22,true); ty+=42;
+    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 42px Georgia,serif");
+    ctx.save(); ctx.font="italic 42px Georgia,serif"; ctx.fillStyle="rgba(220,234,255,0.92)";
     ctx.textAlign="center";
-    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=68;}); ctx.restore(); ty+=20;
+    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore(); ty+=10;
 
-    hLine(ty,0.38,true); ty+=52;
-    ctx.save(); ctx.font="700 40px Georgia,serif"; ctx.fillStyle="rgba(251,191,36,0.95)";
+    hLine(ty,0.38,true); ty+=44;
+    ctx.save(); ctx.font="700 38px Georgia,serif"; ctx.fillStyle="rgba(251,191,36,0.95)";
     ctx.textAlign="center";
-    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=72;
+    ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=56;
 
-    hLine(ty,0.20); ty+=60;
+    hLine(ty,0.18); ty+=44;
 
     /* ── 7. Corpo (resumido) ── */
     const shortBody=data.body.length>280?data.body.slice(0,280).replace(/\s\w+$/,"")+"…":data.body;
-    const blines=wrap(shortBody,W-200,"400 36px Georgia,serif");
-    ctx.save(); ctx.font="400 36px Georgia,serif";
+    const blines=wrap(shortBody,W-200,"400 34px Georgia,serif");
+    ctx.save(); ctx.font="400 34px Georgia,serif";
     ctx.fillStyle="rgba(186,214,255,0.70)"; ctx.textAlign="center";
-    blines.slice(0,7).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=58;}); ctx.restore();
+    blines.slice(0,7).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore();
 
     /* ── 8. Rodapé ── */
-    const footY=H-180;
-    hLine(footY-40,0.18);
-    ctx.save(); ctx.font="700 56px Georgia,serif"; ctx.textAlign="center";
+    const footY=H-140;
+    hLine(footY-32,0.16);
+    ctx.save(); ctx.font="700 50px Georgia,serif"; ctx.textAlign="center";
     ctx.fillStyle="rgba(147,197,253,0.90)";
-    ctx.fillText("#AOGIM",W/2,footY+28); ctx.restore();
+    ctx.fillText("#AOGIM",W/2,footY+20); ctx.restore();
 
     /* ── 9. Barras âmbar topo e base ── */
     const bar=ctx.createLinearGradient(0,0,W,0);
