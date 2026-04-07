@@ -400,128 +400,92 @@ export default function Admin() {
     c.width=W; c.height=H;
     const ctx = c.getContext("2d")!;
 
-    // ── FUNDO: gradiente profundo escuro-azul ──
-    const bg = ctx.createLinearGradient(0,0,W*0.4,H);
-    bg.addColorStop(0,"#06091f"); bg.addColorStop(0.5,"#080d2a"); bg.addColorStop(1,"#050718");
+    // ── FUNDO: azul profundo com claridade no topo (estilo aurora) ──
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,"#0f1f4e");
+    bg.addColorStop(0.38,"#0b1535");
+    bg.addColorStop(0.72,"#080e22");
+    bg.addColorStop(1,"#050918");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    // ── FAIXA LATERAL ESQUERDA (vertical, âmbar difuso) ──
-    const sideL = ctx.createLinearGradient(0,0,180,0);
-    sideL.addColorStop(0,"rgba(251,191,36,0.07)"); sideL.addColorStop(1,"transparent");
-    ctx.fillStyle=sideL; ctx.fillRect(0,0,180,H);
+    // Claridade dourada sutil no topo (como o amanhecer)
+    const dawn = ctx.createRadialGradient(W/2,-60,0,W/2,-60,W*0.72);
+    dawn.addColorStop(0,"rgba(251,191,36,0.22)");
+    dawn.addColorStop(0.45,"rgba(217,119,6,0.07)");
+    dawn.addColorStop(1,"transparent");
+    ctx.fillStyle=dawn; ctx.fillRect(0,0,W,H*0.65);
 
-    // ── FAIXA LATERAL DIREITA ──
-    const sideR = ctx.createLinearGradient(W,0,W-180,0);
-    sideR.addColorStop(0,"rgba(96,165,250,0.06)"); sideR.addColorStop(1,"transparent");
-    ctx.fillStyle=sideR; ctx.fillRect(W-180,0,180,H);
-
-    // ── GRID DE PONTOS (textura moderna) ──
-    ctx.save(); ctx.fillStyle="rgba(147,197,253,1)";
-    for(let x=48;x<W;x+=72){
-      for(let y=48;y<H;y+=72){
-        ctx.globalAlpha=0.028+(Math.random()*0.018);
-        ctx.beginPath(); ctx.arc(x,y,1.2,0,Math.PI*2); ctx.fill();
-      }
-    }
-    ctx.restore();
-
-    // ── ESTRELAS finas ──
-    ctx.save();
-    for(let i=0;i<55;i++){
-      const px=Math.random()*W, py=Math.random()*H*0.72, pr=Math.random()*1.4+0.2;
-      ctx.globalAlpha=Math.random()*0.42+0.06;
-      ctx.fillStyle=i<10?`hsl(${40+Math.random()*12},95%,${78+Math.random()*16}%)`:
-                         `hsl(${210+Math.random()*26},80%,${72+Math.random()*24}%)`;
-      ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-
-    // ── EMBLEMA CENTRAL: sol/luz moderno ──
-    const CX=W/2, CY=248;
-
-    // Halo externo difuso
-    const halo=ctx.createRadialGradient(CX,CY,0,CX,CY,310);
-    halo.addColorStop(0,"rgba(251,191,36,0.13)"); halo.addColorStop(0.42,"rgba(96,165,250,0.05)"); halo.addColorStop(1,"transparent");
-    ctx.fillStyle=halo; ctx.fillRect(0,0,W,H);
-
-    // Raios irradiantes (16 raios, alternando grosso/fino)
-    ctx.save(); ctx.translate(CX,CY);
-    for(let i=0;i<16;i++){
-      const angle=(i/16)*Math.PI*2 - Math.PI/2;
-      const thick=i%2===0;
-      ctx.globalAlpha=thick ? 0.22 : 0.10;
-      ctx.strokeStyle=thick ? "#fbbf24" : "#93c5fd";
-      ctx.lineWidth=thick ? 1.8 : 0.9;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(angle)*72, Math.sin(angle)*72);
-      ctx.lineTo(Math.cos(angle)*185, Math.sin(angle)*185);
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    // Anel externo duplo
-    ctx.save();
-    ctx.globalAlpha=0.38; ctx.strokeStyle="#fbbf24"; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(CX,CY,185,0,Math.PI*2); ctx.stroke();
-    ctx.globalAlpha=0.14; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY,200,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-
-    // Anel interno
-    ctx.save();
-    ctx.globalAlpha=0.55; ctx.strokeStyle="#fbbf24"; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.arc(CX,CY,65,0,Math.PI*2); ctx.stroke();
-    ctx.globalAlpha=0.20; ctx.strokeStyle="#93c5fd"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY,72,0,Math.PI*2); ctx.stroke();
-    ctx.restore();
-
-    // Núcleo luminoso
-    const core=ctx.createRadialGradient(CX,CY,0,CX,CY,65);
-    core.addColorStop(0,"rgba(255,220,80,0.26)"); core.addColorStop(0.5,"rgba(251,191,36,0.10)"); core.addColorStop(1,"transparent");
-    ctx.fillStyle=core; ctx.fillRect(0,0,W,H);
-
-    // Cruz central fina (4 traços em X)
-    ctx.save(); ctx.translate(CX,CY); ctx.globalAlpha=0.45; ctx.strokeStyle="#fbbf24"; ctx.lineWidth=1.2;
-    [[0,1],[Math.PI/2,1],[Math.PI/4,0.6],[Math.PI*3/4,0.6]].forEach(([a,op])=>{
-      ctx.globalAlpha=0.45*op;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a)*12,Math.sin(a)*12); ctx.lineTo(Math.cos(a)*52,Math.sin(a)*52);
-      ctx.moveTo(Math.cos(a+Math.PI)*12,Math.sin(a+Math.PI)*12); ctx.lineTo(Math.cos(a+Math.PI)*52,Math.sin(a+Math.PI)*52);
-      ctx.stroke();
-    });
-    ctx.restore();
-
-    // ── COLUNA DE LUZ (beam vertical) ──
-    const beam=ctx.createLinearGradient(CX,0,CX,H*0.55);
-    beam.addColorStop(0,"rgba(251,191,36,0.16)"); beam.addColorStop(0.25,"rgba(251,191,36,0.07)"); beam.addColorStop(1,"transparent");
-    ctx.save(); ctx.fillStyle=beam;
-    ctx.beginPath();
-    ctx.moveTo(CX-55,0); ctx.lineTo(CX+55,0);
-    ctx.lineTo(CX+240,H*0.55); ctx.lineTo(CX-240,H*0.55);
-    ctx.closePath(); ctx.fill(); ctx.restore();
-
-    // ── LINHAS HORIZONTAIS DECORATIVAS ──
-    const hline=(y:number,alpha:number,color="rgba(251,191,36,1)")=>{
-      const g=ctx.createLinearGradient(0,y,W,y);
-      g.addColorStop(0,"transparent"); g.addColorStop(0.18,color); g.addColorStop(0.82,color); g.addColorStop(1,"transparent");
-      ctx.save(); ctx.globalAlpha=alpha; ctx.fillStyle=g; ctx.fillRect(0,y-0.7,W,1.4); ctx.restore();
-    };
-    hline(0,0.82);          // topo
-    hline(H,0.82);          // base
-    hline(CY-205,0.18);     // acima do emblema
-    hline(CY+205,0.18);     // abaixo do emblema
-
-    // ── BARRA ÂMBAR ESPESSA NO TOPO ──
-    const tb=ctx.createLinearGradient(0,0,W,0);
-    tb.addColorStop(0,"transparent"); tb.addColorStop(0.22,"rgba(251,191,36,0.92)"); tb.addColorStop(0.78,"rgba(251,191,36,0.92)"); tb.addColorStop(1,"transparent");
-    ctx.fillStyle=tb; ctx.fillRect(0,0,W,5);
-    // Barra base espelho
-    ctx.fillStyle=tb; ctx.fillRect(0,H-5,W,5);
-
-    // ── VINHETA RADIAL ──
-    const vig=ctx.createRadialGradient(W/2,H/2,H*0.18,W/2,H/2,H*0.88);
-    vig.addColorStop(0,"transparent"); vig.addColorStop(1,"rgba(2,4,16,0.48)");
+    // Vinheta suave nas bordas
+    const vig = ctx.createRadialGradient(W/2,H*0.5,H*0.15,W/2,H*0.5,H*0.82);
+    vig.addColorStop(0,"transparent"); vig.addColorStop(1,"rgba(3,6,18,0.55)");
     ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+
+    // ── MOLDURA ELEGANTE ──
+    const pad=64;
+    // Borda externa fina
+    ctx.save();
+    ctx.strokeStyle="rgba(251,191,36,0.28)";
+    ctx.lineWidth=1;
+    ctx.strokeRect(pad,pad,W-pad*2,H-pad*2);
+    // Borda interna ainda mais fina
+    ctx.strokeStyle="rgba(251,191,36,0.10)";
+    ctx.lineWidth=0.5;
+    ctx.strokeRect(pad+10,pad+10,W-pad*2-20,H-pad*2-20);
+    ctx.restore();
+
+    // Cantos decorativos em L
+    const cs=52;
+    const corner=(x:number,y:number,sx:number,sy:number)=>{
+      ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.85)"; ctx.lineWidth=2.5; ctx.lineCap="round";
+      ctx.beginPath();
+      ctx.moveTo(x+sx*cs,y); ctx.lineTo(x,y); ctx.lineTo(x,y+sy*cs);
+      ctx.stroke(); ctx.restore();
+    };
+    corner(pad,pad,1,1); corner(W-pad,pad,-1,1);
+    corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
+
+    // ── CRUZ ELEGANTE E SIMPLES ──
+    const CX=W/2, CY=270;
+    const cH=96, cW=62, cT=11, cArm=30;
+    // Brilho difuso atrás da cruz
+    const cg = ctx.createRadialGradient(CX,CY,0,CX,CY,130);
+    cg.addColorStop(0,"rgba(251,191,36,0.14)"); cg.addColorStop(0.6,"rgba(251,191,36,0.04)"); cg.addColorStop(1,"transparent");
+    ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
+    // Cruz preenchida (fill sutil)
+    ctx.save(); ctx.globalAlpha=0.09; ctx.fillStyle="#fbbf24";
+    ctx.fillRect(CX-cT/2,CY-cH/2,cT,cH);
+    ctx.fillRect(CX-cW/2,CY-cH/2+cArm,cW,cT);
+    ctx.restore();
+    // Cruz stroke principal
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.82)"; ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.lineJoin="round";
+    // Traço vertical
+    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
+    // Traço horizontal
+    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    ctx.restore();
+    // Cruz stroke sutil extra (espessura)
+    ctx.save(); ctx.strokeStyle="rgba(255,255,255,0.12)"; ctx.lineWidth=6; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    ctx.restore();
+
+    // ── LINHAS SEPARADORAS CLEAN ──
+    const hLine=(y:number,alpha:number)=>{
+      const g=ctx.createLinearGradient(pad+20,y,W-pad-20,y);
+      g.addColorStop(0,"transparent"); g.addColorStop(0.15,"rgba(251,191,36,"+alpha+")");
+      g.addColorStop(0.85,"rgba(251,191,36,"+alpha+")"); g.addColorStop(1,"transparent");
+      ctx.save(); ctx.fillStyle=g; ctx.fillRect(pad+20,y-0.75,W-pad*2-40,1.5); ctx.restore();
+    };
+    hLine(CY+cH/2+36,0.55);   // logo abaixo da cruz
+    hLine(CY-cH/2-36,0.22);   // logo acima da cruz (sutil)
+    hLine(H*0.86,0.22);        // divisor inferior
+
+    // Barra dourada sólida no topo e base
+    const bar = ctx.createLinearGradient(0,0,W,0);
+    bar.addColorStop(0,"transparent"); bar.addColorStop(0.18,"rgba(251,191,36,0.95)");
+    bar.addColorStop(0.82,"rgba(251,191,36,0.95)"); bar.addColorStop(1,"transparent");
+    ctx.fillStyle=bar; ctx.fillRect(0,0,W,5);
+    ctx.fillStyle=bar; ctx.fillRect(0,H-5,W,5);
 
     return [c, ctx];
   }

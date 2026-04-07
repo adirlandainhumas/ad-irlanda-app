@@ -32,17 +32,29 @@ const Gallery: React.FC = () => {
 
   const fetchFeatured = async () => {
     setFeaturedLoading(true);
-    const { data } = await supabase.storage.from('galeria').list('destaque', {
+    // Tenta carregar da pasta destaque/ primeiro
+    const { data: destaqueData } = await supabase.storage.from('galeria').list('destaque', {
       limit: 7, sortBy: { column: 'name', order: 'asc' },
     });
-    if (data) {
-      const base = STORAGE_BASE_URL.replace('ultimo-culto/', 'destaque/');
-      setFeatured(
-        data
-          .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
-          .map(f => `https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/galeria/destaque/${encodeURIComponent(f.name)}`)
-      );
+    const destaquePhotos = (destaqueData ?? [])
+      .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+      .map(f => `https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/galeria/destaque/${encodeURIComponent(f.name)}`);
+
+    if (destaquePhotos.length >= 3) {
+      setFeatured(destaquePhotos);
+      setFeaturedLoading(false);
+      return;
     }
+
+    // Fallback: usa as fotos mais recentes de ultimo-culto/
+    const { data: cultoData } = await supabase.storage.from('galeria').list('ultimo-culto', {
+      limit: 7, sortBy: { column: 'name', order: 'desc' },
+    });
+    const cultoPhotos = (cultoData ?? [])
+      .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
+      .map(f => `https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/galeria/ultimo-culto/${encodeURIComponent(f.name)}`);
+
+    setFeatured([...destaquePhotos, ...cultoPhotos].slice(0, 7));
     setFeaturedLoading(false);
   };
 
