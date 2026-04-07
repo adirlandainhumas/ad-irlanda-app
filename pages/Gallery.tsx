@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 
 const DRIVE_URL = "https://drive.google.com/drive/folders/1rvTtzvidSVv-95O14-z90W6Foz1K9l7n?usp=sharing";
@@ -20,31 +19,16 @@ const Gallery: React.FC = () => {
 
   const fetchFeatured = async () => {
     setFeaturedLoading(true);
-
-    // Tenta carregar da pasta destaque/ primeiro
-    const { data: destaqueData } = await supabase.storage.from('galeria').list('destaque', {
-      limit: 7, sortBy: { column: 'name', order: 'asc' },
-    });
-    const destaquePhotos = (destaqueData ?? [])
-      .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
-      .map(f => `https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/galeria/destaque/${encodeURIComponent(f.name)}`);
-
-    if (destaquePhotos.length >= 3) {
-      setFeatured(destaquePhotos);
+    try {
+      const res = await fetch("/.netlify/functions/drive-fotos");
+      const json = await res.json();
+      const urls: string[] = (json.fotos ?? []).map((f: { url: string }) => f.url);
+      setFeatured(urls.slice(0, 7));
+    } catch {
+      setFeatured([]);
+    } finally {
       setFeaturedLoading(false);
-      return;
     }
-
-    // Fallback: fotos mais recentes de ultimo-culto/
-    const { data: cultoData } = await supabase.storage.from('galeria').list('ultimo-culto', {
-      limit: 7, sortBy: { column: 'name', order: 'desc' },
-    });
-    const cultoPhotos = (cultoData ?? [])
-      .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f.name))
-      .map(f => `https://llevczjsjurdfejwcqpo.supabase.co/storage/v1/object/public/galeria/ultimo-culto/${encodeURIComponent(f.name)}`);
-
-    setFeatured([...destaquePhotos, ...cultoPhotos].slice(0, 7));
-    setFeaturedLoading(false);
   };
 
   const goSlide = useCallback((dir: 'next'|'prev') => {
