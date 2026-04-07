@@ -59,31 +59,32 @@ function gerarStory(data: DevocionalData): Promise<string> {
     corner(pad,pad,1,1); corner(W-pad,pad,-1,1);
     corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
 
-    /* ── 3. Cruz simples e elegante ── */
-    const CX=W/2, CY=340;
-    const cH=110, cW=74, cT=13, cArm=36;
+    /* ── 3. Elemento decorativo: arco + linha central ── */
+    const CX=W/2, CY=300;
 
-    // Brilho suave atrás da cruz
-    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,160);
-    cg.addColorStop(0,"rgba(251,191,36,0.14)"); cg.addColorStop(0.55,"rgba(251,191,36,0.04)"); cg.addColorStop(1,"transparent");
+    // Glow sutil centralizado
+    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,200);
+    cg.addColorStop(0,"rgba(251,191,36,0.10)"); cg.addColorStop(0.6,"rgba(251,191,36,0.03)"); cg.addColorStop(1,"transparent");
     ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
 
-    // Cruz preenchida sutil
-    ctx.save(); ctx.globalAlpha=0.09; ctx.fillStyle="#fbbf24";
-    ctx.fillRect(CX-cT/2,CY-cH/2,cT,cH);
-    ctx.fillRect(CX-cW/2,CY-cH/2+cArm,cW,cT);
+    // Arco superior decorativo
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.45)"; ctx.lineWidth=1.5; ctx.lineCap="round";
+    ctx.beginPath(); ctx.arc(CX,CY+40,110,-Math.PI,0); ctx.stroke();
     ctx.restore();
 
-    // Cruz stroke branco suave (espessura)
-    ctx.save(); ctx.strokeStyle="rgba(255,255,255,0.10)"; ctx.lineWidth=8; ctx.lineCap="round";
-    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    // Arco externo mais suave
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.18)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(CX,CY+40,130,-Math.PI,0); ctx.stroke();
     ctx.restore();
 
-    // Cruz stroke dourado principal
-    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.85)"; ctx.lineWidth=2.5; ctx.lineCap="round";
-    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    // Linha horizontal central
+    const lg=ctx.createLinearGradient(CX-160,CY+40,CX+160,CY+40);
+    lg.addColorStop(0,"transparent"); lg.addColorStop(0.2,"rgba(251,191,36,0.55)"); lg.addColorStop(0.8,"rgba(251,191,36,0.55)"); lg.addColorStop(1,"transparent");
+    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-160,CY+39,320,1.5); ctx.restore();
+
+    // Ponto central
+    ctx.save(); ctx.globalAlpha=0.7; ctx.fillStyle="#fbbf24";
+    ctx.beginPath(); ctx.arc(CX,CY+40,4,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     /* ── Helpers de texto ── */
@@ -109,7 +110,7 @@ function gerarStory(data: DevocionalData): Promise<string> {
     };
 
     /* ── 4. Cabeçalho ── */
-    const hdrY=CY+cH/2+56;
+    const hdrY=CY+210;
     center("M I N I S T É R I O   I R L A N D A",hdrY,"300 28px Georgia,serif","rgba(186,214,255,0.58)");
     hLine(hdrY+20,0.45,true);
     center("DEVOCIONAL  DO  DIA",hdrY+62,"700 26px sans-serif","rgba(147,197,253,0.75)");

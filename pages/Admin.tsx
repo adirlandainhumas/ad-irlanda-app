@@ -444,29 +444,30 @@ export default function Admin() {
     corner(pad,pad,1,1); corner(W-pad,pad,-1,1);
     corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
 
-    // ── CRUZ ELEGANTE E SIMPLES ──
-    const CX=W/2, CY=270;
-    const cH=96, cW=62, cT=11, cArm=30;
-    // Brilho difuso atrás da cruz
-    const cg = ctx.createRadialGradient(CX,CY,0,CX,CY,130);
-    cg.addColorStop(0,"rgba(251,191,36,0.14)"); cg.addColorStop(0.6,"rgba(251,191,36,0.04)"); cg.addColorStop(1,"transparent");
+    // ── ELEMENTO DECORATIVO: arco + linha central ──
+    const CX=W/2, CY=260;
+
+    // Glow sutil centralizado
+    const cg = ctx.createRadialGradient(CX,CY,0,CX,CY,160);
+    cg.addColorStop(0,"rgba(251,191,36,0.10)"); cg.addColorStop(0.6,"rgba(251,191,36,0.03)"); cg.addColorStop(1,"transparent");
     ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
-    // Cruz preenchida (fill sutil)
-    ctx.save(); ctx.globalAlpha=0.09; ctx.fillStyle="#fbbf24";
-    ctx.fillRect(CX-cT/2,CY-cH/2,cT,cH);
-    ctx.fillRect(CX-cW/2,CY-cH/2+cArm,cW,cT);
+
+    // Arco decorativo
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.45)"; ctx.lineWidth=1.5; ctx.lineCap="round";
+    ctx.beginPath(); ctx.arc(CX,CY+35,100,-Math.PI,0); ctx.stroke();
     ctx.restore();
-    // Cruz stroke principal
-    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.82)"; ctx.lineWidth=2.2; ctx.lineCap="round"; ctx.lineJoin="round";
-    // Traço vertical
-    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
-    // Traço horizontal
-    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.18)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(CX,CY+35,118,-Math.PI,0); ctx.stroke();
     ctx.restore();
-    // Cruz stroke sutil extra (espessura)
-    ctx.save(); ctx.strokeStyle="rgba(255,255,255,0.12)"; ctx.lineWidth=6; ctx.lineCap="round";
-    ctx.beginPath(); ctx.moveTo(CX,CY-cH/2); ctx.lineTo(CX,CY+cH/2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(CX-cW/2,CY-cH/2+cArm+cT/2); ctx.lineTo(CX+cW/2,CY-cH/2+cArm+cT/2); ctx.stroke();
+
+    // Linha horizontal central
+    const lg = ctx.createLinearGradient(CX-150,CY+35,CX+150,CY+35);
+    lg.addColorStop(0,"transparent"); lg.addColorStop(0.2,"rgba(251,191,36,0.55)"); lg.addColorStop(0.8,"rgba(251,191,36,0.55)"); lg.addColorStop(1,"transparent");
+    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-150,CY+34,300,1.5); ctx.restore();
+
+    // Ponto central
+    ctx.save(); ctx.globalAlpha=0.70; ctx.fillStyle="#fbbf24";
+    ctx.beginPath(); ctx.arc(CX,CY+35,4,0,Math.PI*2); ctx.fill();
     ctx.restore();
 
     // ── LINHAS SEPARADORAS CLEAN ──
@@ -476,9 +477,9 @@ export default function Admin() {
       g.addColorStop(0.85,"rgba(251,191,36,"+alpha+")"); g.addColorStop(1,"transparent");
       ctx.save(); ctx.fillStyle=g; ctx.fillRect(pad+20,y-0.75,W-pad*2-40,1.5); ctx.restore();
     };
-    hLine(CY+cH/2+36,0.55);   // logo abaixo da cruz
-    hLine(CY-cH/2-36,0.22);   // logo acima da cruz (sutil)
-    hLine(H*0.86,0.22);        // divisor inferior
+    hLine(CY+160,0.55);   // abaixo do elemento decorativo
+    hLine(CY-60,0.22);    // acima do elemento (sutil)
+    hLine(H*0.86,0.22);   // divisor inferior
 
     // Barra dourada sólida no topo e base
     const bar = ctx.createLinearGradient(0,0,W,0);
