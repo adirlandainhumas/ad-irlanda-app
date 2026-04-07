@@ -16,7 +16,7 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// ─── Story 1080×1920 ─────────────────────────────────────────────────────────
+// ─── Story 1080×1920 — "Vitral Sagrado" ─────────────────────────────────────
 function gerarStory(data: DevocionalData): Promise<string> {
   return new Promise((resolve) => {
     const W=1080, H=1920;
@@ -24,50 +24,75 @@ function gerarStory(data: DevocionalData): Promise<string> {
     c.width=W; c.height=H;
     const ctx=c.getContext("2d")!;
 
-    // Fundo — azul noturno profundo
-    const bg=ctx.createLinearGradient(0,0,W*0.5,H);
-    bg.addColorStop(0,"#030f2b"); bg.addColorStop(0.35,"#041428");
-    bg.addColorStop(0.7,"#061d3e"); bg.addColorStop(1,"#020c1f");
+    /* ── 1. Fundo: gradiente azul noturno radial ── */
+    const bg=ctx.createRadialGradient(W/2,H*0.28,0,W/2,H*0.28,W*1.2);
+    bg.addColorStop(0,"#0a1e4a"); bg.addColorStop(0.4,"#040e26");
+    bg.addColorStop(1,"#010812");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    // Glow âmbar — canto superior (luz divina / amanhecer)
-    const ag=ctx.createRadialGradient(0,0,0,0,0,W*0.75);
-    ag.addColorStop(0,"rgba(212,120,14,0.15)");
-    ag.addColorStop(0.45,"rgba(212,120,14,0.05)");
-    ag.addColorStop(1,"transparent");
-    ctx.fillStyle=ag; ctx.fillRect(0,0,W,H);
-
-    // Glow azul — canto inferior direito
-    const bg2=ctx.createRadialGradient(W,H*0.7,0,W,H*0.7,W*0.85);
-    bg2.addColorStop(0,"rgba(30,64,175,0.2)");
-    bg2.addColorStop(1,"transparent");
-    ctx.fillStyle=bg2; ctx.fillRect(0,0,W,H);
-
-    // Grade geométrica sutil (arquitetura sacra)
-    ctx.save(); ctx.globalAlpha=0.04; ctx.strokeStyle="rgba(147,197,253,1)"; ctx.lineWidth=1;
-    for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-    ctx.restore();
-
-    // Estrelas — ~10% âmbar (vitral)
+    /* ── 2. Estrelas — ~12% âmbar ── */
     ctx.save();
-    for(let i=0;i<95;i++){
-      const px=Math.random()*W,py=Math.random()*H*0.82,pr=Math.random()*1.9+0.3;
-      ctx.globalAlpha=Math.random()*0.5+0.1;
-      ctx.fillStyle=i<10?`hsl(40,90%,${76+Math.random()*18}%)`:
-                         `hsl(${210+Math.random()*30},82%,${72+Math.random()*24}%)`;
+    for(let i=0;i<110;i++){
+      const px=Math.random()*W, py=Math.random()*H*0.75, pr=Math.random()*2+0.3;
+      ctx.globalAlpha=Math.random()*0.55+0.08;
+      ctx.fillStyle=i<14?`hsl(${38+Math.random()*14},95%,${72+Math.random()*20}%)`:
+                          `hsl(${210+Math.random()*28},85%,${70+Math.random()*26}%)`;
       ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
 
-    // Barra âmbar no topo — assinatura
-    const tb=ctx.createLinearGradient(0,0,W,0);
-    tb.addColorStop(0,"rgba(217,119,6,0.5)");
-    tb.addColorStop(0.5,"rgba(251,191,36,0.92)");
-    tb.addColorStop(1,"rgba(217,119,6,0.5)");
-    ctx.fillStyle=tb; ctx.fillRect(0,0,W,6);
+    /* ── 3. Cruz de Luz ── */
+    const CX=W/2, CY=380;
+    // Raios em cruz — vertical
+    const vg=ctx.createLinearGradient(CX,0,CX,CY*2.2);
+    vg.addColorStop(0,"rgba(251,191,36,0)"); vg.addColorStop(0.35,"rgba(251,191,36,0.18)");
+    vg.addColorStop(0.55,"rgba(255,215,80,0.42)"); vg.addColorStop(0.75,"rgba(251,191,36,0.18)"); vg.addColorStop(1,"rgba(251,191,36,0)");
+    ctx.save(); ctx.fillStyle=vg; ctx.fillRect(CX-22,0,44,CY*2.2); ctx.restore();
+    // Raios em cruz — horizontal
+    const hg2=ctx.createLinearGradient(0,CY,W,CY);
+    hg2.addColorStop(0,"rgba(251,191,36,0)"); hg2.addColorStop(0.25,"rgba(251,191,36,0.1)");
+    hg2.addColorStop(0.5,"rgba(251,191,36,0.28)"); hg2.addColorStop(0.75,"rgba(251,191,36,0.1)"); hg2.addColorStop(1,"rgba(251,191,36,0)");
+    ctx.save(); ctx.fillStyle=hg2; ctx.fillRect(0,CY-18,W,36); ctx.restore();
 
-    // Helpers
+    /* ── 4. Janela de Rosa (rosa geométrica) ── */
+    const R=185;
+    const drawRose=(alpha:number,strokeColor:string,lw:number)=>{
+      ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=strokeColor; ctx.lineWidth=lw;
+      // Anel externo
+      ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.stroke();
+      // 8 pétalas (círculos inscritos)
+      const pr=R*0.42, dist=R-pr;
+      for(let i=0;i<8;i++){
+        const a=(i/8)*Math.PI*2-Math.PI/2;
+        ctx.beginPath(); ctx.arc(CX+dist*Math.cos(a),CY+dist*Math.sin(a),pr,0,Math.PI*2); ctx.stroke();
+      }
+      // Anel interno
+      ctx.beginPath(); ctx.arc(CX,CY,R*0.22,0,Math.PI*2); ctx.stroke();
+      // 8 raios do anel interno ao externo
+      for(let i=0;i<8;i++){
+        const a=(i/8)*Math.PI*2-Math.PI/2;
+        ctx.beginPath();
+        ctx.moveTo(CX+R*0.22*Math.cos(a),CY+R*0.22*Math.sin(a));
+        ctx.lineTo(CX+R*Math.cos(a),CY+R*Math.sin(a));
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    drawRose(0.18,"rgba(96,165,250,1)",1);     // azul — camada base
+    drawRose(0.55,"rgba(251,191,36,1)",1.4);   // âmbar — camada principal
+
+    /* ── 5. Glow central da rosa ── */
+    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,R*0.8);
+    cg.addColorStop(0,"rgba(255,215,80,0.22)"); cg.addColorStop(0.45,"rgba(251,191,36,0.07)"); cg.addColorStop(1,"transparent");
+    ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
+
+    /* ── 6. Barra âmbar no topo ── */
+    const tb=ctx.createLinearGradient(0,0,W,0);
+    tb.addColorStop(0,"rgba(217,119,6,0.3)"); tb.addColorStop(0.35,"rgba(251,191,36,0.9)");
+    tb.addColorStop(0.65,"rgba(251,191,36,0.9)"); tb.addColorStop(1,"rgba(217,119,6,0.3)");
+    ctx.fillStyle=tb; ctx.fillRect(0,0,W,7);
+
+    /* ── Helpers de texto ── */
     const wrap=(text:string,maxW:number,font:string)=>{
       ctx.font=font;
       return text.split(" ").reduce((lines:string[],word)=>{
@@ -77,84 +102,76 @@ function gerarStory(data: DevocionalData): Promise<string> {
         return[...lines.slice(0,-1),test];
       },[""]).filter(Boolean);
     };
-    const center=(text:string,y:number,font:string,color:string,alpha=1)=>{
-      ctx.save(); ctx.globalAlpha=alpha; ctx.font=font;
-      ctx.fillStyle=color; ctx.textAlign="center";
+    const center=(text:string,y:number,font:string,color:string,alpha=1,sc?:string,sb?:number)=>{
+      ctx.save(); ctx.globalAlpha=alpha; ctx.font=font; ctx.fillStyle=color; ctx.textAlign="center";
+      if(sc){ctx.shadowColor=sc;ctx.shadowBlur=sb??0;}
       ctx.fillText(text,W/2,y); ctx.restore();
     };
-    const hline=(y:number,alpha=0.28)=>{
+    const hline=(y:number,alpha=0.25,color="rgba(120,170,255,1)")=>{
       ctx.save();
       const l=ctx.createLinearGradient(120,0,W-120,0);
-      l.addColorStop(0,"transparent"); l.addColorStop(0.5,`rgba(120,170,255,${alpha})`); l.addColorStop(1,"transparent");
-      ctx.strokeStyle=l; ctx.lineWidth=1;
+      l.addColorStop(0,"transparent"); l.addColorStop(0.5,color.replace("1)",`${alpha})`)); l.addColorStop(1,"transparent");
+      ctx.strokeStyle=l.toString(); ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(120,y); ctx.lineTo(W-120,y); ctx.stroke(); ctx.restore();
     };
-    const amberLine=(y:number,w=110)=>{
+    const amberDivider=(y:number)=>{
       ctx.save();
-      const l=ctx.createLinearGradient(W/2-w,0,W/2+w,0);
-      l.addColorStop(0,"transparent"); l.addColorStop(0.5,"rgba(251,191,36,0.55)"); l.addColorStop(1,"transparent");
-      ctx.strokeStyle=l; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(W/2-w,y); ctx.lineTo(W/2+w,y); ctx.stroke(); ctx.restore();
+      const l=ctx.createLinearGradient(W/2-90,0,W/2+90,0);
+      l.addColorStop(0,"transparent"); l.addColorStop(0.5,"rgba(251,191,36,0.65)"); l.addColorStop(1,"transparent");
+      ctx.strokeStyle=l.toString(); ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(W/2-90,y); ctx.lineTo(W/2+90,y); ctx.stroke(); ctx.restore();
     };
 
-    // Cabeçalho
-    hline(172);
-    center("M I N I S T É R I O   I R L A N D A",136,"300 24px Georgia,serif","rgba(147,197,253,0.55)");
-    amberLine(154);
-    center("DEVOCIONAL  DO  DIA",228,"700 23px sans-serif","rgba(96,165,250,0.72)");
-    center(data.dateLabel,278,"italic 300 25px Georgia,serif","rgba(147,197,253,0.40)");
-    hline(316);
+    /* ── 7. Cabeçalho ── */
+    const hdrY=CY+R+60;
+    center("M I N I S T É R I O   I R L A N D A",hdrY,"300 25px Georgia,serif","rgba(147,197,253,0.60)");
+    amberDivider(hdrY+22);
+    center("DEVOCIONAL  DO  DIA",hdrY+58,"700 22px sans-serif","rgba(96,165,250,0.72)");
+    center(data.dateLabel,hdrY+100,"italic 300 24px Georgia,serif","rgba(147,197,253,0.42)");
+    hline(hdrY+132);
 
-    // Título
-    let ty=390;
+    /* ── 8. Título ── */
+    let ty=hdrY+168;
     if(data.title){
-      const tlines=wrap(data.title,W-160,"600 60px Georgia,serif");
-      ctx.save(); ctx.font="600 60px Georgia,serif"; ctx.fillStyle="#dce8ff";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=24;
-      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=82;}); ctx.restore();
-      ty+=22;
+      const tlines=wrap(data.title,W-140,"600 62px Georgia,serif");
+      ctx.save(); ctx.font="600 62px Georgia,serif"; ctx.fillStyle="#e4eeff";
+      ctx.textAlign="center"; ctx.shadowColor="rgba(251,191,36,0.25)"; ctx.shadowBlur=22;
+      tlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=84;}); ctx.restore(); ty+=24;
     }
 
-    // Ornamento âmbar
-    center("✦",ty,"22px serif","rgba(251,191,36,0.78)"); ty+=55;
+    /* ── 9. Versículo ── */
+    center("✦",ty,"22px serif","rgba(251,191,36,0.85)"); ty+=56;
+    ctx.save(); ctx.font="italic 112px Georgia,serif"; ctx.fillStyle="rgba(212,120,14,0.07)";
+    ctx.textAlign="left"; ctx.fillText("\u201C",90,ty+8); ctx.restore();
+    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 42px Georgia,serif");
+    ctx.save(); ctx.font="italic 42px Georgia,serif"; ctx.fillStyle="rgba(220,234,255,0.94)";
+    ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.15)"; ctx.shadowBlur=10;
+    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=64;}); ctx.restore(); ty+=16;
 
-    // Aspas decorativas (toque âmbar)
-    ctx.save(); ctx.font="italic 115px Georgia,serif"; ctx.fillStyle="rgba(212,120,14,0.07)";
-    ctx.textAlign="left"; ctx.fillText("\u201C",90,ty+12); ctx.restore();
-
-    // Versículo
-    const vlines=wrap(`"${data.verseText}"`,W-200,"italic 40px Georgia,serif");
-    ctx.save(); ctx.font="italic 40px Georgia,serif";
-    ctx.fillStyle="rgba(214,231,255,0.93)"; ctx.textAlign="center";
-    ctx.shadowColor="rgba(30,64,175,0.14)"; ctx.shadowBlur=8;
-    vlines.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore();
-    ty+=16;
-
-    hline(ty,0.18); ty+=50;
-    ctx.save(); ctx.font="600 35px Georgia,serif"; ctx.fillStyle="rgba(147,197,253,0.96)";
-    ctx.textAlign="center"; ctx.shadowColor="rgba(59,130,246,0.35)"; ctx.shadowBlur=14;
+    // Ref em âmbar
+    amberDivider(ty); ty+=48;
+    ctx.save(); ctx.font="700 38px Georgia,serif"; ctx.fillStyle="rgba(251,191,36,0.95)";
+    ctx.textAlign="center"; ctx.shadowColor="rgba(217,119,6,0.5)"; ctx.shadowBlur=16;
     ctx.fillText(data.verseRef,W/2,ty); ctx.restore(); ty+=60;
 
-    center("✦",ty,"20px serif","rgba(251,191,36,0.55)"); ty+=55;
+    center("✦",ty,"20px serif","rgba(251,191,36,0.50)"); ty+=54;
 
-    // Corpo
+    /* ── 10. Corpo ── */
     const shortBody=data.body.length>240?data.body.slice(0,240).replace(/\s\w+$/,"")+"…":data.body;
-    const blines=wrap(shortBody,W-180,"400 33px Georgia,serif");
-    ctx.save(); ctx.font="400 33px Georgia,serif";
+    const blines=wrap(shortBody,W-180,"400 34px Georgia,serif");
+    ctx.save(); ctx.font="400 34px Georgia,serif";
     ctx.fillStyle="rgba(186,214,255,0.72)"; ctx.textAlign="center";
-    blines.slice(0,6).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=53;}); ctx.restore();
+    blines.slice(0,6).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=54;}); ctx.restore();
 
-    // Rodapé
-    const footY=H-162;
-    hline(footY-44,0.18);
-    ctx.save(); ctx.font="700 50px Georgia,serif"; ctx.textAlign="center";
+    /* ── 11. Rodapé ── */
+    const footY=H-160;
+    hline(footY-50,0.18);
+    ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
     ctx.shadowColor="rgba(59,130,246,0.55)"; ctx.shadowBlur=28;
-    const hg=ctx.createLinearGradient(W/2-160,0,W/2+160,0);
-    hg.addColorStop(0,"#60a5fa"); hg.addColorStop(0.5,"#93c5fd"); hg.addColorStop(1,"#60a5fa");
-    ctx.fillStyle=hg; ctx.fillText("#AOGIM",W/2,footY+20); ctx.restore();
-
-    // Ponto âmbar decorativo no rodapé
-    center("✦",footY+56,"14px serif","rgba(251,191,36,0.45)");
+    const fg=ctx.createLinearGradient(W/2-170,0,W/2+170,0);
+    fg.addColorStop(0,"#60a5fa"); fg.addColorStop(0.5,"#93c5fd"); fg.addColorStop(1,"#60a5fa");
+    ctx.fillStyle=fg; ctx.fillText("#AOGIM",W/2,footY+22); ctx.restore();
+    center("✦",footY+60,"14px serif","rgba(251,191,36,0.45)");
 
     resolve(c.toDataURL("image/png"));
   });

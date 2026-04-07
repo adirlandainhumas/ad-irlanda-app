@@ -399,38 +399,57 @@ export default function Admin() {
     const c = document.createElement("canvas");
     c.width=W; c.height=H;
     const ctx = c.getContext("2d")!;
-    // Fundo azul noturno
-    const bg = ctx.createLinearGradient(0,0,W*0.5,H);
-    bg.addColorStop(0,"#030f2b"); bg.addColorStop(0.35,"#041428");
-    bg.addColorStop(0.7,"#061d3e"); bg.addColorStop(1,"#020c1f");
+    // Fundo: radial azul noturno
+    const bg = ctx.createRadialGradient(W/2,H*0.22,0,W/2,H*0.22,W);
+    bg.addColorStop(0,"#0a1e4a"); bg.addColorStop(0.45,"#040e26"); bg.addColorStop(1,"#010812");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-    // Glow âmbar (canto superior)
-    const ag=ctx.createRadialGradient(0,0,0,0,0,W*0.65);
-    ag.addColorStop(0,"rgba(212,120,14,0.12)"); ag.addColorStop(0.5,"rgba(212,120,14,0.04)"); ag.addColorStop(1,"transparent");
-    ctx.fillStyle=ag; ctx.fillRect(0,0,W,H);
-    // Glow azul (canto inferior direito)
-    const bg2=ctx.createRadialGradient(W,H*0.65,0,W,H*0.65,W*0.75);
-    bg2.addColorStop(0,"rgba(30,64,175,0.16)"); bg2.addColorStop(1,"transparent");
-    ctx.fillStyle=bg2; ctx.fillRect(0,0,W,H);
-    // Grade geométrica sutil
-    ctx.save(); ctx.globalAlpha=0.035; ctx.strokeStyle="rgba(147,197,253,1)"; ctx.lineWidth=1;
-    for(let x=0;x<W;x+=80){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-    for(let y=0;y<H;y+=80){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-    ctx.restore();
     // Estrelas
     ctx.save();
-    for(let i=0;i<65;i++){
-      const px=Math.random()*W, py=Math.random()*H*0.9, pr=Math.random()*1.6+0.3;
-      ctx.globalAlpha=Math.random()*0.45+0.1;
-      ctx.fillStyle=i<7?`hsl(40,90%,${76+Math.random()*18}%)`:
-                        `hsl(${210+Math.random()*30},82%,${72+Math.random()*24}%)`;
+    for(let i=0;i<75;i++){
+      const px=Math.random()*W, py=Math.random()*H*0.85, pr=Math.random()*1.8+0.3;
+      ctx.globalAlpha=Math.random()*0.5+0.08;
+      ctx.fillStyle=i<9?`hsl(${38+Math.random()*14},95%,${72+Math.random()*20}%)`:
+                        `hsl(${210+Math.random()*28},85%,${70+Math.random()*26}%)`;
       ctx.beginPath(); ctx.arc(px,py,pr,0,Math.PI*2); ctx.fill();
     }
     ctx.restore();
+    // Cruz de luz
+    const CX=W/2, CY=220;
+    const vg=ctx.createLinearGradient(CX,0,CX,CY*2);
+    vg.addColorStop(0,"rgba(251,191,36,0)"); vg.addColorStop(0.4,"rgba(255,215,80,0.35)"); vg.addColorStop(0.7,"rgba(251,191,36,0.12)"); vg.addColorStop(1,"rgba(251,191,36,0)");
+    ctx.save(); ctx.fillStyle=vg; ctx.fillRect(CX-18,0,36,CY*2); ctx.restore();
+    const hgc=ctx.createLinearGradient(0,CY,W,CY);
+    hgc.addColorStop(0,"rgba(251,191,36,0)"); hgc.addColorStop(0.3,"rgba(251,191,36,0.12)"); hgc.addColorStop(0.5,"rgba(251,191,36,0.22)"); hgc.addColorStop(0.7,"rgba(251,191,36,0.12)"); hgc.addColorStop(1,"rgba(251,191,36,0)");
+    ctx.save(); ctx.fillStyle=hgc; ctx.fillRect(0,CY-14,W,28); ctx.restore();
+    // Janela de rosa
+    const R=130;
+    const drawRose=(alpha:number,color:string,lw:number)=>{
+      ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=lw;
+      ctx.beginPath(); ctx.arc(CX,CY,R,0,Math.PI*2); ctx.stroke();
+      const pr=R*0.42, dist=R-pr;
+      for(let i=0;i<8;i++){
+        const a=(i/8)*Math.PI*2-Math.PI/2;
+        ctx.beginPath(); ctx.arc(CX+dist*Math.cos(a),CY+dist*Math.sin(a),pr,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(CX,CY,R*0.22,0,Math.PI*2); ctx.stroke();
+      for(let i=0;i<8;i++){
+        const a=(i/8)*Math.PI*2-Math.PI/2;
+        ctx.beginPath();
+        ctx.moveTo(CX+R*0.22*Math.cos(a),CY+R*0.22*Math.sin(a));
+        ctx.lineTo(CX+R*Math.cos(a),CY+R*Math.sin(a));
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    drawRose(0.16,"rgba(96,165,250,1)",1);
+    drawRose(0.52,"rgba(251,191,36,1)",1.3);
+    const cg=ctx.createRadialGradient(CX,CY,0,CX,CY,R*0.75);
+    cg.addColorStop(0,"rgba(255,215,80,0.18)"); cg.addColorStop(0.5,"rgba(251,191,36,0.05)"); cg.addColorStop(1,"transparent");
+    ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
     // Barra âmbar no topo
     const tb=ctx.createLinearGradient(0,0,W,0);
-    tb.addColorStop(0,"rgba(217,119,6,0.5)"); tb.addColorStop(0.5,"rgba(251,191,36,0.88)"); tb.addColorStop(1,"rgba(217,119,6,0.5)");
-    ctx.fillStyle=tb; ctx.fillRect(0,0,W,5);
+    tb.addColorStop(0,"rgba(217,119,6,0.3)"); tb.addColorStop(0.35,"rgba(251,191,36,0.88)"); tb.addColorStop(0.65,"rgba(251,191,36,0.88)"); tb.addColorStop(1,"rgba(217,119,6,0.3)");
+    ctx.fillStyle=tb; ctx.fillRect(0,0,W,6);
     return [c, ctx];
   }
   function dvSplitBody(text: string): [string, string|null] {
@@ -455,12 +474,12 @@ export default function Admin() {
     // Slide 1: Capa
     {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,162); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",126,"300 26px Georgia,serif","rgba(147,197,253,0.55)");
-      dvAmberLine(ctx,144);
-      dvCenter(ctx,"DEVOCIONAL  DO  DIA",210,"700 23px sans-serif","rgba(96,165,250,0.72)");
-      dvCenter(ctx,d.dateLabel,260,"italic 300 25px Georgia,serif","rgba(147,197,253,0.40)");
-      dvHline(ctx,295);
-      let ty=385;
+      dvHline(ctx,378); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",348,"300 22px Georgia,serif","rgba(147,197,253,0.55)");
+      dvAmberLine(ctx,360);
+      dvCenter(ctx,"DEVOCIONAL  DO  DIA",415,"700 21px sans-serif","rgba(96,165,250,0.72)");
+      dvCenter(ctx,d.dateLabel,455,"italic 300 22px Georgia,serif","rgba(147,197,253,0.40)");
+      dvHline(ctx,482);
+      let ty=520;
       if(d.title){
         const tl=dvWrap(ctx,d.title,W-140,"600 64px Georgia,serif");
         ctx.save(); ctx.font="600 64px Georgia,serif"; ctx.fillStyle="#dce8ff";
@@ -485,12 +504,12 @@ export default function Admin() {
     // Slides de reflexão
     const textSlide = (idx:number, bodyText:string, isCont:boolean, hasMore:boolean) => {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,148); dvCenter(ctx,"✝",110,"48px serif","rgba(147,197,253,0.72)");
-      ctx.save(); ctx.font="700 25px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,192); ctx.restore();
-      dvAmberLine(ctx,212);
-      let startY=292;
-      if(isCont){ dvCenter(ctx,"continuação",272,"italic 300 23px Georgia,serif","rgba(147,197,253,0.32)"); startY=318; }
+      dvHline(ctx,368); dvCenter(ctx,"✝",335,"48px serif","rgba(147,197,253,0.72)");
+      ctx.save(); ctx.font="700 24px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,412); ctx.restore();
+      dvAmberLine(ctx,430);
+      let startY=490;
+      if(isCont){ dvCenter(ctx,"continuação",472,"italic 300 22px Georgia,serif","rgba(147,197,253,0.32)"); startY=510; }
       const bl=dvWrap(ctx,bodyText,W-160,"400 36px Georgia,serif");
       ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="rgba(186,214,255,0.82)"; ctx.textAlign="center";
       let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
@@ -505,13 +524,13 @@ export default function Admin() {
     {
       const idx = body2 ? 3 : 2;
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,148); dvCenter(ctx,"🙏",110,"48px serif","rgba(147,197,253,0.72)");
-      ctx.save(); ctx.font="700 25px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,192); ctx.restore();
-      dvAmberLine(ctx,212);
+      dvHline(ctx,368); dvCenter(ctx,"🙏",335,"48px serif","rgba(147,197,253,0.72)");
+      ctx.save(); ctx.font="700 24px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
+      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,412); ctx.restore();
+      dvAmberLine(ctx,430);
       const pl=dvWrap(ctx,d.prayer,W-160,"italic 36px Georgia,serif");
       ctx.save(); ctx.font="italic 36px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.86)"; ctx.textAlign="center";
-      let ty=292; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
+      let ty=490; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=60;}); ctx.restore();
       dvDots(ctx,idx,total,H);
       result.push(c.toDataURL("image/png"));
     }
@@ -521,8 +540,8 @@ export default function Admin() {
       const [c, ctx] = dvMakeCanvas();
       ctx.save(); ctx.font="180px serif"; ctx.textAlign="center";
       ctx.globalAlpha=0.05; ctx.fillStyle="rgba(251,191,36,1)"; ctx.fillText("✦",W/2,640); ctx.restore();
-      dvHline(ctx,132); dvCenter(ctx,"DEVOCIONAL DO DIA",96,"700 21px sans-serif","rgba(96,165,250,0.55)"); dvHline(ctx,148);
-      let ty=252;
+      dvHline(ctx,368); dvCenter(ctx,"DEVOCIONAL DO DIA",342,"700 21px sans-serif","rgba(96,165,250,0.55)"); dvHline(ctx,382);
+      let ty=460;
       const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"700 70px Georgia,serif");
       ctx.save(); ctx.font="700 70px Georgia,serif"; ctx.fillStyle="#dce8ff";
       ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=32;
