@@ -547,12 +547,88 @@ export default function Admin() {
   async function dvDownloadZip() {
     setDevZipBusy(true);
     try {
-      // Gera ZIP nativo (sem biblioteca externa) usando a API de Streams do browser
-      // Fallback: baixa todos separados com delay
-      const nome = `devocional-carrossel-${dvTodayKey()}`;
-      // Tenta usar showSaveFilePicker / FileSystemAccess API se disponível
-      // caso contrário baixa um a um
-      devSlides.forEach((src, i) => { setTimeout(()=>dvDownloadSlide(src, i), i*350); });
+      // Monta ZIP binário manualmente (sem dependência externa)
+      const u32le = (n: number) => { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n, true); return b; };
+      const u16le = (n: number) => { const b = new Uint8Array(2); new DataView(b.buffer).setUint16(0, n, true); return b; };
+      const enc   = new TextEncoder();
+
+      const crc32 = (() => {
+        const t = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+          let c = i;
+          for (let j = 0; j < 8; j++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+          t[i] = c;
+        }
+        return (buf: Uint8Array) => {
+          let c = 0xFFFFFFFF;
+          for (let i = 0; i < buf.length; i++) c = t[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+          return (c ^ 0xFFFFFFFF) >>> 0;
+        };
+      })();
+
+      const cat = (...arrays: Uint8Array[]) => {
+        const total = arrays.reduce((s, a) => s + a.length, 0);
+        const out = new Uint8Array(total);
+        let pos = 0;
+        for (const a of arrays) { out.set(a, pos); pos += a.length; }
+        return out;
+      };
+
+      const localHeaders: Uint8Array[] = [];
+      const centralHeaders: Uint8Array[] = [];
+      let bodyOffset = 0;
+
+      for (let i = 0; i < devSlides.length; i++) {
+        const blob = await fetch(devSlides[i]).then(r => r.blob());
+        const data = new Uint8Array(await blob.arrayBuffer());
+        const name = enc.encode(`slide-${String(i+1).padStart(2,"0")}-${dvTodayKey()}.png`);
+        const crc  = crc32(data);
+        const sz   = data.length;
+
+        // Local file header (signature 0x04034b50)
+        const lh = cat(
+          new Uint8Array([0x50,0x4b,0x03,0x04]), // sig
+          u16le(20), u16le(0), u16le(0),          // version, flags, method (stored)
+          u16le(0), u16le(0),                     // mod time, mod date
+          u32le(crc), u32le(sz), u32le(sz),       // crc, compressed size, uncompressed size
+          u16le(name.length), u16le(0),           // filename len, extra len
+          name, data,
+        );
+
+        // Central directory header (signature 0x02014b50)
+        const ch = cat(
+          new Uint8Array([0x50,0x4b,0x01,0x02]),
+          u16le(20), u16le(20), u16le(0), u16le(0), // versions, flags, method
+          u16le(0), u16le(0),                        // mod time, mod date
+          u32le(crc), u32le(sz), u32le(sz),
+          u16le(name.length), u16le(0), u16le(0),   // fn len, extra len, comment len
+          u16le(0), u16le(0), u32le(0),              // disk start, int attrs, ext attrs
+          u32le(bodyOffset),                         // local header offset
+          name,
+        );
+
+        localHeaders.push(lh);
+        centralHeaders.push(ch);
+        bodyOffset += lh.length;
+      }
+
+      const body    = cat(...localHeaders);
+      const central = cat(...centralHeaders);
+      const cdSize  = central.length;
+      const cdOffset = body.length;
+      const eocd = cat(
+        new Uint8Array([0x50,0x4b,0x05,0x06]),     // end-of-central-directory sig
+        u16le(0), u16le(0),                         // disk number, start disk
+        u16le(devSlides.length), u16le(devSlides.length),
+        u32le(cdSize), u32le(cdOffset),
+        u16le(0),                                   // comment length
+      );
+
+      const zip = cat(body, central, eocd);
+      const url = URL.createObjectURL(new Blob([zip], { type: "application/zip" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = `devocional-carrossel-${dvTodayKey()}.zip`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } finally { setDevZipBusy(false); }
   }
 
