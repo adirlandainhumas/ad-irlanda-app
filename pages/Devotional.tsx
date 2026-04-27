@@ -16,7 +16,7 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// ─── Story 1080×1920 — Midnight Editorial ────────────────────────────────────
+// Story 1080x1920 — Warm Ivory Editorial
 function gerarStory(data: DevocionalData): Promise<string> {
   return new Promise((resolve) => {
     const W = 1080, H = 1920;
@@ -24,137 +24,130 @@ function gerarStory(data: DevocionalData): Promise<string> {
     cv.width = W; cv.height = H;
     const ctx = cv.getContext("2d")!;
 
-    // 1 — Background: mesh gradient
-    ctx.fillStyle = "#060910";
+    // 1. Background: gradiente creme quente — limpo, sem blobs
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0,   "#FCF8F0");
+    bg.addColorStop(0.5, "#F5EDD8");
+    bg.addColorStop(1,   "#EDE0C0");
+    ctx.fillStyle = bg;
     ctx.fillRect(0, 0, W, H);
 
-    const b1 = ctx.createRadialGradient(W/2, -80, 0, W/2, -80, W*0.75);
-    b1.addColorStop(0, "rgba(220,165,55,0.24)");
-    b1.addColorStop(0.44, "rgba(180,118,28,0.08)");
-    b1.addColorStop(1, "transparent");
-    ctx.fillStyle = b1; ctx.fillRect(0, 0, W, H);
-
-    const b2 = ctx.createRadialGradient(W*0.1, H*0.44, 0, W*0.1, H*0.44, 480);
-    b2.addColorStop(0, "rgba(50,80,200,0.09)");
-    b2.addColorStop(1, "transparent");
-    ctx.fillStyle = b2; ctx.fillRect(0, 0, W, H);
-
-    const b3 = ctx.createRadialGradient(W*0.9, H*0.82, 0, W*0.9, H*0.82, 360);
-    b3.addColorStop(0, "rgba(220,165,55,0.07)");
-    b3.addColorStop(1, "transparent");
-    ctx.fillStyle = b3; ctx.fillRect(0, 0, W, H);
-
-    const vig = ctx.createRadialGradient(W/2, H*0.46, H*0.15, W/2, H*0.46, H*0.88);
-    vig.addColorStop(0, "transparent");
-    vig.addColorStop(1, "rgba(3,4,9,0.62)");
-    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+    // Brilho suave centralizado no topo (unico, sem manchas laterais)
+    const topGlow = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, W*0.60);
+    topGlow.addColorStop(0, "rgba(205,150,38,0.14)");
+    topGlow.addColorStop(1, "transparent");
+    ctx.fillStyle = topGlow;
+    ctx.fillRect(0, 0, W, H);
 
     // Helpers
     const wrapText = (text: string, maxW: number, font: string) => {
       ctx.font = font;
       return text.split(" ").reduce((lines: string[], word) => {
-        const last = lines[lines.length-1] ?? "";
+        const last = lines[lines.length - 1] ?? "";
         const test = last ? `${last} ${word}` : word;
         if (ctx.measureText(test).width > maxW && last) return [...lines, word];
-        return [...lines.slice(0,-1), test];
+        return [...lines.slice(0, -1), test];
       }, [""]).filter(Boolean);
     };
 
     const ct = (text: string, y: number, font: string, color: string, alpha = 1) => {
       ctx.save(); ctx.globalAlpha = alpha; ctx.font = font;
       ctx.fillStyle = color; ctx.textAlign = "center";
-      ctx.fillText(text, W/2, y); ctx.restore();
+      ctx.fillText(text, W / 2, y); ctx.restore();
     };
 
-    const hLine = (y: number, alpha: number, w = W*0.58) => {
-      const x0 = (W-w)/2;
-      const g = ctx.createLinearGradient(x0, y, x0+w, y);
+    const hLine = (y: number, alpha: number, w = W * 0.52) => {
+      const x0 = (W - w) / 2;
+      const g = ctx.createLinearGradient(x0, y, x0 + w, y);
       g.addColorStop(0, "transparent");
-      g.addColorStop(0.18, `rgba(220,165,55,${alpha})`);
-      g.addColorStop(0.82, `rgba(220,165,55,${alpha})`);
+      g.addColorStop(0.2,  `rgba(165,115,16,${alpha})`);
+      g.addColorStop(0.8,  `rgba(165,115,16,${alpha})`);
       g.addColorStop(1, "transparent");
-      ctx.save(); ctx.fillStyle = g; ctx.fillRect(x0, y-0.85, w, 1.7); ctx.restore();
+      ctx.save(); ctx.fillStyle = g; ctx.fillRect(x0, y - 0.9, w, 1.8); ctx.restore();
     };
 
-    const drawCross = (cx: number, cy: number, arm = 36) => {
-      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 110);
-      cg.addColorStop(0, "rgba(220,165,55,0.18)");
-      cg.addColorStop(1, "transparent");
-      ctx.save(); ctx.fillStyle = cg;
-      ctx.fillRect(cx-115, cy-115, 230, 230); ctx.restore();
-
+    const drawCross = (cx: number, cy: number, arm = 34) => {
       ctx.save();
-      ctx.strokeStyle = "rgba(220,165,55,0.78)";
-      ctx.lineWidth = 2.2; ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(150,105,10,0.28)";
+      ctx.shadowBlur  = 16;
+      ctx.strokeStyle = "#9A6E10";
+      ctx.lineWidth   = 2.5;
+      ctx.lineCap     = "round";
       ctx.beginPath();
-      ctx.moveTo(cx, cy - arm); ctx.lineTo(cx, cy + arm);
-      ctx.moveTo(cx - arm*0.60, cy - arm*0.18); ctx.lineTo(cx + arm*0.60, cy - arm*0.18);
-      ctx.stroke(); ctx.restore();
+      ctx.moveTo(cx,              cy - arm);
+      ctx.lineTo(cx,              cy + arm);
+      ctx.moveTo(cx - arm * 0.58, cy - arm * 0.16);
+      ctx.lineTo(cx + arm * 0.58, cy - arm * 0.16);
+      ctx.stroke();
+      ctx.restore();
     };
 
-    // 2 — Top accent bar
-    const topBar = ctx.createLinearGradient(0, 0, W, 0);
-    topBar.addColorStop(0, "transparent");
-    topBar.addColorStop(0.16, "rgba(220,165,55,0.90)");
-    topBar.addColorStop(0.84, "rgba(220,165,55,0.90)");
-    topBar.addColorStop(1, "transparent");
-    ctx.fillStyle = topBar; ctx.fillRect(0, 0, W, 4);
+    // 2. Barras de acento topo/base
+    const bar = ctx.createLinearGradient(0, 0, W, 0);
+    bar.addColorStop(0,    "transparent");
+    bar.addColorStop(0.15, "rgba(155,108,14,0.78)");
+    bar.addColorStop(0.85, "rgba(155,108,14,0.78)");
+    bar.addColorStop(1,    "transparent");
+    ctx.fillStyle = bar; ctx.fillRect(0, 0, W, 4);
 
-    // 3 — Cross
-    drawCross(W/2, 208, 36);
+    // 3. Cruz decorativa
+    drawCross(W / 2, 204, 34);
 
-    // 4 — Header
-    let cy = 310;
-    hLine(cy, 0.18, W*0.46); cy += 58;
-    ct("MINISTÉRIO IRLANDA", cy, "400 24px Georgia,serif", "rgba(240,235,222,0.40)");
+    // 4. Cabecalho
+    let cy = 308;
+    hLine(cy, 0.30, W * 0.40); cy += 58;
+    ct("MINISTERIO IRLANDA", cy, "400 24px Georgia,serif", "#2C1E08", 0.46);
     cy += 48;
-    ct("DEVOCIONAL  DO  DIA", cy, "700 21px sans-serif", "rgba(220,165,55,0.74)");
+    ct("DEVOCIONAL  DO  DIA", cy, "bold 21px sans-serif", "#9A6E10", 0.84);
     cy += 44;
-    ct(data.dateLabel, cy, "italic 400 23px Georgia,serif", "rgba(240,235,222,0.28)");
+    ct(data.dateLabel, cy, "italic 400 23px Georgia,serif", "#2C1E08", 0.34);
     cy += 68;
-    hLine(cy, 0.20); cy += 78;
+    hLine(cy, 0.30); cy += 80;
 
-    // 5 — Title: hero typography
+    // 5. Titulo — hero typography
     if (data.title) {
-      const tFont = "700 82px Georgia,serif";
-      const tLines = wrapText(data.title, W-160, tFont);
-      ctx.save(); ctx.font = tFont; ctx.fillStyle = "#F0EDE8"; ctx.textAlign = "center";
-      tLines.forEach(l => { ctx.fillText(l, W/2, cy); cy += 98; });
+      const tFont  = "bold 82px Georgia,serif";
+      const tLines = wrapText(data.title, W - 160, tFont);
+      ctx.save(); ctx.font = tFont; ctx.fillStyle = "#1A1008"; ctx.textAlign = "center";
+      tLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 98; });
       ctx.restore(); cy += 24;
     }
-    hLine(cy, 0.11, W*0.34); cy += 72;
+    hLine(cy, 0.20, W * 0.28); cy += 74;
 
-    // 6 — Verse
-    const vFont = "italic 400 44px Georgia,serif";
-    const vLines = wrapText(`"${data.verseText}"`, W-210, vFont);
-    ctx.save(); ctx.font = vFont; ctx.fillStyle = "rgba(240,235,222,0.88)"; ctx.textAlign = "center";
-    vLines.forEach(l => { ctx.fillText(l, W/2, cy); cy += 64; }); ctx.restore(); cy += 18;
+    // 6. Versiculo
+    const vFont  = "italic 400 44px Georgia,serif";
+    const vLines = wrapText(`"${data.verseText}"`, W - 210, vFont);
+    ctx.save(); ctx.font = vFont; ctx.fillStyle = "#3A2A14";
+    ctx.globalAlpha = 0.88; ctx.textAlign = "center";
+    vLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 64; });
+    ctx.restore(); cy += 18;
 
-    ct(data.verseRef, cy, "700 32px Georgia,serif", "#DCA83C"); cy += 64;
-    hLine(cy, 0.14); cy += 66;
+    ct(data.verseRef, cy, "bold 32px Georgia,serif", "#8B6208"); cy += 64;
+    hLine(cy, 0.26); cy += 66;
 
-    // 7 — Body
+    // 7. Corpo — reflexao breve
     const shortBody = data.body.length > 310
-      ? data.body.slice(0, 310).replace(/\s\w+$/, "") + "…"
+      ? data.body.slice(0, 310).replace(/\s\w+$/, "") + "..."
       : data.body;
-    const bLines = wrapText(shortBody, W-230, "400 36px Georgia,serif");
+    const bLines = wrapText(shortBody, W - 230, "400 36px Georgia,serif");
     ctx.save(); ctx.font = "400 36px Georgia,serif";
-    ctx.fillStyle = "rgba(240,235,222,0.50)"; ctx.textAlign = "center";
-    bLines.slice(0, 7).forEach(l => { ctx.fillText(l, W/2, cy); cy += 54; }); ctx.restore();
+    ctx.fillStyle = "#4A3820"; ctx.globalAlpha = 0.65; ctx.textAlign = "center";
+    bLines.slice(0, 7).forEach(l => { ctx.fillText(l, W / 2, cy); cy += 54; });
+    ctx.restore();
 
-    // 8 — Footer
-    hLine(H-200, 0.12);
-    ctx.save(); ctx.font = "700 54px Georgia,serif"; ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(220,165,55,0.84)";
-    ctx.fillText("#AOGIM", W/2, H-120); ctx.restore();
+    // 8. Rodape
+    hLine(H - 202, 0.26);
+    ctx.save(); ctx.font = "bold 54px Georgia,serif"; ctx.textAlign = "center";
+    ctx.fillStyle = "#9A6E10";
+    ctx.fillText("#AOGIM", W / 2, H - 122); ctx.restore();
 
-    ctx.fillStyle = topBar; ctx.fillRect(0, H-4, W, 4);
+    ctx.fillStyle = bar; ctx.fillRect(0, H - 4, W, 4);
 
     resolve(cv.toDataURL("image/png"));
   });
 }
 
-// ─── Componente ──────────────────────────────────────────────────────────────
+// Componente
 export default function Devotional() {
   const [data, setData]                     = useState<DevocionalData|null>(null);
   const [loading, setLoading]               = useState(true);
@@ -246,7 +239,6 @@ export default function Devotional() {
         .dv-in-3 { animation-delay:.28s }
         .dv-in-4 { animation-delay:.42s }
 
-        /* Verse */
         .dv-verse-card {
           border-radius:20px; padding:30px 24px 26px;
           background:linear-gradient(135deg,rgba(251,235,150,0.22) 0%,rgba(255,252,238,0.10) 100%);
@@ -262,7 +254,6 @@ export default function Devotional() {
         .dv-verse-line    { flex:1; height:1px; background:rgba(180,128,18,0.22); }
         .dv-verse-ref-txt { font-size:11px; font-weight:700; letter-spacing:.08em; color:#9A6D10; white-space:nowrap; }
 
-        /* Cards */
         .dv-card {
           border-radius:16px; background:#FFFFFF;
           border:1px solid rgba(0,0,0,0.06); overflow:hidden;
@@ -296,15 +287,14 @@ export default function Devotional() {
 
         .dv-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,0.07),transparent); margin-bottom:24px; }
 
-        /* Buttons */
         .dv-btn {
           width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
           border:none; border-radius:14px; padding:15px 0; cursor:pointer;
           font-family:'Lato',sans-serif; font-size:15px; font-weight:700; color:#fff;
           transition:opacity .18s,transform .18s;
         }
-        .dv-btn:hover   { opacity:.9; transform:translateY(-1px); }
-        .dv-btn:active  { transform:none; }
+        .dv-btn:hover    { opacity:.9; transform:translateY(-1px); }
+        .dv-btn:active   { transform:none; }
         .dv-btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
         .dv-btn-wa { background:#1E40AF; }
         .dv-btn-wa:hover { background:#1D4ED8; opacity:1; }
@@ -334,14 +324,12 @@ export default function Devotional() {
       <div className="dv-top-accent" />
       <main className="dv-root">
 
-        {/* Logo */}
         <div style={{ display:"flex", justifyContent:"center", paddingTop:20, paddingBottom:2 }}>
           <img src={logoUrl} alt="AOGIM Conect" style={{ width:66, objectFit:"contain" }} />
         </div>
 
         <div style={{ width:"100%", maxWidth:500, margin:"0 auto", padding:"0 18px 80px" }}>
 
-          {/* Loading */}
           {loading && (
             <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"65vh", gap:16 }}>
               <div style={{ width:26, height:26, border:"2.5px solid rgba(0,0,0,0.08)", borderTopColor:"#1E40AF", borderRadius:"50%", animation:"dvSpin .85s linear infinite" }} />
@@ -357,7 +345,6 @@ export default function Devotional() {
 
           {!loading && data && (
             <>
-              {/* Cabeçalho */}
               <div className="dv-in dv-in-1" style={{ textAlign:"center", paddingTop:10, paddingBottom:22 }}>
                 <span style={{ fontSize:10, letterSpacing:".24em", color:"#1A3FBB", textTransform:"uppercase", fontWeight:700 }}>
                   Devocional do Dia
@@ -376,7 +363,6 @@ export default function Devotional() {
 
               <div className="dv-divider dv-in dv-in-1" />
 
-              {/* Versículo */}
               <div className="dv-verse-card dv-in dv-in-2">
                 <p className="dv-verse-text">"{data.verseText}"</p>
                 <div className="dv-verse-ref-row">
@@ -386,7 +372,6 @@ export default function Devotional() {
                 </div>
               </div>
 
-              {/* Reflexão */}
               <div className="dv-card dv-in dv-in-3">
                 <button className="dv-card-hdr" onClick={() => setExpandedBody(v => !v)}>
                   <span className="dv-card-label">
@@ -409,7 +394,6 @@ export default function Devotional() {
                 </div>
               </div>
 
-              {/* Oração */}
               <div className="dv-card dv-in dv-in-3" style={{ marginBottom:28 }}>
                 <button className="dv-card-hdr" onClick={() => setExpandedPrayer(v => !v)}>
                   <span className="dv-card-label">
@@ -432,7 +416,6 @@ export default function Devotional() {
                 </div>
               </div>
 
-              {/* Ações */}
               <div className="dv-in dv-in-4" style={{ display:"flex", flexDirection:"column", gap:12 }}>
 
                 <button className="dv-btn dv-btn-wa" onClick={compartilharWA}>
