@@ -368,28 +368,21 @@ export default function Admin() {
     if(sc){ctx.shadowColor=sc; ctx.shadowBlur=sb??0;}
     ctx.fillText(text, 1080/2, y); ctx.restore();
   }
-  function dvHline(ctx: CanvasRenderingContext2D, y: number, alpha=0.28) {
-    ctx.save();
-    const l = ctx.createLinearGradient(80,0,1000,0);
-    l.addColorStop(0,"transparent"); l.addColorStop(0.5,`rgba(120,170,255,${alpha})`); l.addColorStop(1,"transparent");
-    ctx.strokeStyle=l; ctx.lineWidth=1.2;
-    ctx.beginPath(); ctx.moveTo(80,y); ctx.lineTo(1000,y); ctx.stroke(); ctx.restore();
-  }
-  function dvAmberLine(ctx: CanvasRenderingContext2D, y: number, w=100) {
-    ctx.save();
-    const l = ctx.createLinearGradient(1080/2-w,0,1080/2+w,0);
-    l.addColorStop(0,"transparent"); l.addColorStop(0.5,"rgba(251,191,36,0.55)"); l.addColorStop(1,"transparent");
-    ctx.strokeStyle=l; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(1080/2-w,y); ctx.lineTo(1080/2+w,y); ctx.stroke(); ctx.restore();
+  function dvHline(ctx: CanvasRenderingContext2D, y: number, alpha=0.28, w=580) {
+    const W=1080; const x0=(W-w)/2;
+    const l = ctx.createLinearGradient(x0,y,x0+w,y);
+    l.addColorStop(0,"transparent"); l.addColorStop(0.18,`rgba(155,108,14,${alpha})`);
+    l.addColorStop(0.82,`rgba(155,108,14,${alpha})`); l.addColorStop(1,"transparent");
+    ctx.save(); ctx.fillStyle=l; ctx.fillRect(x0,y-0.85,w,1.7); ctx.restore();
   }
   function dvDots(ctx: CanvasRenderingContext2D, current: number, total: number, H: number) {
-    const r=8, gap=22, W=1080;
+    const r=7, gap=20, W=1080;
     const tw = r*2*total + gap*(total-1);
     let sx = (W-tw)/2;
     for(let i=0;i<total;i++){
       ctx.save(); ctx.beginPath();
-      ctx.arc(sx+r, H-60, r, 0, Math.PI*2);
-      ctx.fillStyle = i===current ? "rgba(96,165,250,0.92)" : "rgba(59,130,246,0.22)";
+      ctx.arc(sx+r, H-55, r, 0, Math.PI*2);
+      ctx.fillStyle = i===current ? "rgba(155,108,14,0.88)" : "rgba(155,108,14,0.22)";
       ctx.fill(); ctx.restore();
       sx += r*2+gap;
     }
@@ -400,93 +393,19 @@ export default function Admin() {
     c.width=W; c.height=H;
     const ctx = c.getContext("2d")!;
 
-    // ── FUNDO: azul profundo com claridade no topo (estilo aurora) ──
     const bg = ctx.createLinearGradient(0,0,0,H);
-    bg.addColorStop(0,"#0f1f4e");
-    bg.addColorStop(0.38,"#0b1535");
-    bg.addColorStop(0.72,"#080e22");
-    bg.addColorStop(1,"#050918");
+    bg.addColorStop(0,"#FCF8F0"); bg.addColorStop(0.5,"#F5EDD8"); bg.addColorStop(1,"#EDE0C0");
     ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
-    // Claridade dourada sutil no topo (como o amanhecer)
-    const dawn = ctx.createRadialGradient(W/2,-60,0,W/2,-60,W*0.72);
-    dawn.addColorStop(0,"rgba(251,191,36,0.22)");
-    dawn.addColorStop(0.45,"rgba(217,119,6,0.07)");
-    dawn.addColorStop(1,"transparent");
-    ctx.fillStyle=dawn; ctx.fillRect(0,0,W,H*0.65);
+    const glow = ctx.createRadialGradient(W/2,0,0,W/2,0,W*0.54);
+    glow.addColorStop(0,"rgba(205,150,38,0.13)"); glow.addColorStop(1,"transparent");
+    ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
 
-    // Vinheta suave nas bordas
-    const vig = ctx.createRadialGradient(W/2,H*0.5,H*0.15,W/2,H*0.5,H*0.82);
-    vig.addColorStop(0,"transparent"); vig.addColorStop(1,"rgba(3,6,18,0.55)");
-    ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
-
-    // ── MOLDURA ELEGANTE ──
-    const pad=64;
-    // Borda externa fina
-    ctx.save();
-    ctx.strokeStyle="rgba(251,191,36,0.28)";
-    ctx.lineWidth=1;
-    ctx.strokeRect(pad,pad,W-pad*2,H-pad*2);
-    // Borda interna ainda mais fina
-    ctx.strokeStyle="rgba(251,191,36,0.10)";
-    ctx.lineWidth=0.5;
-    ctx.strokeRect(pad+10,pad+10,W-pad*2-20,H-pad*2-20);
-    ctx.restore();
-
-    // Cantos decorativos em L
-    const cs=52;
-    const corner=(x:number,y:number,sx:number,sy:number)=>{
-      ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.85)"; ctx.lineWidth=2.5; ctx.lineCap="round";
-      ctx.beginPath();
-      ctx.moveTo(x+sx*cs,y); ctx.lineTo(x,y); ctx.lineTo(x,y+sy*cs);
-      ctx.stroke(); ctx.restore();
-    };
-    corner(pad,pad,1,1); corner(W-pad,pad,-1,1);
-    corner(pad,H-pad,1,-1); corner(W-pad,H-pad,-1,-1);
-
-    // ── ELEMENTO DECORATIVO: arco + linha central ──
-    const CX=W/2, CY=190;
-
-    // Glow sutil centralizado
-    const cg = ctx.createRadialGradient(CX,CY+25,0,CX,CY+25,130);
-    cg.addColorStop(0,"rgba(251,191,36,0.10)"); cg.addColorStop(0.6,"rgba(251,191,36,0.03)"); cg.addColorStop(1,"transparent");
-    ctx.fillStyle=cg; ctx.fillRect(0,0,W,H);
-
-    // Arco decorativo
-    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.45)"; ctx.lineWidth=1.5; ctx.lineCap="round";
-    ctx.beginPath(); ctx.arc(CX,CY+25,82,-Math.PI,0); ctx.stroke();
-    ctx.restore();
-    ctx.save(); ctx.strokeStyle="rgba(251,191,36,0.18)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.arc(CX,CY+25,96,-Math.PI,0); ctx.stroke();
-    ctx.restore();
-
-    // Linha horizontal central
-    const lg = ctx.createLinearGradient(CX-120,CY+25,CX+120,CY+25);
-    lg.addColorStop(0,"transparent"); lg.addColorStop(0.2,"rgba(251,191,36,0.55)"); lg.addColorStop(0.8,"rgba(251,191,36,0.55)"); lg.addColorStop(1,"transparent");
-    ctx.save(); ctx.fillStyle=lg; ctx.fillRect(CX-120,CY+24,240,1.5); ctx.restore();
-
-    // Ponto central
-    ctx.save(); ctx.globalAlpha=0.70; ctx.fillStyle="#fbbf24";
-    ctx.beginPath(); ctx.arc(CX,CY+25,3.5,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-
-    // ── LINHAS SEPARADORAS CLEAN ──
-    const hLine=(y:number,alpha:number)=>{
-      const g=ctx.createLinearGradient(pad+20,y,W-pad-20,y);
-      g.addColorStop(0,"transparent"); g.addColorStop(0.15,"rgba(251,191,36,"+alpha+")");
-      g.addColorStop(0.85,"rgba(251,191,36,"+alpha+")"); g.addColorStop(1,"transparent");
-      ctx.save(); ctx.fillStyle=g; ctx.fillRect(pad+20,y-0.75,W-pad*2-40,1.5); ctx.restore();
-    };
-    hLine(CY+126,0.50);   // abaixo do elemento
-    hLine(CY-44,0.18);    // acima (sutil)
-    hLine(H*0.86,0.20);   // divisor inferior
-
-    // Barra dourada sólida no topo e base
     const bar = ctx.createLinearGradient(0,0,W,0);
-    bar.addColorStop(0,"transparent"); bar.addColorStop(0.18,"rgba(251,191,36,0.95)");
-    bar.addColorStop(0.82,"rgba(251,191,36,0.95)"); bar.addColorStop(1,"transparent");
-    ctx.fillStyle=bar; ctx.fillRect(0,0,W,5);
-    ctx.fillStyle=bar; ctx.fillRect(0,H-5,W,5);
+    bar.addColorStop(0,"transparent"); bar.addColorStop(0.15,"rgba(155,108,14,0.78)");
+    bar.addColorStop(0.85,"rgba(155,108,14,0.78)"); bar.addColorStop(1,"transparent");
+    ctx.fillStyle=bar; ctx.fillRect(0,0,W,4);
+    ctx.fillStyle=bar; ctx.fillRect(0,H-4,W,4);
 
     return [c, ctx];
   }
@@ -503,8 +422,22 @@ export default function Admin() {
     return [text.slice(0,at).trim(), text.slice(at).trim()];
   }
 
-  function gerarSlides(d: DevData): string[] {
-    const W=1080, H=1350;
+  async function gerarSlides(d: DevData): Promise<string[]> {
+    const W=1080;
+
+    let seloImg: HTMLImageElement|null = null;
+    try {
+      seloImg = await new Promise<HTMLImageElement>((res,rej)=>{
+        const img=new Image(); img.onload=()=>res(img); img.onerror=rej; img.src="/selo.png";
+      });
+    } catch {}
+
+    const drawSelo = (ctx: CanvasRenderingContext2D, y: number, size: number) => {
+      if(!seloImg) return;
+      const sw = (seloImg.width/seloImg.height)*size;
+      ctx.drawImage(seloImg, W/2-sw/2, y, sw, size);
+    };
+
     const [body1, body2] = dvSplitBody(d.body);
     const total = body2 ? 5 : 4;
     const result: string[] = [];
@@ -512,105 +445,98 @@ export default function Admin() {
     // Slide 1: Capa
     {
       const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,326); dvCenter(ctx,"M I N I S T É R I O   I R L A N D A",300,"300 21px Georgia,serif","rgba(147,197,253,0.55)");
-      dvAmberLine(ctx,312);
-      dvCenter(ctx,"DEVOCIONAL  DO  DIA",358,"700 20px sans-serif","rgba(96,165,250,0.72)");
-      dvCenter(ctx,d.dateLabel,394,"italic 300 21px Georgia,serif","rgba(147,197,253,0.40)");
-      dvHline(ctx,418);
-      let ty=455;
+      drawSelo(ctx, 68, 130);
+      let ty = 228;
+      dvHline(ctx,ty,0.30,W*0.42); ty+=58;
+      dvCenter(ctx,"MINISTERIO IRLANDA",ty,"400 22px Georgia,serif","#2C1E08",0.44);
+      ty+=46;
+      dvCenter(ctx,"DEVOCIONAL  DO  DIA",ty,"bold 20px sans-serif","#9A6E10",0.84);
+      ty+=42;
+      dvCenter(ctx,d.dateLabel,ty,"italic 400 21px Georgia,serif","#2C1E08",0.32);
+      ty+=62;
+      dvHline(ctx,ty,0.28); ty+=74;
       if(d.title){
-        const tl=dvWrap(ctx,d.title,W-140,"600 60px Georgia,serif");
-        ctx.save(); ctx.font="600 60px Georgia,serif"; ctx.fillStyle="#dce8ff";
-        ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=22;
-        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=76;}); ctx.restore(); ty+=14;
+        const tl=dvWrap(ctx,d.title,W-160,"bold 74px Georgia,serif");
+        ctx.save(); ctx.font="bold 74px Georgia,serif"; ctx.fillStyle="#1A1008"; ctx.textAlign="center";
+        tl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=90;}); ctx.restore(); ty+=22;
       }
-      dvCenter(ctx,"✦",ty,"20px serif","rgba(251,191,36,0.78)"); ty+=46;
-      const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 38px Georgia,serif");
-      ctx.save(); ctx.font="italic 38px Georgia,serif"; ctx.fillStyle="rgba(214,231,255,0.93)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.14)"; ctx.shadowBlur=6;
-      vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=58;}); ctx.restore(); ty+=14;
-      dvHline(ctx,ty,0.18); ty+=44;
-      ctx.save(); ctx.font="600 34px Georgia,serif"; ctx.fillStyle="rgba(147,197,253,0.96)";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(59,130,246,0.35)"; ctx.shadowBlur=12;
-      ctx.fillText(d.verseRef,W/2,ty); ctx.restore();
-      dvDots(ctx,0,total,H);
+      dvHline(ctx,ty,0.16,W*0.28); ty+=66;
+      const vl=dvWrap(ctx,`"${d.verseText}"`,W-200,"italic 400 42px Georgia,serif");
+      ctx.save(); ctx.font="italic 400 42px Georgia,serif"; ctx.fillStyle="#3A2A14"; ctx.globalAlpha=0.88; ctx.textAlign="center";
+      vl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=62;}); ctx.restore(); ty+=16;
+      dvCenter(ctx,d.verseRef,ty,"bold 30px Georgia,serif","#8B6208");
+      dvDots(ctx,0,total,1350);
       result.push(c.toDataURL("image/png"));
     }
 
-    // Slides de reflexão
+    // Slides de reflexao
     const textSlide = (idx:number, bodyText:string, isCont:boolean, hasMore:boolean) => {
-      const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,316); dvCenter(ctx,"—",288,"36px serif","rgba(147,197,253,0.60)");
-      ctx.save(); ctx.font="700 22px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("R  E  F  L  E  X  Ã  O",W/2,354); ctx.restore();
-      dvAmberLine(ctx,370);
-      let startY=415;
-      if(isCont){ dvCenter(ctx,"continuação",400,"italic 300 21px Georgia,serif","rgba(147,197,253,0.32)"); startY=432; }
-      const bl=dvWrap(ctx,bodyText,W-160,"400 34px Georgia,serif");
-      ctx.save(); ctx.font="400 34px Georgia,serif"; ctx.fillStyle="rgba(186,214,255,0.82)"; ctx.textAlign="center";
-      let ty=startY; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=56;}); ctx.restore();
-      if(hasMore){ dvCenter(ctx,"→ continua no próximo slide",H-90,"italic 300 23px Georgia,serif","rgba(147,197,253,0.38)"); }
-      dvDots(ctx,idx,total,H);
+      const [c,ctx] = dvMakeCanvas();
+      drawSelo(ctx, 52, 80);
+      let ty = 158;
+      dvHline(ctx,ty,0.28,W*0.44); ty+=52;
+      dvCenter(ctx,"REFLEXÃO",ty,"bold 22px sans-serif","#9A6E10",0.86); ty+=46;
+      dvHline(ctx,ty,0.18,W*0.30); ty+=54;
+      if(isCont){ dvCenter(ctx,"continuação",ty,"italic 400 20px Georgia,serif","#2C1E08",0.30); ty+=40; }
+      const bl=dvWrap(ctx,bodyText,W-160,"400 36px Georgia,serif");
+      ctx.save(); ctx.font="400 36px Georgia,serif"; ctx.fillStyle="#4A3820"; ctx.globalAlpha=0.72; ctx.textAlign="center";
+      let bty=ty; bl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,bty);bty+=56;}); ctx.restore();
+      if(hasMore){ dvCenter(ctx,"continua no próximo slide →",1295,"italic 400 21px Georgia,serif","#4A3820",0.38); }
+      dvDots(ctx,idx,total,1350);
       result.push(c.toDataURL("image/png"));
     };
     textSlide(1, body1, false, !!body2);
     if(body2) textSlide(2, body2, true, false);
 
-    // Slide Oração
+    // Slide Oracao
     {
-      const idx = body2 ? 3 : 2;
-      const [c, ctx] = dvMakeCanvas();
-      dvHline(ctx,316); dvCenter(ctx,"🙏",288,"42px serif","rgba(147,197,253,0.72)");
-      ctx.save(); ctx.font="700 22px sans-serif"; ctx.fillStyle="rgba(96,165,250,0.68)";
-      ctx.textAlign="center"; ctx.fillText("O  R  A  Ç  Ã  O",W/2,354); ctx.restore();
-      dvAmberLine(ctx,370);
-      const pl=dvWrap(ctx,d.prayer,W-160,"italic 34px Georgia,serif");
-      ctx.save(); ctx.font="italic 34px Georgia,serif"; ctx.fillStyle="rgba(200,225,255,0.86)"; ctx.textAlign="center";
-      let ty=415; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,ty);ty+=56;}); ctx.restore();
-      dvDots(ctx,idx,total,H);
+      const idx=body2?3:2;
+      const [c,ctx]=dvMakeCanvas();
+      drawSelo(ctx,52,80);
+      let ty=158;
+      dvHline(ctx,ty,0.28,W*0.44); ty+=52;
+      dvCenter(ctx,"ORAÇÃO",ty,"bold 22px sans-serif","#9A6E10",0.86); ty+=46;
+      dvHline(ctx,ty,0.18,W*0.30); ty+=54;
+      const pl=dvWrap(ctx,d.prayer,W-160,"italic 400 36px Georgia,serif");
+      ctx.save(); ctx.font="italic 400 36px Georgia,serif"; ctx.fillStyle="#3A2A14"; ctx.globalAlpha=0.78; ctx.textAlign="center";
+      let pty=ty; pl.slice(0,14).forEach(l=>{ctx.fillText(l,W/2,pty);pty+=56;}); ctx.restore();
+      dvDots(ctx,idx,total,1350);
       result.push(c.toDataURL("image/png"));
     }
 
     // Slide CTA
     {
-      const [c, ctx] = dvMakeCanvas();
-      ctx.save(); ctx.font="180px serif"; ctx.textAlign="center";
-      ctx.globalAlpha=0.05; ctx.fillStyle="rgba(251,191,36,1)"; ctx.fillText("✦",W/2,640); ctx.restore();
-      dvHline(ctx,368); dvCenter(ctx,"DEVOCIONAL DO DIA",342,"700 21px sans-serif","rgba(96,165,250,0.55)"); dvHline(ctx,382);
-      let ty=460;
-      const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"700 70px Georgia,serif");
-      ctx.save(); ctx.font="700 70px Georgia,serif"; ctx.fillStyle="#dce8ff";
-      ctx.textAlign="center"; ctx.shadowColor="rgba(30,64,175,0.45)"; ctx.shadowBlur=32;
-      hl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=88;}); ctx.restore(); ty+=18;
-      dvHline(ctx,ty,0.22); ty+=58;
-      ["💾  Salva pra ler quando precisar","🙏  Manda pra alguém que precisa ouvir","💬  Conta pra gente nos comentários"].forEach(cta=>{
-        const cl=dvWrap(ctx,cta,W-130,"400 36px sans-serif");
-        ctx.save(); ctx.font="400 36px sans-serif"; ctx.fillStyle="rgba(186,214,255,0.88)"; ctx.textAlign="center";
-        cl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore(); ty+=14;
+      const [c,ctx]=dvMakeCanvas();
+      drawSelo(ctx,52,80);
+      let ty=172;
+      dvHline(ctx,ty,0.20,W*0.52); ty+=52;
+      dvCenter(ctx,"DEVOCIONAL DO DIA",ty,"bold 20px sans-serif","#9A6E10",0.60); ty+=46;
+      dvHline(ctx,ty,0.20,W*0.52); ty+=68;
+      const hl=dvWrap(ctx,"Esse devocional tocou seu coração?",W-120,"bold 66px Georgia,serif");
+      ctx.save(); ctx.font="bold 66px Georgia,serif"; ctx.fillStyle="#1A1008"; ctx.textAlign="center";
+      hl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=82;}); ctx.restore(); ty+=22;
+      dvHline(ctx,ty,0.20); ty+=54;
+      ["Salva pra ler quando precisar","Manda pra alguém que precisa ouvir","Conta pra gente nos comentários"].forEach(cta=>{
+        const cl=dvWrap(ctx,`— ${cta}`,W-130,"400 34px Georgia,serif");
+        ctx.save(); ctx.font="400 34px Georgia,serif"; ctx.fillStyle="#4A3820"; ctx.globalAlpha=0.70; ctx.textAlign="center";
+        cl.forEach(l=>{ctx.fillText(l,W/2,ty);ty+=52;}); ctx.restore(); ty+=12;
       });
-      ty+=20; dvHline(ctx,ty,0.2); ty+=54;
-      ctx.save(); ctx.font="400 26px sans-serif"; ctx.fillStyle="rgba(147,197,253,0.48)";
-      ctx.textAlign="center"; ctx.fillText("#AOGIM  #Devocional  #FéQueTransforma",W/2,ty); ctx.restore(); ty+=58;
-      ctx.save(); ctx.font="700 52px Georgia,serif"; ctx.textAlign="center";
-      ctx.shadowColor="rgba(59,130,246,0.6)"; ctx.shadowBlur=30;
-      const hg=ctx.createLinearGradient(W/2-180,0,W/2+180,0);
-      hg.addColorStop(0,"#60a5fa"); hg.addColorStop(0.5,"#93c5fd"); hg.addColorStop(1,"#60a5fa");
-      ctx.fillStyle=hg; ctx.fillText("@AOGIM Conect",W/2,ty); ctx.restore();
-      dvDots(ctx,total-1,total,H);
+      ty+=20; dvHline(ctx,ty,0.18); ty+=54;
+      dvCenter(ctx,"#AOGIM  #Devocional  #FéQueTransforma",ty,"400 24px sans-serif","#4A3820",0.45); ty+=60;
+      dvCenter(ctx,"@AOGIM Conect",ty,"bold 46px Georgia,serif","#9A6E10",0.85);
+      dvDots(ctx,total-1,total,1350);
       result.push(c.toDataURL("image/png"));
     }
 
     return result;
   }
 
-  function handleGerarCarrossel() {
+  async function handleGerarCarrossel() {
     if(!devData) return;
     setDevGerando(true);
-    setTimeout(()=>{
-      try{ setDevSlides(gerarSlides(devData)); }
-      catch(e:any){ setDevErr(e.message); }
-      finally{ setDevGerando(false); }
-    }, 40);
+    try{ setDevSlides(await gerarSlides(devData)); }
+    catch(e:any){ setDevErr(e.message); }
+    finally{ setDevGerando(false); }
   }
 
   function dvDownloadSlide(src: string, idx: number) {
