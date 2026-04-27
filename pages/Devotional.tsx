@@ -16,135 +16,155 @@ function todayKey() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
 
-// Story 1080x1920 — Warm Ivory Editorial
-function gerarStory(data: DevocionalData): Promise<string> {
-  return new Promise((resolve) => {
-    const W = 1080, H = 1920;
-    const cv = document.createElement("canvas");
-    cv.width = W; cv.height = H;
-    const ctx = cv.getContext("2d")!;
+// Corta o texto na ultima frase completa dentro do limite de caracteres
+function truncateAtSentence(text: string, maxChars = 300): string {
+  if (text.length <= maxChars) return text;
+  let cut = maxChars;
+  while (cut > 0 && !/[.!?]/.test(text[cut - 1])) cut--;
+  if (cut > 60) return text.slice(0, cut).trim();
+  const first = text.match(/^[^.!?]+[.!?]/);
+  return first ? first[0].trim() : text.slice(0, maxChars).trim() + "...";
+}
 
-    // 1. Background: gradiente creme quente — limpo, sem blobs
-    const bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0,   "#FCF8F0");
-    bg.addColorStop(0.5, "#F5EDD8");
-    bg.addColorStop(1,   "#EDE0C0");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
+// Story 1080x1920 — Warm Ivory Editorial com selo
+async function gerarStory(data: DevocionalData): Promise<string> {
+  const W = 1080, H = 1920;
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d")!;
 
-    // Brilho suave centralizado no topo (unico, sem manchas laterais)
-    const topGlow = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, W*0.60);
-    topGlow.addColorStop(0, "rgba(205,150,38,0.14)");
-    topGlow.addColorStop(1, "transparent");
-    ctx.fillStyle = topGlow;
-    ctx.fillRect(0, 0, W, H);
+  // Carrega o selo
+  let seloImg: HTMLImageElement | null = null;
+  try {
+    seloImg = await new Promise<HTMLImageElement>((res, rej) => {
+      const img = new Image();
+      img.onload  = () => res(img);
+      img.onerror = rej;
+      img.src = "/selo.png";
+    });
+  } catch { /* segue sem selo */ }
 
-    // Helpers
-    const wrapText = (text: string, maxW: number, font: string) => {
-      ctx.font = font;
-      return text.split(" ").reduce((lines: string[], word) => {
-        const last = lines[lines.length - 1] ?? "";
-        const test = last ? `${last} ${word}` : word;
-        if (ctx.measureText(test).width > maxW && last) return [...lines, word];
-        return [...lines.slice(0, -1), test];
-      }, [""]).filter(Boolean);
-    };
+  // 1. Background: gradiente creme quente, limpo
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0,   "#FCF8F0");
+  bg.addColorStop(0.5, "#F5EDD8");
+  bg.addColorStop(1,   "#EDE0C0");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-    const ct = (text: string, y: number, font: string, color: string, alpha = 1) => {
-      ctx.save(); ctx.globalAlpha = alpha; ctx.font = font;
-      ctx.fillStyle = color; ctx.textAlign = "center";
-      ctx.fillText(text, W / 2, y); ctx.restore();
-    };
+  // Brilho suave unico no topo
+  const topGlow = ctx.createRadialGradient(W/2, 0, 0, W/2, 0, W * 0.58);
+  topGlow.addColorStop(0, "rgba(205,150,38,0.13)");
+  topGlow.addColorStop(1, "transparent");
+  ctx.fillStyle = topGlow;
+  ctx.fillRect(0, 0, W, H);
 
-    const hLine = (y: number, alpha: number, w = W * 0.52) => {
-      const x0 = (W - w) / 2;
-      const g = ctx.createLinearGradient(x0, y, x0 + w, y);
-      g.addColorStop(0, "transparent");
-      g.addColorStop(0.2,  `rgba(165,115,16,${alpha})`);
-      g.addColorStop(0.8,  `rgba(165,115,16,${alpha})`);
-      g.addColorStop(1, "transparent");
-      ctx.save(); ctx.fillStyle = g; ctx.fillRect(x0, y - 0.9, w, 1.8); ctx.restore();
-    };
+  // Helpers
+  const wrapText = (text: string, maxW: number, font: string) => {
+    ctx.font = font;
+    return text.split(" ").reduce((lines: string[], word) => {
+      const last = lines[lines.length - 1] ?? "";
+      const test = last ? `${last} ${word}` : word;
+      if (ctx.measureText(test).width > maxW && last) return [...lines, word];
+      return [...lines.slice(0, -1), test];
+    }, [""]).filter(Boolean);
+  };
 
-    const drawCross = (cx: number, cy: number, arm = 34) => {
-      ctx.save();
-      ctx.shadowColor = "rgba(150,105,10,0.28)";
-      ctx.shadowBlur  = 16;
-      ctx.strokeStyle = "#9A6E10";
-      ctx.lineWidth   = 2.5;
-      ctx.lineCap     = "round";
-      ctx.beginPath();
-      ctx.moveTo(cx,              cy - arm);
-      ctx.lineTo(cx,              cy + arm);
-      ctx.moveTo(cx - arm * 0.58, cy - arm * 0.16);
-      ctx.lineTo(cx + arm * 0.58, cy - arm * 0.16);
-      ctx.stroke();
-      ctx.restore();
-    };
+  const ct = (text: string, y: number, font: string, color: string, alpha = 1) => {
+    ctx.save(); ctx.globalAlpha = alpha; ctx.font = font;
+    ctx.fillStyle = color; ctx.textAlign = "center";
+    ctx.fillText(text, W / 2, y); ctx.restore();
+  };
 
-    // 2. Barras de acento topo/base
-    const bar = ctx.createLinearGradient(0, 0, W, 0);
-    bar.addColorStop(0,    "transparent");
-    bar.addColorStop(0.15, "rgba(155,108,14,0.78)");
-    bar.addColorStop(0.85, "rgba(155,108,14,0.78)");
-    bar.addColorStop(1,    "transparent");
-    ctx.fillStyle = bar; ctx.fillRect(0, 0, W, 4);
+  const hLine = (y: number, alpha: number, w = W * 0.50) => {
+    const x0 = (W - w) / 2;
+    const g = ctx.createLinearGradient(x0, y, x0 + w, y);
+    g.addColorStop(0, "transparent");
+    g.addColorStop(0.2,  `rgba(155,108,14,${alpha})`);
+    g.addColorStop(0.8,  `rgba(155,108,14,${alpha})`);
+    g.addColorStop(1, "transparent");
+    ctx.save(); ctx.fillStyle = g; ctx.fillRect(x0, y - 0.9, w, 1.8); ctx.restore();
+  };
 
-    // 3. Cruz decorativa
-    drawCross(W / 2, 204, 34);
+  // 2. Barras de acento topo/base
+  const bar = ctx.createLinearGradient(0, 0, W, 0);
+  bar.addColorStop(0,    "transparent");
+  bar.addColorStop(0.15, "rgba(155,108,14,0.78)");
+  bar.addColorStop(0.85, "rgba(155,108,14,0.78)");
+  bar.addColorStop(1,    "transparent");
+  ctx.fillStyle = bar; ctx.fillRect(0, 0, W, 4);
 
-    // 4. Cabecalho
-    let cy = 308;
-    hLine(cy, 0.30, W * 0.40); cy += 58;
-    ct("MINISTERIO IRLANDA", cy, "400 24px Georgia,serif", "#2C1E08", 0.46);
-    cy += 48;
-    ct("DEVOCIONAL  DO  DIA", cy, "bold 21px sans-serif", "#9A6E10", 0.84);
-    cy += 44;
-    ct(data.dateLabel, cy, "italic 400 23px Georgia,serif", "#2C1E08", 0.34);
-    cy += 68;
-    hLine(cy, 0.30); cy += 80;
+  // 3. Selo em proporcao perfeita (ou cruz de fallback)
+  let cy = 100;
+  if (seloImg) {
+    const targetH = 180;
+    const ratio   = seloImg.width / seloImg.height;
+    const targetW = targetH * ratio;
+    const sx      = W / 2 - targetW / 2;
+    ctx.drawImage(seloImg, sx, cy, targetW, targetH);
+    cy += targetH + 28;
+  } else {
+    cy = 204;
+    ctx.save();
+    ctx.shadowColor = "rgba(150,105,10,0.28)";
+    ctx.shadowBlur  = 16;
+    ctx.strokeStyle = "#9A6E10";
+    ctx.lineWidth   = 2.5; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(W/2, cy - 34); ctx.lineTo(W/2, cy + 34);
+    ctx.moveTo(W/2 - 20, cy - 6); ctx.lineTo(W/2 + 20, cy - 6);
+    ctx.stroke(); ctx.restore();
+    cy += 50;
+  }
 
-    // 5. Titulo — hero typography
-    if (data.title) {
-      const tFont  = "bold 82px Georgia,serif";
-      const tLines = wrapText(data.title, W - 160, tFont);
-      ctx.save(); ctx.font = tFont; ctx.fillStyle = "#1A1008"; ctx.textAlign = "center";
-      tLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 98; });
-      ctx.restore(); cy += 24;
-    }
-    hLine(cy, 0.20, W * 0.28); cy += 74;
+  // 4. Cabecalho
+  hLine(cy, 0.30, W * 0.40); cy += 58;
+  ct("MINISTERIO IRLANDA", cy, "400 24px Georgia,serif", "#2C1E08", 0.46);
+  cy += 48;
+  ct("DEVOCIONAL  DO  DIA", cy, "bold 21px sans-serif", "#9A6E10", 0.84);
+  cy += 44;
+  ct(data.dateLabel, cy, "italic 400 23px Georgia,serif", "#2C1E08", 0.34);
+  cy += 68;
+  hLine(cy, 0.30); cy += 80;
 
-    // 6. Versiculo
-    const vFont  = "italic 400 44px Georgia,serif";
-    const vLines = wrapText(`"${data.verseText}"`, W - 210, vFont);
-    ctx.save(); ctx.font = vFont; ctx.fillStyle = "#3A2A14";
-    ctx.globalAlpha = 0.88; ctx.textAlign = "center";
-    vLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 64; });
-    ctx.restore(); cy += 18;
+  // 5. Titulo hero
+  if (data.title) {
+    const tFont  = "bold 82px Georgia,serif";
+    const tLines = wrapText(data.title, W - 160, tFont);
+    ctx.save(); ctx.font = tFont; ctx.fillStyle = "#1A1008"; ctx.textAlign = "center";
+    tLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 98; });
+    ctx.restore(); cy += 24;
+  }
+  hLine(cy, 0.20, W * 0.28); cy += 74;
 
-    ct(data.verseRef, cy, "bold 32px Georgia,serif", "#8B6208"); cy += 64;
-    hLine(cy, 0.26); cy += 66;
+  // 6. Versiculo
+  const vFont  = "italic 400 44px Georgia,serif";
+  const vLines = wrapText(`"${data.verseText}"`, W - 210, vFont);
+  ctx.save(); ctx.font = vFont; ctx.fillStyle = "#3A2A14";
+  ctx.globalAlpha = 0.88; ctx.textAlign = "center";
+  vLines.forEach(l => { ctx.fillText(l, W / 2, cy); cy += 64; });
+  ctx.restore(); cy += 18;
 
-    // 7. Corpo — reflexao breve
-    const shortBody = data.body.length > 310
-      ? data.body.slice(0, 310).replace(/\s\w+$/, "") + "..."
-      : data.body;
-    const bLines = wrapText(shortBody, W - 230, "400 36px Georgia,serif");
-    ctx.save(); ctx.font = "400 36px Georgia,serif";
-    ctx.fillStyle = "#4A3820"; ctx.globalAlpha = 0.65; ctx.textAlign = "center";
-    bLines.slice(0, 7).forEach(l => { ctx.fillText(l, W / 2, cy); cy += 54; });
-    ctx.restore();
+  ct(data.verseRef, cy, "bold 32px Georgia,serif", "#8B6208"); cy += 64;
+  hLine(cy, 0.26); cy += 66;
 
-    // 8. Rodape
-    hLine(H - 202, 0.26);
-    ctx.save(); ctx.font = "bold 54px Georgia,serif"; ctx.textAlign = "center";
-    ctx.fillStyle = "#9A6E10";
-    ctx.fillText("#AOGIM", W / 2, H - 122); ctx.restore();
+  // 7. Corpo — cortado na ultima frase completa
+  const bodyText = truncateAtSentence(data.body, 300);
+  const bLines   = wrapText(bodyText, W - 230, "400 36px Georgia,serif");
+  ctx.save(); ctx.font = "400 36px Georgia,serif";
+  ctx.fillStyle = "#4A3820"; ctx.globalAlpha = 0.65; ctx.textAlign = "center";
+  bLines.slice(0, 8).forEach(l => { ctx.fillText(l, W / 2, cy); cy += 54; });
+  ctx.restore();
 
-    ctx.fillStyle = bar; ctx.fillRect(0, H - 4, W, 4);
+  // 8. Rodape
+  hLine(H - 202, 0.26);
+  ctx.save(); ctx.font = "bold 54px Georgia,serif"; ctx.textAlign = "center";
+  ctx.fillStyle = "#9A6E10";
+  ctx.fillText("#AOGIM", W / 2, H - 122); ctx.restore();
 
-    resolve(cv.toDataURL("image/png"));
-  });
+  ctx.fillStyle = bar; ctx.fillRect(0, H - 4, W, 4);
+
+  return cv.toDataURL("image/png");
 }
 
 // Componente
