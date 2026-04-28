@@ -22,7 +22,7 @@ type Membro = {
 };
 
 type PrayerRequest = {
-  id: string; nome: string; contato?: string | null; pedido: string; created_at: string;
+  id: string; nome: string; contato?: string | null; pedido: string; lido: boolean; created_at: string;
 };
 
 type MembroFicha = {
@@ -249,15 +249,23 @@ export default function Admin() {
   async function loadPrayerRequests() {
     setPrayerLoading(true);
     try {
-      const { data, error } = await supabase.from("prayer_requests").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("prayer_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       setPrayerRequests((data as PrayerRequest[]) ?? []);
     } catch (err: any) { setPrayerMsg("Erro ao carregar: " + (err?.message ?? "")); }
     finally { setPrayerLoading(false); }
   }
 
+  async function marcarLido(id: string) {
+    await supabase.from("prayer_requests").update({ lido: true }).eq("id", id);
+    setPrayerRequests(prev => prev.map(p => p.id === id ? { ...p, lido: true } : p));
+  }
+
   async function deletePrayerRequest(id: string) {
-    if (!confirm("Excluir este pedido?")) return;
+    if (!confirm("Excluir este pedido de oração?")) return;
     const { error } = await supabase.from("prayer_requests").delete().eq("id", id);
     if (!error) setPrayerRequests(prev => prev.filter(p => p.id !== id));
   }
@@ -907,40 +915,105 @@ export default function Admin() {
         {tab === "oracao" && (
           <div className="mt-8">
             <div className="flex items-center justify-between flex-wrap gap-3">
-              <h2 className="text-lg font-semibold text-slate-900">Pedidos de Oração</h2>
-              <button onClick={loadPrayerRequests} disabled={prayerLoading} className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm disabled:opacity-50">
-                {prayerLoading ? "Atualizando…" : "↻ Atualizar"}
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Pedidos de Oração</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {prayerRequests.filter(p => !p.lido).length > 0
+                    ? `${prayerRequests.filter(p => !p.lido).length} não lido(s) · ${prayerRequests.length} total`
+                    : `${prayerRequests.length} pedido(s) recebido(s)`}
+                </p>
+              </div>
+              <button onClick={loadPrayerRequests} disabled={prayerLoading}
+                className="rounded-xl bg-white border px-4 py-2 hover:bg-slate-50 transition text-sm disabled:opacity-50 flex items-center gap-2">
+                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-slate-500">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+                {prayerLoading ? "Atualizando…" : "Atualizar"}
               </button>
             </div>
+
             {prayerMsg && (
               <div className="mt-4 rounded-xl bg-red-50 border border-red-100 text-red-700 px-4 py-3 text-sm">{prayerMsg}</div>
             )}
-            {prayerLoading && <div className="mt-6 text-slate-500 text-sm">Carregando pedidos…</div>}
-            {!prayerLoading && prayerRequests.length === 0 && (
-              <div className="mt-6 text-slate-500 text-sm text-center py-12 bg-white rounded-2xl border">
-                Nenhum pedido de oração recebido ainda.
+            {prayerLoading && (
+              <div className="mt-8 flex items-center justify-center gap-3 text-slate-500 text-sm">
+                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity=".25"/>
+                  <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+                Carregando pedidos…
               </div>
             )}
-            <div className="mt-4 space-y-4">
+            {!prayerLoading && prayerRequests.length === 0 && (
+              <div className="mt-6 py-16 text-center bg-white rounded-2xl border">
+                <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" className="w-6 h-6">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p className="text-slate-500 text-sm">Nenhum pedido de oração recebido ainda.</p>
+              </div>
+            )}
+
+            <div className="mt-4 space-y-3">
               {prayerRequests.map(pr => (
-                <div key={pr.id} className="bg-white rounded-2xl border p-5 shadow-sm">
+                <div key={pr.id} className={`rounded-2xl border p-5 shadow-sm transition ${pr.lido ? "bg-white" : "bg-amber-50 border-amber-200"}`}>
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-semibold text-slate-900">{pr.nome}</span>
-                        {pr.contato && (
-                          <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{pr.contato}</span>
+                      {/* Cabeçalho */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {!pr.lido && (
+                          <span className="inline-flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">
+                            ● Novo
+                          </span>
                         )}
-                        <span className="text-xs text-slate-400">{formatDateBR(pr.created_at)}</span>
+                        <span className="font-semibold text-slate-900 text-sm">{pr.nome}</span>
+                        {pr.contato && (
+                          <a
+                            href={pr.contato.match(/^\d/) ? `https://wa.me/55${pr.contato.replace(/\D/g,'')}` : `mailto:${pr.contato}`}
+                            target="_blank" rel="noreferrer"
+                            className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full hover:bg-blue-100 transition"
+                          >
+                            {pr.contato}
+                          </a>
+                        )}
+                        <span className="text-xs text-slate-400 ml-auto">{formatDateBR(pr.created_at)}</span>
                       </div>
-                      <p className="mt-3 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{pr.pedido}</p>
+
+                      {/* Pedido */}
+                      <p className="mt-3 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap border-l-2 border-amber-300 pl-3 ml-0.5">
+                        {pr.pedido}
+                      </p>
+
+                      {/* Ações */}
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
+                        {!pr.lido && (
+                          <button
+                            onClick={() => marcarLido(pr.id)}
+                            className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full hover:bg-green-100 transition font-medium"
+                          >
+                            ✓ Marcar como lido
+                          </button>
+                        )}
+                        {pr.contato && pr.contato.match(/^\d/) && (
+                          <a
+                            href={`https://wa.me/55${pr.contato.replace(/\D/g,'')}?text=${encodeURIComponent(`Olá ${pr.nome}, estamos orando pelo seu pedido. 🙏`)}`}
+                            target="_blank" rel="noreferrer"
+                            className="text-xs bg-green-600 text-white px-3 py-1 rounded-full hover:bg-green-700 transition font-medium"
+                          >
+                            Responder no WhatsApp
+                          </a>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Excluir */}
                     <button
                       onClick={() => deletePrayerRequest(pr.id)}
-                      className="text-slate-400 hover:text-red-500 transition flex-shrink-0 p-1"
+                      className="text-slate-300 hover:text-red-500 transition flex-shrink-0 p-1 mt-0.5"
                       title="Excluir pedido"
                     >
-                      <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                      <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                         <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </button>

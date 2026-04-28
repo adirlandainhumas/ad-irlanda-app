@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const ADMIN_WHATSAPP = "556294478817";
+
 export default function Prayer() {
   const [nome, setNome] = useState("");
   const [contato, setContato] = useState("");
@@ -23,6 +25,9 @@ export default function Prayer() {
     if (dbError) {
       setError("Erro ao enviar. Tente novamente.");
     } else {
+      // Notifica o admin via WhatsApp (grátis, sem API paga)
+      const msg = `🙏 *Novo pedido de oração recebido!*\n\n👤 *Nome:* ${nome.trim()}${contato.trim() ? `\n📱 *Contato:* ${contato.trim()}` : ""}\n\n📖 *Pedido:*\n${pedido.trim()}\n\n_Ver todos em:_ https://aogimconectinhumas.site/#/admin`;
+      window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank");
       setSubmitted(true);
     }
   }
