@@ -320,6 +320,7 @@ const MemberArea: FC = () => {
   const [email, setEmail]                   = useState('');
   const [telefone, setTelefone]             = useState('');
   const [password, setPassword]             = useState('');
+  const [showPassword, setShowPassword]     = useState(false);
   const [funcaoSignup, setFuncaoSignup]     = useState('Membro');
   const [congregacaoSignup, setCongregacaoSignup] = useState('Inhumas - GO');
   const [error, setError]                   = useState<string | null>(null);
@@ -1031,7 +1032,30 @@ const MemberArea: FC = () => {
               <label style={labelStyle}>Senha</label>
               <div style={{ position:"relative" }}>
                 <Lock style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0" }} />
-                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="ma-field" style={fieldStyle} required />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={e=>setPassword(e.target.value)}
+                  className="ma-field"
+                  style={{ ...fieldStyle, paddingRight:42 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:"#C0B8B0", padding:2, display:"flex", alignItems:"center" }}
+                  tabIndex={-1}
+                >
+                  {showPassword
+                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:17,height:17 }}>
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:17,height:17 }}>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                  }
+                </button>
               </div>
             </div>
             <button type="submit" disabled={loading} style={{
