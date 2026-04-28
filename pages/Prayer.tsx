@@ -167,6 +167,15 @@ export default function Prayer() {
 
                 {error && <div className="pr-error">{error}</div>}
 
+                <div style={{ display:"flex", alignItems:"flex-start", gap:8, background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:10, padding:"10px 13px", marginBottom:8 }}>
+                  <svg viewBox="0 0 20 20" fill="#16a34a" style={{ width:15, height:15, flexShrink:0, marginTop:1 }}>
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                  </svg>
+                  <p style={{ fontSize:12, color:"#15803d", margin:0, lineHeight:1.5 }}>
+                    Seu pedido é confidencial e será visto <strong>somente pelo pastor</strong>, com total discrição e sigilo.
+                  </p>
+                </div>
+
                 <button type="submit" className="pr-btn" disabled={loading || !nome.trim() || !pedido.trim()}>
                   {loading ? (
                     <>
