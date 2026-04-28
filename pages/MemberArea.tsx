@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC, type FormEvent, type ReactNode } from 'react';
+import React, { useCallback, useEffect, useRef, useState, type ChangeEvent, type FC, type FormEvent, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import {
   AlertCircle, Calendar, Camera, CheckCircle2, CreditCard,
@@ -608,66 +608,196 @@ const MemberArea: FC = () => {
   if (session) {
     const nome = memberDetails.full_name || session.user.user_metadata?.full_name || 'Membro';
     const fotoRender = photoPreview || photoUrl;
+    const primeiroNome = nome.split(' ')[0];
 
     return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-[60vh] space-y-8">
-        <div className="w-24 h-24 rounded-full flex items-center justify-center text-blue-700 shadow-inner border border-blue-100 overflow-hidden bg-blue-50">
-          {fotoRender ? <img src={fotoRender} alt="Foto" className="w-full h-full object-cover" /> : <User className="w-12 h-12" />}
-        </div>
+      <>
+        <style>{`
+          @keyframes maFadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes maSpin   { to{transform:rotate(360deg)} }
+          .ma-root { font-family:'Lato',sans-serif; min-height:100vh; background:#F8F7F4; }
+          .ma-accent { height:3px; background:linear-gradient(90deg,transparent,#C49A22 18%,#E8B84B 50%,#C49A22 82%,transparent); }
+          .ma-in   { opacity:0; animation:maFadeUp .42s cubic-bezier(.22,.61,.36,1) forwards; }
+          .ma-in-1 { animation-delay:.06s } .ma-in-2 { animation-delay:.16s } .ma-in-3 { animation-delay:.28s }
+          .ma-card {
+            background:#fff; border-radius:20px;
+            border:1px solid rgba(0,0,0,0.06);
+            box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.03);
+            padding:24px 20px;
+          }
+          .ma-photo {
+            width:84px; height:84px; border-radius:50%;
+            border:2.5px solid rgba(196,154,34,0.38);
+            box-shadow:0 0 0 5px rgba(196,154,34,0.09);
+            overflow:hidden; background:#F0EAD8;
+            display:flex; align-items:center; justify-content:center; flex-shrink:0;
+          }
+          .ma-photo img { width:100%; height:100%; object-fit:cover; }
+          .ma-badge { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; letter-spacing:.06em; border-radius:999px; padding:4px 11px; }
+          .ma-badge-gold  { background:rgba(196,154,34,0.12); color:#8B6208; border:1px solid rgba(196,154,34,0.24); }
+          .ma-badge-blue  { background:rgba(26,63,187,0.08);  color:#1A3FBB; border:1px solid rgba(26,63,187,0.14); }
+          .ma-badge-green { background:rgba(22,163,74,0.08);  color:#15803D; border:1px solid rgba(22,163,74,0.14); }
+          .ma-badge-amber { background:rgba(217,119,6,0.10);  color:#B45309; border:1px solid rgba(217,119,6,0.19); }
+          .ma-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,0.07),transparent); margin:18px 0; }
+          .ma-progress { height:4px; border-radius:999px; background:#EDE8DF; overflow:hidden; margin-top:8px; }
+          .ma-progress-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#C49A22,#E8B84B); }
+          .ma-btn-primary {
+            width:100%; display:flex; align-items:center; justify-content:center; gap:10px;
+            background:#1E40AF; color:#fff; border:none; border-radius:14px;
+            padding:15px 0; font-family:'Lato',sans-serif; font-size:15px; font-weight:700;
+            cursor:pointer; transition:opacity .18s,transform .18s;
+          }
+          .ma-btn-primary:hover  { opacity:.9; transform:translateY(-1px); }
+          .ma-btn-primary:active { transform:none; }
+          .ma-btn-secondary {
+            width:100%; display:flex; align-items:center; justify-content:center; gap:9px;
+            background:transparent; color:#574A3E; border:1px solid rgba(0,0,0,0.09);
+            border-radius:14px; padding:13px 0; font-family:'Lato',sans-serif;
+            font-size:14px; font-weight:700; cursor:pointer; transition:border-color .18s,color .18s;
+          }
+          .ma-btn-secondary:hover { border-color:#9E958E; color:#17130E; }
+          .ma-btn-ghost {
+            width:100%; display:flex; align-items:center; justify-content:center; gap:9px;
+            background:transparent; color:#9E958E; border:none; border-radius:14px;
+            padding:11px 0; font-family:'Lato',sans-serif; font-size:13px; font-weight:700;
+            cursor:pointer; transition:color .18s;
+          }
+          .ma-btn-ghost:hover { color:#DC2626; }
+          .ma-msg { border-radius:14px; padding:13px 15px; display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; }
+          .ma-msg-info  { background:rgba(26,63,187,0.06);  border:1px solid rgba(26,63,187,0.12); }
+          .ma-msg-error { background:rgba(220,38,38,0.07);  border:1px solid rgba(220,38,38,0.17); }
+        `}</style>
 
-        <div className="text-center space-y-1">
-          <h2 className="text-2xl font-bold text-slate-800">Olá, {nome.split(' ')[0]}!</h2>
-          <p className="text-slate-500 text-sm">{session.user.email}</p>
-          {/* Exibe congregação abaixo do email */}
-          <p className="text-blue-700 text-xs font-semibold flex items-center justify-center gap-1">
-            <MapPin className="w-3 h-3" /> Ministério Irlanda • {congregacaoMembro}
-          </p>
-        </div>
+        <div className="ma-accent" />
+        <main className="ma-root">
 
-        {fetchingDetails && (
-          <div className="w-full max-w-xl bg-blue-50 text-blue-700 p-4 rounded-2xl text-sm font-semibold border border-blue-100 flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin" /> Carregando seus dados...
+          <div style={{ display:"flex", justifyContent:"center", paddingTop:20, paddingBottom:2 }}>
+            <img src={LOGO_URL} alt="AOGIM" style={{ width:56, objectFit:"contain" }} />
           </div>
-        )}
-        {successMsg && (
-          <div className="w-full max-w-xl bg-blue-50 text-blue-700 p-4 rounded-2xl text-sm font-semibold border border-blue-100 flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5" /> {successMsg}
-          </div>
-        )}
-        {error && (
-          <div className="w-full max-w-xl bg-red-50 text-red-700 p-4 rounded-2xl text-sm font-semibold border border-red-100 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" /> {error}
-          </div>
-        )}
 
-        <div className="w-full max-w-xl space-y-4">
-          {!hasFicha && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-bold text-amber-800">Ficha cadastral pendente</p>
-                <p className="text-sm text-amber-700 mt-1">Complete sua ficha para liberar seu cartão de membro.</p>
-              </div>
+          <div style={{ width:"100%", maxWidth:480, margin:"0 auto", padding:"0 18px 88px" }}>
+
+            {/* Header */}
+            <div className="ma-in ma-in-1" style={{ textAlign:"center", padding:"10px 0 20px" }}>
+              <span style={{ fontSize:10, letterSpacing:".24em", color:"#1A3FBB", textTransform:"uppercase", fontWeight:700 }}>
+                Área do Membro
+              </span>
+              <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(20px,5vw,24px)", fontWeight:700, color:"#17130E", margin:"7px 0 0", lineHeight:1.22 }}>
+                Olá, {primeiroNome}!
+              </h1>
             </div>
-          )}
-          <button
-            onClick={() => hasFicha ? setShowCard(true) : setShowFichaForm(true)}
-            className={`w-full text-white font-bold py-5 px-6 rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] ${hasFicha ? 'bg-blue-700 hover:bg-blue-800' : 'bg-amber-500 hover:bg-amber-600'}`}
-          >
-            {hasFicha ? <><CreditCard className="w-6 h-6" /> Acessar Cartão de Membro</> : <><UserCircle className="w-6 h-6" /> Preencher Ficha Cadastral</>}
-          </button>
-          {hasFicha && (
-            <button
-              onClick={() => setShowFichaForm(true)}
-              className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-600 font-bold py-4 rounded-2xl hover:bg-slate-100 transition-all border border-slate-200"
-            >
-              <Save className="w-5 h-5" /> Editar Ficha Cadastral
-            </button>
-          )}
-          <button onClick={handleSignOut} className="w-full flex items-center justify-center gap-2 bg-slate-50 text-slate-500 font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-600 transition-all border border-slate-100">
-            <LogOut className="w-5 h-5" /> Sair da Conta
-          </button>
-        </div>
+
+            {/* Feedback */}
+            {fetchingDetails && (
+              <div className="ma-msg ma-msg-info ma-in ma-in-1">
+                <div style={{ width:16,height:16,border:"2px solid rgba(26,63,187,0.2)",borderTopColor:"#1A3FBB",borderRadius:"50%",animation:"maSpin .85s linear infinite",flexShrink:0,marginTop:1 }} />
+                <span style={{ fontSize:13, color:"#1A3FBB", fontWeight:600 }}>Carregando seus dados…</span>
+              </div>
+            )}
+            {successMsg && (
+              <div className="ma-msg ma-msg-info ma-in ma-in-1">
+                <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:16,height:16,color:"#1A3FBB",flexShrink:0,marginTop:1 }}>
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                </svg>
+                <span style={{ fontSize:13, color:"#1A3FBB", fontWeight:600 }}>{successMsg}</span>
+              </div>
+            )}
+            {error && (
+              <div className="ma-msg ma-msg-error ma-in ma-in-1">
+                <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:16,height:16,color:"#DC2626",flexShrink:0,marginTop:1 }}>
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+                </svg>
+                <span style={{ fontSize:13, color:"#DC2626", fontWeight:600 }}>{error}</span>
+              </div>
+            )}
+
+            {/* Card do membro */}
+            <div className="ma-card ma-in ma-in-2" style={{ marginBottom:12 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+                <div className="ma-photo">
+                  {fotoRender
+                    ? <img src={fotoRender} alt="Foto" />
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="rgba(155,108,14,0.38)" strokeWidth="1.5" style={{ width:30,height:30 }}>
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                  }
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <p style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:17, fontWeight:700, color:"#17130E", margin:"0 0 2px", lineHeight:1.2, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                    {nome}
+                  </p>
+                  <p style={{ fontSize:12, color:"#9E958E", margin:"0 0 9px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    {session.user.email}
+                  </p>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    <span className="ma-badge ma-badge-gold">⛪ {memberDetails.church_function || 'Membro'}</span>
+                    <span className="ma-badge ma-badge-blue">📍 {congregacaoMembro}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ma-divider" />
+
+              {!hasFicha ? (
+                <div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                    <span style={{ fontSize:12, fontWeight:700, color:"#B45309" }}>Ficha cadastral</span>
+                    <span className="ma-badge ma-badge-amber">Pendente</span>
+                  </div>
+                  <div className="ma-progress"><div className="ma-progress-fill" style={{ width:"25%" }} /></div>
+                  <p style={{ fontSize:11, color:"#9E958E", marginTop:6, fontStyle:"italic", fontFamily:"Georgia,serif" }}>
+                    Preencha a ficha para liberar o cartão de membro.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:"#574A3E" }}>Ficha cadastral</span>
+                  <span className="ma-badge ma-badge-green">
+                    <svg viewBox="0 0 12 12" fill="currentColor" style={{ width:9,height:9 }}>
+                      <path fillRule="evenodd" d="M10.354 3.146a.5.5 0 010 .708l-5 5a.5.5 0 01-.708 0l-2.5-2.5a.5.5 0 11.708-.708L5 7.793l4.646-4.647a.5.5 0 01.708 0z" clipRule="evenodd"/>
+                    </svg>
+                    Completa
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Ações */}
+            <div className="ma-in ma-in-3" style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              {!hasFicha ? (
+                <button className="ma-btn-primary" onClick={() => setShowFichaForm(true)}>
+                  <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:17,height:17,flexShrink:0 }}>
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                    <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd"/>
+                  </svg>
+                  Preencher Ficha Cadastral
+                </button>
+              ) : (
+                <button className="ma-btn-primary" onClick={() => setShowCard(true)}>
+                  <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:17,height:17,flexShrink:0 }}>
+                    <path d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2H2V5zM2 9h16v6a2 2 0 01-2 2H4a2 2 0 01-2-2V9zm4 2a1 1 0 000 2h1a1 1 0 100-2H6zm4 0a1 1 0 000 2h4a1 1 0 100-2h-4z"/>
+                  </svg>
+                  Acessar Cartão de Membro
+                </button>
+              )}
+              {hasFicha && (
+                <button className="ma-btn-secondary" onClick={() => setShowFichaForm(true)}>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:15,height:15,flexShrink:0 }}>
+                    <path d="M11 5H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-5M18.364 3.636a2 2 0 010 2.828L10 15l-4 1 1-4 8.364-8.364a2 2 0 012.828 0z" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Editar Ficha Cadastral
+                </button>
+              )}
+              <button className="ma-btn-ghost" onClick={handleSignOut}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" style={{ width:15,height:15,flexShrink:0 }}>
+                  <path d="M13 7l5 5m0 0l-5 5m5-5H8M9 3H4a1 1 0 00-1 1v12a1 1 0 001 1h5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Sair da Conta
+              </button>
+            </div>
+
+          </div>
+        </main>
 
         {/* Modal Ficha */}
         {showFichaForm && (
@@ -789,82 +919,143 @@ const MemberArea: FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </>
     );
   }
 
   // ── Não logado ────────────────────────────────────────────────────────────
+  const fieldStyle: React.CSSProperties = {
+    width:"100%", background:"#FAFAF8", border:"1px solid rgba(0,0,0,0.09)",
+    borderRadius:12, padding:"13px 14px 13px 42px",
+    fontFamily:"'Lato',sans-serif", fontSize:15, color:"#17130E", outline:"none",
+  };
+  const labelStyle: React.CSSProperties = {
+    fontSize:11, fontWeight:700, letterSpacing:".13em", textTransform:"uppercase",
+    color:"#9E958E", display:"block", marginBottom:6,
+  };
+
   return (
-    <div className="min-h-[70vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
-        <h2 className="text-2xl font-black text-center text-slate-800 mb-2">
-          {isSignUp ? 'Solicitar Cadastro de Membro' : 'Entrar na área de membros'}
-        </h2>
-        <p className="text-center text-sm text-slate-500 mb-6">
-          {isSignUp ? 'Após o cadastro, a liderança receberá uma notificação para aprovar seu acesso.' : 'Acesse sua ficha e cartão de membro.'}
-        </p>
-        <form onSubmit={handleAuth} className="space-y-4">
-          {isSignUp && (
-            <>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Nome completo</label>
-                <div className="relative"><User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="text" value={fullName} onChange={e=>setFullName(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Telefone</label>
-                <div className="relative"><Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <input type="tel" value={telefone} onChange={e=>setTelefone(e.target.value)} placeholder="(62) 99999-9999" className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
-                </div>
-              </div>
-              {/* ── Select de Congregação ── */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Congregação</label>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <select value={congregacaoSignup} onChange={e=>setCongregacaoSignup(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 appearance-none text-slate-700 font-medium" required>
-                    {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <p className="text-xs text-slate-400 ml-1">Selecione a congregação que você frequenta.</p>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Função na Igreja</label>
-                <div className="relative"><Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                  <select value={funcaoSignup} onChange={e=>setFuncaoSignup(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4 appearance-none text-slate-700 font-medium" required>
-                    {['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)'].map(o => (
-                      <option key={o} value={o}>{o}</option>
-                    ))}
-                  </select>
-                </div>
-                <p className="text-xs text-slate-400 ml-1">Será confirmada pela liderança após aprovação.</p>
-              </div>
-            </>
+    <>
+      <style>{`
+        .ma-login-root { font-family:'Lato',sans-serif; min-height:88vh; background:#F8F7F4; display:flex; align-items:center; justify-content:center; padding:24px 18px 60px; }
+        .ma-login-card { width:100%; max-width:436px; background:#fff; border-radius:22px; border:1px solid rgba(0,0,0,0.06); box-shadow:0 2px 4px rgba(0,0,0,0.04),0 8px 24px rgba(0,0,0,0.04); padding:34px 28px 30px; }
+        .ma-accent { height:3px; background:linear-gradient(90deg,transparent,#C49A22 18%,#E8B84B 50%,#C49A22 82%,transparent); }
+        .ma-field:focus { border-color:rgba(26,63,187,0.35) !important; background:#fff !important; }
+      `}</style>
+
+      <div className="ma-accent" />
+      <div className="ma-login-root">
+        <div className="ma-login-card">
+
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:20 }}>
+            <img src={LOGO_URL} alt="AOGIM" style={{ width:54, objectFit:"contain" }} />
+          </div>
+
+          <div style={{ textAlign:"center", marginBottom:24 }}>
+            <span style={{ fontSize:10, letterSpacing:".24em", color:"#1A3FBB", textTransform:"uppercase", fontWeight:700 }}>
+              {isSignUp ? 'Solicitar Cadastro' : 'Área do Membro'}
+            </span>
+            <h1 style={{ fontFamily:"'Playfair Display',Georgia,serif", fontSize:"clamp(19px,5vw,22px)", fontWeight:700, color:"#17130E", margin:"7px 0 4px", lineHeight:1.22 }}>
+              {isSignUp ? 'Cadastro de Membro' : 'Entrar na conta'}
+            </h1>
+            <p style={{ fontFamily:"Georgia,serif", fontStyle:"italic", fontSize:13, color:"#9E958E", margin:0 }}>
+              {isSignUp ? 'A liderança receberá notificação para aprovar.' : 'Acesse sua ficha e cartão de membro.'}
+            </p>
+          </div>
+
+          {error && (
+            <div style={{ borderRadius:12, padding:"12px 14px", background:"rgba(220,38,38,0.07)", border:"1px solid rgba(220,38,38,0.17)", display:"flex", gap:9, alignItems:"flex-start", marginBottom:16 }}>
+              <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:15,height:15,color:"#DC2626",flexShrink:0,marginTop:1 }}>
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/>
+              </svg>
+              <span style={{ fontSize:13, color:"#DC2626", fontWeight:600 }}>{error}</span>
+            </div>
           )}
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">E-mail</label>
-            <div className="relative"><Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
+          {successMsg && (
+            <div style={{ borderRadius:12, padding:"12px 14px", background:"rgba(26,63,187,0.06)", border:"1px solid rgba(26,63,187,0.12)", display:"flex", gap:9, alignItems:"flex-start", marginBottom:16 }}>
+              <svg viewBox="0 0 20 20" fill="currentColor" style={{ width:15,height:15,color:"#1A3FBB",flexShrink:0,marginTop:1 }}>
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+              </svg>
+              <span style={{ fontSize:13, color:"#1A3FBB", fontWeight:600 }}>{successMsg}</span>
             </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-600 uppercase tracking-wide ml-1">Senha</label>
-            <div className="relative"><Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-white border border-slate-200 rounded-2xl py-4 pl-12 pr-4" required />
+          )}
+
+          <form onSubmit={handleAuth} style={{ display:"flex", flexDirection:"column", gap:14 }}>
+            {isSignUp && (
+              <>
+                <div>
+                  <label style={labelStyle}>Nome completo</label>
+                  <div style={{ position:"relative" }}>
+                    <User style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0" }} />
+                    <input type="text" value={fullName} onChange={e=>setFullName(e.target.value)} className="ma-field" style={fieldStyle} required />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Telefone</label>
+                  <div style={{ position:"relative" }}>
+                    <Phone style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0" }} />
+                    <input type="tel" value={telefone} onChange={e=>setTelefone(e.target.value)} placeholder="(62) 99999-9999" className="ma-field" style={fieldStyle} required />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Congregação</label>
+                  <div style={{ position:"relative" }}>
+                    <MapPin style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0", zIndex:1 }} />
+                    <select value={congregacaoSignup} onChange={e=>setCongregacaoSignup(e.target.value)} className="ma-field" style={{ ...fieldStyle, appearance:"none" as const }} required>
+                      {CONGREGACOES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Função na Igreja</label>
+                  <div style={{ position:"relative" }}>
+                    <Users style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0", zIndex:1 }} />
+                    <select value={funcaoSignup} onChange={e=>setFuncaoSignup(e.target.value)} className="ma-field" style={{ ...fieldStyle, appearance:"none" as const }} required>
+                      {['Membro','Diácono','Diáconisa','Presbítero','Evangelista','Pastor','Cooperador(a)'].map(o => (
+                        <option key={o} value={o}>{o}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <p style={{ fontSize:11, color:"#9E958E", marginTop:4 }}>Será confirmada pela liderança após aprovação.</p>
+                </div>
+              </>
+            )}
+            <div>
+              <label style={labelStyle}>E-mail</label>
+              <div style={{ position:"relative" }}>
+                <Mail style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0" }} />
+                <input type="email" value={email} onChange={e=>setEmail(e.target.value)} className="ma-field" style={fieldStyle} required />
+              </div>
             </div>
-          </div>
-          {error && <div className="flex items-center gap-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100"><AlertCircle className="w-5 h-5 flex-shrink-0" /> <span>{error}</span></div>}
-          {successMsg && <div className="flex items-center gap-2 p-3 bg-blue-50 text-blue-700 rounded-xl text-sm border border-blue-100"><CheckCircle2 className="w-5 h-5 flex-shrink-0" /> <span>{successMsg}</span></div>}
-          <button type="submit" disabled={loading} className="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-70">
-            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : isSignUp ? 'Solicitar Cadastro' : 'Entrar'}
+            <div>
+              <label style={labelStyle}>Senha</label>
+              <div style={{ position:"relative" }}>
+                <Lock style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", width:16, height:16, color:"#C0B8B0" }} />
+                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="ma-field" style={fieldStyle} required />
+              </div>
+            </div>
+            <button type="submit" disabled={loading} style={{
+              width:"100%", display:"flex", alignItems:"center", justifyContent:"center", gap:9,
+              background:"#1E40AF", color:"#fff", border:"none", borderRadius:13,
+              padding:"14px 0", fontFamily:"'Lato',sans-serif", fontSize:15, fontWeight:700,
+              cursor:loading?"not-allowed":"pointer", opacity:loading?.6:1, marginTop:2,
+            }}>
+              {loading
+                ? <><div style={{ width:17,height:17,border:"2px solid rgba(255,255,255,0.25)",borderTopColor:"#fff",borderRadius:"50%",animation:"maSpin .85s linear infinite" }} /> Aguarde…</>
+                : isSignUp ? 'Solicitar Cadastro' : 'Entrar'
+              }
+            </button>
+          </form>
+
+          <div style={{ height:1, background:"linear-gradient(90deg,transparent,rgba(0,0,0,0.07),transparent)", margin:"20px 0" }} />
+
+          <button type="button" onClick={() => { setIsSignUp(p=>!p); setError(null); setSuccessMsg(null); }}
+            style={{ width:"100%", background:"none", border:"none", cursor:"pointer", fontSize:13, fontWeight:700, color:"#1A3FBB", fontFamily:"'Lato',sans-serif", padding:"4px 0" }}>
+            {isSignUp ? 'Já tem conta? Entre aqui' : 'Não tem conta? Solicitar cadastro'}
           </button>
-        </form>
-        <button type="button" onClick={() => { setIsSignUp(p=>!p); setError(null); setSuccessMsg(null); }} className="w-full mt-4 text-sm font-semibold text-blue-700 hover:text-blue-900">
-          {isSignUp ? 'Já tem conta? Entre aqui' : 'Não tem conta? Solicitar cadastro'}
-        </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
