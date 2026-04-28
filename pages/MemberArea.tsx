@@ -49,7 +49,7 @@ async function checarStatus(userId: string): Promise<'aprovado'|'pendente'|'repr
   return data.status as any;
 }
 
-// ─── Geração do Cartão — congregação dinâmica ─────────────────────────────────
+// ─── Geração do Cartão — Editorial Creme Quente ──────────────────────────────
 async function gerarCartaoCNH(
   details: MemberDetails,
   photoUrl: string | null,
@@ -66,241 +66,231 @@ async function gerarCartaoCNH(
     ctx.scale(S, S);
     const LW = W / S, LH = H / S;
 
-    // Fundo
+    const CREAM     = '#FBF8F2';
+    const CREAM_MID = '#F5EDD8';
+    const CREAM_FTR = '#EDE0C0';
+    const GOLD      = '#B45309';
+    const GOLD_L    = '#D97706';
+    const INK       = '#1C1917';
+    const INK_2     = '#78716C';
+    const INK_LBL   = '#92400E';
+
+    // Background creme quente
     const bgGrad = ctx.createLinearGradient(0, 0, LW, LH);
-    bgGrad.addColorStop(0, '#08122a'); bgGrad.addColorStop(1, '#0b1c3e');
+    bgGrad.addColorStop(0, CREAM); bgGrad.addColorStop(0.6, CREAM_MID); bgGrad.addColorStop(1, '#EDE8DC');
     ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, LW, LH);
 
-    ctx.save(); ctx.globalAlpha = 0.04;
-    for (let x = 20; x < LW; x += 28)
-      for (let y = 20; y < LH; y += 28) {
-        ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2);
-        ctx.fillStyle = '#4a90e2'; ctx.fill();
+    // Textura pontilhada suave
+    ctx.save(); ctx.globalAlpha = 0.025;
+    for (let x = 0; x < LW; x += 18)
+      for (let y = 0; y < LH; y += 18) {
+        ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2);
+        ctx.fillStyle = GOLD; ctx.fill();
       }
     ctx.restore();
 
-    // Faixa superior
-    const faixaH = 110;
-    const faixaGrad = ctx.createLinearGradient(0, 0, LW, faixaH);
-    faixaGrad.addColorStop(0, '#1040b0'); faixaGrad.addColorStop(0.6, '#1a55d0'); faixaGrad.addColorStop(1, '#0d3a9e');
-    ctx.fillStyle = faixaGrad; ctx.fillRect(0, 0, LW, faixaH);
+    // Barra dourada superior
+    const topGrad = ctx.createLinearGradient(0, 0, LW, 0);
+    topGrad.addColorStop(0, GOLD); topGrad.addColorStop(0.5, GOLD_L); topGrad.addColorStop(1, GOLD);
+    ctx.fillStyle = topGrad; ctx.fillRect(0, 0, LW, 4);
 
-    ctx.save(); ctx.globalAlpha = 0.08;
-    for (let r = 80; r <= 320; r += 55) {
-      ctx.beginPath(); ctx.arc(LW - 60, -20, r, 0, Math.PI*2);
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 22; ctx.stroke();
-    }
-    ctx.restore();
-
-    const lineGrad = ctx.createLinearGradient(0, faixaH, LW, faixaH);
-    lineGrad.addColorStop(0, 'transparent'); lineGrad.addColorStop(0.2, '#5090ff');
-    lineGrad.addColorStop(0.8, '#5090ff'); lineGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = lineGrad; ctx.fillRect(0, faixaH - 2, LW, 3);
+    // Área do cabeçalho
+    ctx.fillStyle = 'rgba(255,255,255,0.70)'; ctx.fillRect(0, 4, LW, 88);
 
     // Logo
     try {
       const logo = new Image(); logo.crossOrigin = 'anonymous';
-      await new Promise<void>((res) => { logo.onload=()=>res(); logo.onerror=()=>res(); logo.src=LOGO_URL; });
-      if (logo.complete && logo.naturalWidth > 0) ctx.drawImage(logo, 24, 14, 80, 80);
+      await new Promise<void>((res) => { logo.onload = () => res(); logo.onerror = () => res(); logo.src = LOGO_URL; });
+      if (logo.complete && logo.naturalWidth > 0) ctx.drawImage(logo, 18, 10, 68, 68);
     } catch {}
 
-    // ── Título + congregação dinâmica no topo ────────────────────────────────
+    // Nome da igreja
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.font = 'bold 23px Georgia, serif';
-    ctx.fillText('ASSEMBLÉIA DE DEUS', 122, 46);
-    ctx.font = '14px sans-serif'; ctx.fillStyle = 'rgba(180,210,255,0.85)';
-    ctx.fillText(`MINISTÉRIO IRLANDA  •  ${(congregacao || 'INHUMAS - GO').toUpperCase()}`, 122, 68);
+    ctx.fillStyle = INK; ctx.font = 'bold 22px Georgia, serif'; ctx.textAlign = 'left';
+    ctx.fillText('ASSEMBLÉIA DE DEUS', 100, 40);
+    ctx.font = 'italic 12px Georgia, serif'; ctx.fillStyle = INK_2;
+    ctx.fillText(`Ministério Irlanda  •  ${(congregacao || 'Inhumas - GO').toUpperCase()}`, 100, 62);
     ctx.restore();
 
+    // Badge "CARTÃO DE MEMBRO"
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.beginPath(); ctx.roundRect(LW - 215, 28, 190, 52, 26); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.roundRect(LW - 215, 28, 190, 52, 26); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('CARTÃO DE MEMBRO', LW - 120, 60);
+    ctx.font = 'bold 11px sans-serif';
+    const badgeLabel = 'CARTÃO DE MEMBRO';
+    const badgeTW = ctx.measureText(badgeLabel).width;
+    const badgeX = LW - badgeTW - 52;
+    ctx.fillStyle = GOLD;
+    ctx.beginPath(); ctx.roundRect(badgeX, 26, badgeTW + 36, 30, 15); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'left';
+    ctx.fillText(badgeLabel, badgeX + 18, 45);
     ctx.restore();
+
+    // Separador dourado do cabeçalho
+    const hSep = ctx.createLinearGradient(0, 0, LW, 0);
+    hSep.addColorStop(0, 'transparent'); hSep.addColorStop(0.15, GOLD_L);
+    hSep.addColorStop(0.85, GOLD_L); hSep.addColorStop(1, 'transparent');
+    ctx.fillStyle = hSep; ctx.fillRect(0, 92, LW, 1.5);
 
     // Foto
-    const photoW = 158, photoH = 198;
-    const photoX = 22, photoY = faixaH + 18;
-
+    const photoW = 158, photoH = 198, photoX = 20, photoY = 106;
     ctx.save();
-    ctx.shadowColor = 'rgba(20,80,220,0.5)'; ctx.shadowBlur = 20;
-    ctx.strokeStyle = 'rgba(80,150,255,0.6)'; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.roundRect(photoX - 2, photoY - 2, photoW + 4, photoH + 4, 10); ctx.stroke();
+    ctx.shadowColor = 'rgba(180,120,30,0.28)'; ctx.shadowBlur = 14;
+    ctx.strokeStyle = GOLD_L; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(photoX - 1, photoY - 1, photoW + 2, photoH + 2, 10); ctx.stroke();
     ctx.restore();
 
-    ctx.save(); ctx.beginPath(); ctx.roundRect(photoX, photoY, photoW, photoH, 8); ctx.clip();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(photoX, photoY, photoW, photoH, 9); ctx.clip();
     if (photoUrl) {
       try {
         const img = new Image(); img.crossOrigin = 'anonymous';
-        await new Promise<void>((res) => { img.onload=()=>res(); img.onerror=()=>res(); img.src=photoUrl; });
+        await new Promise<void>((res) => { img.onload = () => res(); img.onerror = () => res(); img.src = photoUrl; });
         if (img.complete && img.naturalWidth > 0) {
-          const aspect = img.naturalWidth/img.naturalHeight, boxAspect = photoW/photoH;
-          let sx=0,sy=0,sw=img.naturalWidth,sh=img.naturalHeight;
-          if(aspect>boxAspect){sw=sh*boxAspect;sx=(img.naturalWidth-sw)/2;}
-          else{sh=sw/boxAspect;sy=(img.naturalHeight-sh)/2;}
-          ctx.drawImage(img,sx,sy,sw,sh,photoX,photoY,photoW,photoH);
-        } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
-      } catch { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
-    } else { ctx.fillStyle='#1a3060'; ctx.fillRect(photoX,photoY,photoW,photoH); }
+          const aspect = img.naturalWidth / img.naturalHeight, boxAspect = photoW / photoH;
+          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          if (aspect > boxAspect) { sw = sh * boxAspect; sx = (img.naturalWidth - sw) / 2; }
+          else { sh = sw / boxAspect; sy = (img.naturalHeight - sh) / 2; }
+          ctx.drawImage(img, sx, sy, sw, sh, photoX, photoY, photoW, photoH);
+        } else { ctx.fillStyle = CREAM_FTR; ctx.fillRect(photoX, photoY, photoW, photoH); }
+      } catch { ctx.fillStyle = CREAM_FTR; ctx.fillRect(photoX, photoY, photoW, photoH); }
+    } else { ctx.fillStyle = CREAM_FTR; ctx.fillRect(photoX, photoY, photoW, photoH); }
     ctx.restore();
 
+    // Nome + badge abaixo da foto
     ctx.save(); ctx.textAlign = 'center';
-    let nomeDisplay = details.full_name || 'MEMBRO';
-    if (nomeDisplay.split(' ').length > 2) {
-      const p = nomeDisplay.split(' '); nomeDisplay = `${p[0]} ${p[p.length-1]}`;
-    }
-    ctx.font = 'bold 13px sans-serif'; ctx.fillStyle = '#e8f4ff';
-    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW/2, photoY + photoH + 20);
-
+    ctx.font = 'bold 13px Georgia, serif'; ctx.fillStyle = INK;
+    ctx.fillText((details.full_name || 'MEMBRO').toUpperCase(), photoX + photoW / 2, photoY + photoH + 20);
     const funcao = details.church_function || 'Membro';
-    ctx.font = 'bold 11px sans-serif';
-    const badgeW = Math.min(photoW, ctx.measureText(funcao).width + 24);
-    ctx.fillStyle = 'rgba(26,85,208,0.7)';
-    ctx.beginPath(); ctx.roundRect(photoX + photoW/2 - badgeW/2, photoY + photoH + 28, badgeW, 22, 11); ctx.fill();
-    ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(funcao, photoX + photoW/2, photoY + photoH + 43);
+    ctx.font = 'bold 10px sans-serif';
+    const fbW = Math.min(photoW, ctx.measureText(funcao).width + 24);
+    ctx.fillStyle = GOLD;
+    ctx.beginPath(); ctx.roundRect(photoX + photoW / 2 - fbW / 2, photoY + photoH + 27, fbW, 20, 10); ctx.fill();
+    ctx.fillStyle = '#FFF';
+    ctx.fillText(funcao, photoX + photoW / 2, photoY + photoH + 41);
     ctx.restore();
 
-    // ── Selo: ícone da pomba/globo ────────────────────────────────────────────
-    const seloX = photoX + photoW / 2;
-    const seloY = photoY + photoH + 120;
-    const seloR = 56;
-
+    // Selo
+    const seloX = photoX + photoW / 2, seloY = photoY + photoH + 108, seloR = 50;
     try {
-      const seloImg = new Image();
-      seloImg.crossOrigin = 'anonymous';
+      const seloImg = new Image(); seloImg.crossOrigin = 'anonymous';
       await new Promise<void>((res) => { seloImg.onload = () => res(); seloImg.onerror = () => res(); seloImg.src = '/selo.png'; });
       if (seloImg.complete && seloImg.naturalWidth > 0) {
         ctx.save();
-        // Clip em círculo para manter proporção arredondada
+        ctx.fillStyle = 'rgba(253,230,138,0.12)';
+        ctx.beginPath(); ctx.arc(seloX, seloY, seloR + 3, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(seloX, seloY, seloR, 0, Math.PI * 2); ctx.clip();
         ctx.drawImage(seloImg, seloX - seloR, seloY - seloR, seloR * 2, seloR * 2);
         ctx.restore();
-        // Anel externo sutil
         ctx.save();
         ctx.beginPath(); ctx.arc(seloX, seloY, seloR + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(180,210,255,0.5)'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = 'rgba(180,120,30,0.35)'; ctx.lineWidth = 1.5; ctx.stroke();
         ctx.restore();
       }
     } catch {}
 
-    // Dados
-    const dx = photoX + photoW + 26;
-    const dy = faixaH + 16;
-    const colW = (LW - dx - 20) / 2;
+    // Área de dados
+    const dx = photoX + photoW + 24, colW = (LW - dx - 18) / 2;
+    let sy2 = 106;
 
-    const drawField = (label: string, value: string, x: number, y: number, maxW = colW - 12) => {
+    const drawLbl = (t: string, x: number, y: number) => {
       ctx.save();
-      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.75)'; ctx.textAlign = 'left';
-      ctx.fillText(label.toUpperCase(), x, y);
-      ctx.font = '15px Georgia, serif'; ctx.fillStyle = 'rgba(220,235,255,0.95)';
-      let val = value;
-      while (ctx.measureText(val).width > maxW && val.length > 4) val = val.slice(0,-1);
-      if (val !== value) val += '…';
-      ctx.fillText(val, x, y + 19);
+      ctx.font = 'bold 8.5px sans-serif'; ctx.fillStyle = INK_LBL; ctx.textAlign = 'left';
+      ctx.fillText(t.toUpperCase(), x, y);
+      ctx.restore();
+    };
+    const drawVal = (t: string, x: number, y: number, maxW = colW - 8) => {
+      ctx.save();
+      ctx.font = '14px Georgia, serif'; ctx.fillStyle = INK; ctx.textAlign = 'left';
+      let v = t;
+      while (ctx.measureText(v).width > maxW && v.length > 4) v = v.slice(0, -1);
+      if (v !== t) v += '…';
+      ctx.fillText(v, x, y);
+      ctx.restore();
+    };
+    const drawSep2 = (y: number) => {
+      const g = ctx.createLinearGradient(dx, 0, LW - 18, 0);
+      g.addColorStop(0, 'rgba(180,120,30,0.35)'); g.addColorStop(0.7, 'rgba(180,120,30,0.1)'); g.addColorStop(1, 'transparent');
+      ctx.fillStyle = g; ctx.fillRect(dx, y, LW - dx - 18, 1);
+    };
+    const drawSecTitle = (t: string, x: number, y: number) => {
+      ctx.save();
+      ctx.font = 'bold 9px sans-serif'; ctx.fillStyle = GOLD_L; ctx.textAlign = 'left';
+      ctx.fillText(t.toUpperCase(), x, y);
+      const tw = ctx.measureText(t.toUpperCase()).width;
+      ctx.fillStyle = 'rgba(217,119,6,0.28)'; ctx.fillRect(x, y + 2, tw, 1);
       ctx.restore();
     };
 
-    const drawSectionHeader = (label: string, x: number, y: number, w: number) => {
-      ctx.save();
-      ctx.fillStyle = 'rgba(26,85,208,0.35)';
-      ctx.beginPath(); ctx.roundRect(x, y - 14, w, 22, 4); ctx.fill();
-      ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(120,180,255,0.9)';
-      ctx.textAlign = 'left'; ctx.fillText(label, x + 10, y + 3);
-      ctx.restore();
-    };
+    // DADOS PESSOAIS
+    drawSecTitle('Dados Pessoais', dx, sy2 + 10);
+    sy2 += 22;
+    drawLbl('Nome Completo', dx, sy2); drawVal(details.full_name || '—', dx, sy2 + 13, LW - dx - 18);
+    sy2 += 32;
+    drawLbl('Nascimento', dx, sy2); drawVal(formatDate(details.birth_date), dx, sy2 + 13);
+    drawLbl('Estado Civil', dx + colW, sy2); drawVal(details.marital_status || '—', dx + colW, sy2 + 13);
+    sy2 += 32;
+    drawLbl('Endereço', dx, sy2); drawVal(`${details.address_street || '—'}, ${details.address_lot || ''} — ${details.address_sector || ''}`, dx, sy2 + 13, LW - dx - 18);
+    sy2 += 32;
+    drawLbl('Cidade / Estado', dx, sy2); drawVal(`${details.address_city || '—'} / ${details.address_state || '—'}`, dx, sy2 + 13, LW - dx - 18);
+    sy2 += 36; drawSep2(sy2 - 6);
 
-    const sepLine = (y: number) => {
-      const g = ctx.createLinearGradient(dx, 0, LW-20, 0);
-      g.addColorStop(0,'rgba(80,140,255,0.5)'); g.addColorStop(1,'transparent');
-      ctx.fillStyle = g; ctx.fillRect(dx, y, LW - dx - 20, 1);
-    };
+    // CONTATO
+    drawSecTitle('Contato', dx, sy2 + 10);
+    sy2 += 22;
+    drawLbl('Telefone', dx, sy2); drawVal(details.phone || '—', dx, sy2 + 13);
+    drawLbl('E-mail', dx + colW, sy2); drawVal(details.email || '—', dx + colW, sy2 + 13, colW - 8);
+    sy2 += 36; drawSep2(sy2 - 6);
 
-    let sy2 = dy + 10;
-
-    drawSectionHeader('DADOS PESSOAIS', dx, sy2, LW - dx - 20);
-    sy2 += 20;
-    drawField('Nome Completo', details.full_name || '—', dx, sy2, LW - dx - 20);
-    sy2 += 36;
-    drawField('Nascimento', formatDate(details.birth_date), dx, sy2);
-    drawField('Estado Civil', details.marital_status || '—', dx + colW, sy2);
-    sy2 += 36;
-    drawField('Endereço', `${details.address_street||'—'}, ${details.address_lot||''} — ${details.address_sector||''}`, dx, sy2, LW - dx - 20);
-    sy2 += 36;
-    drawField('Cidade / Estado', `${details.address_city||'—'} / ${details.address_state||'—'}`, dx, sy2, LW - dx - 20);
-    sy2 += 40;
-
-    sepLine(sy2 - 6);
-
-    drawSectionHeader('CONTATO', dx, sy2 + 10, LW - dx - 20);
-    sy2 += 28;
-    drawField('Telefone', details.phone || '—', dx, sy2);
-    drawField('E-mail', details.email || '—', dx + colW, sy2, colW - 12);
-    sy2 += 40;
-
-    sepLine(sy2 - 6);
-
-    drawSectionHeader('DADOS ECLESIÁSTICOS', dx, sy2 + 10, LW - dx - 20);
-    sy2 += 28;
-    drawField('Entrada na Igreja', formatDate(details.church_entry_date), dx, sy2);
-    drawField('Data de Batismo', formatDate(details.baptism_date), dx + colW, sy2);
+    // DADOS ECLESIÁSTICOS
+    drawSecTitle('Dados Eclesiásticos', dx, sy2 + 10);
+    sy2 += 22;
+    drawLbl('Entrada na Igreja', dx, sy2); drawVal(formatDate(details.church_entry_date), dx, sy2 + 13);
+    drawLbl('Data de Batismo', dx + colW, sy2); drawVal(formatDate(details.baptism_date), dx + colW, sy2 + 13);
     sy2 += 36;
 
-    // ── Texto ministerial com congregação dinâmica ───────────────────────────
     ctx.save();
-    ctx.font = 'italic 12px Georgia, serif';
-    ctx.fillStyle = 'rgba(140,190,255,0.65)';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Assembléia de Deus — Ministério Internacional • Irlanda • ${congregacao || 'Inhumas-GO'} • Brasil`, dx, sy2 + 14);
-    ctx.font = 'bold 11px sans-serif';
-    ctx.fillStyle = 'rgba(120,175,255,0.55)';
-    ctx.fillText('AOGIM — Assembly of God Ireland Ministry', dx, sy2 + 30);
+    ctx.font = 'italic 11px Georgia, serif';
+    ctx.fillStyle = 'rgba(120,80,30,0.52)'; ctx.textAlign = 'left';
+    ctx.fillText(`Assembléia de Deus — Ministério Internacional • Irlanda • ${congregacao || 'Inhumas-GO'} • Brasil`, dx, sy2 + 12);
+    ctx.font = '9.5px sans-serif'; ctx.fillStyle = 'rgba(120,80,30,0.38)';
+    ctx.fillText('AOGIM — Assembly of God Ireland Ministry', dx, sy2 + 26);
     ctx.restore();
 
     // Rodapé
-    const ano = new Date().getFullYear();
-    const validade = `${String(new Date().getMonth()+1).padStart(2,'0')}/${ano+1}`;
+    const footerY = LH - 68;
+    const fGrad = ctx.createLinearGradient(0, footerY, 0, LH);
+    fGrad.addColorStop(0, CREAM_FTR); fGrad.addColorStop(1, '#E0D4B8');
+    ctx.fillStyle = fGrad; ctx.fillRect(0, footerY, LW, LH - footerY);
 
-    const rodapeGrad = ctx.createLinearGradient(0, LH-55, 0, LH);
-    rodapeGrad.addColorStop(0,'rgba(10,20,60,0)'); rodapeGrad.addColorStop(1,'rgba(10,20,60,0.8)');
-    ctx.fillStyle = rodapeGrad; ctx.fillRect(0, LH-55, LW, 55);
+    const fLineGrad = ctx.createLinearGradient(0, 0, LW, 0);
+    fLineGrad.addColorStop(0, 'transparent'); fLineGrad.addColorStop(0.2, GOLD_L);
+    fLineGrad.addColorStop(0.8, GOLD_L); fLineGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = fLineGrad; ctx.fillRect(0, footerY, LW, 1.5);
 
-    const lineRodape = ctx.createLinearGradient(0, 0, LW, 0);
-    lineRodape.addColorStop(0,'transparent'); lineRodape.addColorStop(0.3,'rgba(60,120,255,0.4)');
-    lineRodape.addColorStop(0.7,'rgba(60,120,255,0.4)'); lineRodape.addColorStop(1,'transparent');
-    ctx.fillStyle = lineRodape; ctx.fillRect(0, LH-55, LW, 1);
+    const now = new Date();
+    const validade = `${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear() + 1}`;
 
     ctx.save(); ctx.textAlign = 'left';
-    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('Nº DE REGISTRO', 28, LH-30);
-    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(numRegistro, 28, LH-13);
+    ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = INK_LBL; ctx.fillText('Nº DE REGISTRO', 20, footerY + 16);
+    ctx.font = 'bold 13px Courier New, monospace'; ctx.fillStyle = INK; ctx.fillText(numRegistro, 20, footerY + 32);
 
-    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('EMISSÃO', 230, LH-30);
-    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(dataEmissao, 230, LH-13);
+    ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = INK_LBL; ctx.fillText('EMISSÃO', 235, footerY + 16);
+    ctx.font = 'bold 13px Courier New, monospace'; ctx.fillStyle = INK; ctx.fillText(dataEmissao, 235, footerY + 32);
 
-    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('VALIDADE', 380, LH-30);
-    ctx.font = 'bold 15px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.95)';
-    ctx.fillText(validade, 380, LH-13);
+    ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = INK_LBL; ctx.fillText('VALIDADE', 385, footerY + 16);
+    ctx.font = 'bold 13px Courier New, monospace'; ctx.fillStyle = INK; ctx.fillText(validade, 385, footerY + 32);
 
-    // ── Congregação no rodapé direito ────────────────────────────────────────
+    ctx.font = 'italic 9.5px Georgia, serif'; ctx.fillStyle = 'rgba(120,80,30,0.55)';
+    ctx.fillText('* Este cartão não possui validade legal após o vencimento.', 20, footerY + 54);
+
     ctx.textAlign = 'right';
-    ctx.font = 'bold 10px sans-serif'; ctx.fillStyle = 'rgba(80,160,255,0.65)';
-    ctx.fillText('CONGREGAÇÃO', LW-20, LH-30);
-    ctx.font = 'bold 13px Courier New, monospace'; ctx.fillStyle = 'rgba(180,220,255,0.9)';
-    ctx.fillText((congregacao || 'INHUMAS - GO').toUpperCase(), LW-20, LH-13);
+    ctx.font = 'bold 8px sans-serif'; ctx.fillStyle = INK_LBL; ctx.fillText('CONGREGAÇÃO', LW - 18, footerY + 16);
+    ctx.font = 'bold 12px Courier New, monospace'; ctx.fillStyle = INK;
+    ctx.fillText((congregacao || 'INHUMAS - GO').toUpperCase(), LW - 18, footerY + 32);
     ctx.restore();
 
+    // Borda do cartão
     ctx.save();
-    ctx.strokeStyle = 'rgba(60,140,255,0.25)'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.roundRect(1, 1, LW-2, LH-2, 16); ctx.stroke();
+    ctx.strokeStyle = 'rgba(180,120,30,0.32)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.roundRect(0.75, 0.75, LW - 1.5, LH - 1.5, 14); ctx.stroke();
     ctx.restore();
 
     resolve(canvas.toDataURL('image/png', 0.95));
@@ -556,9 +546,8 @@ const MemberArea: FC = () => {
       let dataEmissao = detData?.data_emissao;
 
       if (!numRegistro) {
-        // Gera número único e permanente derivado do UUID do usuário
-        const hex = session.user.id.replace(/-/g, '').slice(0, 9);
-        const seq = (parseInt(hex, 16) % 900000) + 100000;
+        const { data: seqData } = await supabase.rpc('get_next_card_number');
+        const seq = String(seqData ?? 100001).padStart(6, '0');
         numRegistro = `ADI-${new Date().getFullYear()}-${seq}`;
         dataEmissao = new Date().toISOString().split('T')[0];
         await supabase.from('member_details').update({ numero_registro: numRegistro, data_emissao: dataEmissao }).eq('user_id', session.user.id);
