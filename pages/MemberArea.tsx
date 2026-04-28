@@ -156,8 +156,10 @@ async function gerarCartaoCNH(
 
     // Nome + badge abaixo da foto
     ctx.save(); ctx.textAlign = 'center';
+    const partes = (details.full_name || 'MEMBRO').trim().split(/\s+/);
+    const nomeDisplay = partes.length > 1 ? `${partes[0]} ${partes[partes.length - 1]}` : partes[0];
     ctx.font = 'bold 13px Georgia, serif'; ctx.fillStyle = INK;
-    ctx.fillText((details.full_name || 'MEMBRO').toUpperCase(), photoX + photoW / 2, photoY + photoH + 20);
+    ctx.fillText(nomeDisplay.toUpperCase(), photoX + photoW / 2, photoY + photoH + 20);
     const funcao = details.church_function || 'Membro';
     ctx.font = 'bold 10px sans-serif';
     const fbW = Math.min(photoW, ctx.measureText(funcao).width + 24);
